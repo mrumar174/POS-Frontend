@@ -1,0 +1,20 @@
+@if (alertService.current(); as alert) {
+  <div class="alert-backdrop">
+    <div class="alert-card shadow" [class]="'alert-card-' + alert.type">
+      <h5 class="mb-2">{{ alert.title }}</h5>
+      <p class="mb-4 text-secondary">{{ alert.message }}</p>
+      <div class="d-flex justify-content-end gap-2">
+        @for (btn of alert.buttons; track btn.value) {
+          <button
+            type="button"
+            class="btn btn-sm"
+            [class]="'btn-' + btn.style"
+            (click)="respond(btn.value)"
+          >
+            {{ btn.label }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}

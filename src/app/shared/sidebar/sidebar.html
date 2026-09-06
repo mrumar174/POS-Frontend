@@ -1,0 +1,62 @@
+@if (auth.isAuthenticated()) {
+  <aside class="sidebar d-flex flex-column" [class.collapsed]="collapsed()">
+    <div class="sidebar-brand px-3 py-3 border-bottom d-flex align-items-center justify-content-between">
+      @if (!collapsed()) {
+        <span class="fw-bold fs-5">POS Backend</span>
+      }
+      <button class="btn btn-sm btn-outline-secondary border-0" (click)="toggleSidebar()" [title]="collapsed() ? 'Expand' : 'Collapse'">
+        {{ collapsed() ? '»' : '«' }}
+      </button>
+    </div>
+
+    <nav class="flex-grow-1 px-2 py-3 overflow-auto">
+      <ul class="nav flex-column gap-1">
+        @for (group of groups; track group.label) {
+          <li class="nav-item">
+            <button
+              class="nav-link d-flex align-items-center gap-2 w-100 border-0 bg-transparent text-start group-toggle"
+              (click)="toggleGroup(group.label)"
+            >
+              <span>{{ group.icon }}</span>
+              @if (!collapsed()) {
+                <span class="flex-grow-1">{{ group.label }}</span>
+                <span class="chevron" [class.rotated]="isGroupExpanded(group.label)">▾</span>
+              }
+            </button>
+
+            @if (!collapsed() && isGroupExpanded(group.label)) {
+              <ul class="nav flex-column ps-4 gap-1 mt-1">
+                @for (link of group.links; track link.route) {
+                  <li class="nav-item">
+                    
+                     <a class="nav-link d-flex align-items-center gap-2 sub-link"
+                      [routerLink]="link.route"
+                      routerLinkActive="active"
+                    >
+                      <span>{{ link.icon }}</span>
+                      <span>{{ link.label }}</span>
+                    </a>
+                  </li>
+                }
+              </ul>
+            }
+          </li>
+        }
+      </ul>
+    </nav>
+
+    <div class="sidebar-footer px-3 py-3 border-top">
+      @if (!collapsed()) {
+        <div class="mb-2 small">
+          <div class="fw-semibold">{{ auth.currentUser()?.fullName }}</div>
+          @if (auth.roles().length) {
+            <span class="badge bg-secondary mt-1">{{ auth.roles()!.join(', ') }}</span>
+          }
+        </div>
+      }
+      <button class="btn btn-outline-secondary btn-sm w-100" (click)="logout()" [title]="collapsed() ? 'Logout' : ''">
+        {{ collapsed() ? '⏻' : 'Logout' }}
+      </button>
+    </div>
+  </aside>
+}

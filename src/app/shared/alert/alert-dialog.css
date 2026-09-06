@@ -1,0 +1,23 @@
+.alert-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+}
+
+.alert-card {
+  background: #fff;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 420px;
+  border-top: 4px solid #6c757d;
+}
+
+.alert-card-danger { border-top-color: #dc3545; }
+.alert-card-warning { border-top-color: #ffc107; }
+.alert-card-success { border-top-color: #198754; }
+.alert-card-info { border-top-color: #0d6efd; }

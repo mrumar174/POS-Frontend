@@ -1,0 +1,21 @@
+{
+  "runtime": "Net90",
+  "documentGenerator": {
+    "fromDocument": {
+      "url": "https://localhost:7185/swagger/v1/swagger.json",
+      "output": null
+    }
+  },
+  "codeGenerators": {
+    "openApiToTypeScriptClient": {
+      "className": "{controller}Client",
+      "template": "Angular",
+      "generateClientInterfaces": true,
+      "injectionTokenType": "InjectionToken",
+      "generateDtoTypes": true,
+      "useSingletonProvider": true,
+      "dateTimeType": "Date",
+      "output": "src/app/core/api/api-client.ts"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+@if (auth.isAuthenticated()) {
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+    <div class="container">
+      <a class="navbar-brand" routerLink="/categories">POS Backend</a>
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/categories" routerLinkActive="active">Categories</a>
+          </li>
+        </ul>
+        <span class="navbar-text text-light me-3">
+          {{ auth.currentUser()?.fullName }}
+          @if (auth.roles().length) {
+            <span class="badge bg-secondary ms-1">{{ auth.roles()!.join(', ') }}</span>
+          }
+        </span>
+        <button class="btn btn-outline-light btn-sm" (click)="logout()">Logout</button>
+      </div>
+    </div>
+  </nav>
+}

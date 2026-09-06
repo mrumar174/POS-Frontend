@@ -1,0 +1,13 @@
+<div class="toast-stack">
+  @for (n of notificationService.notifications(); track n.id) {
+    <div class="toast-item shadow-sm" [class]="'toast-' + n.type">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="fw-semibold small">{{ n.title }}</div>
+          <div class="small">{{ n.message }}</div>
+        </div>
+        <button type="button" class="btn-close btn-sm ms-2" aria-label="Close" (click)="dismiss(n.id)"></button>
+      </div>
+    </div>
+  }
+</div>

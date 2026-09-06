@@ -1,0 +1,16 @@
+.filter-row th {
+  background-color: #f8f9fa;
+  padding: 8px;
+}
+
+.filter-row input {
+  min-width: 100px;
+}
+
+.table th {
+  white-space: nowrap;
+}
+
+.table td {
+  vertical-align: middle;
+}
