@@ -1,0 +1,23 @@
+.page-header {
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e4e1da;
+}
+
+.breadcrumb-trail {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.segment {
+  color: #8a8477;
+}
+
+.segment.last {
+  color: #1c1a17;
+  font-weight: 600;
+}
+
+.separator {
+  color: #b5afa2;
+  margin: 0 0.15rem;
+}

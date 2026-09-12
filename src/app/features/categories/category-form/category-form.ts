@@ -4,11 +4,12 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Client, CreateCategoryDto, UpdateCategoryDto } from '../../../core/api/api-client';
 import { NotificationService } from '../../../shared/notification/notification.service';
+import { PageHeader } from "../../../shared/page-header/page-header";
 
 @Component({
   selector: 'app-category-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, PageHeader],
   templateUrl: './category-form.html'
 })
 export class CategoryForm implements OnInit {

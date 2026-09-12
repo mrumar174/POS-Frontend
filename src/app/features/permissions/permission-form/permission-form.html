@@ -1,0 +1,34 @@
+<div class="container">
+  <app-page-header [segments]="['Identity & Access', 'Create Permissions']"></app-page-header>
+  <p class="text-muted small">Add one or more permissions in a batch (e.g. "Sales.Create" / module "Sales"). Duplicates are skipped automatically.</p>
+
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <div formArrayName="rows">
+      @for (row of rows.controls; track $index) {
+        <div [formGroupName]="$index" class="row g-2 mb-2 align-items-center">
+          <div class="col-md-4">
+            <input type="text" class="form-control form-control-sm" placeholder="Name e.g. Sales.Create" formControlName="name" />
+          </div>
+          <div class="col-md-3">
+            <input type="text" class="form-control form-control-sm" placeholder="Module e.g. Sales" formControlName="module" />
+          </div>
+          <div class="col-md-4">
+            <input type="text" class="form-control form-control-sm" placeholder="Description (optional)" formControlName="description" />
+          </div>
+          <div class="col-md-1">
+            <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeRow($index)">✕</button>
+          </div>
+        </div>
+      }
+    </div>
+
+    <button type="button" class="btn btn-outline-secondary btn-sm mb-3" (click)="addRow()">+ Add another row</button>
+
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary" [disabled]="loading()">
+        @if (loading()) { Saving... } @else { Save all }
+      </button>
+      <a routerLink="/permissions" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+  </form>
+</div>

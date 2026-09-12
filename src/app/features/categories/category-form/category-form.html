@@ -1,22 +1,30 @@
-<div class="container" style="max-width: 480px;">
-  <h4 class="mb-3">{{ isEditMode() ? 'Edit Category' : 'New Category' }}</h4>
-  @if (errorMessage()) {
+<div class="container">
+  <app-page-header [segments]="['Catalog', isEditMode() ? 'Edit Category' : 'Create Category']"></app-page-header>
+  <!-- @if (errorMessage()) {
     <div class="alert alert-danger py-2">{{ errorMessage() }}</div>
-  }
-  <form [formGroup]="form" (ngSubmit)="submit()">
-    <div class="mb-3">
-      <label class="form-label">Name</label>
-      <input type="text" class="form-control" formControlName="name" />
+  } -->
+  <div class="row">
+    <div class="col-4">
     </div>
-    <div class="mb-3">
-      <label class="form-label">Description <span class="text-muted">(optional)</span></label>
-      <textarea class="form-control" formControlName="description" rows="3"></textarea>
+    <div class="col-7">
+
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <div class="mb-3">
+          <label class="form-label">Name</label>
+          <input type="text" class="form-control" formControlName="name" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Description <span class="text-muted">(optional)</span></label>
+          <textarea class="form-control" formControlName="description" rows="3"></textarea>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary" [disabled]="loading()">
+            @if (loading()) { Saving... } @else { Save }
+          </button>
+          <a routerLink="/categories" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+      </form>
     </div>
-    <div class="d-flex gap-2">
-      <button type="submit" class="btn btn-primary" [disabled]="loading()">
-        @if (loading()) { Saving... } @else { Save }
-      </button>
-      <a routerLink="/categories" class="btn btn-outline-secondary">Cancel</a>
-    </div>
-  </form>
+    <div class="col"></div>
+  </div>
 </div>

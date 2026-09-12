@@ -5,11 +5,12 @@ import { Client, CategoryDto } from '../../../core/api/api-client';
 
 import { NotificationService } from '../../../shared/notification/notification.service';
 import { AlertService } from '../../../shared/alert/alert.service';
+import { PageHeader } from "../../../shared/page-header/page-header";
 
 @Component({
   selector: 'app-category-list',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, PageHeader],
   templateUrl: './category-list.html',
   styleUrl: './category-list.css'
 })

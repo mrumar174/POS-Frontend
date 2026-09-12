@@ -1,183 +1,116 @@
 <div class="container-fluid">
-
+<app-page-header [segments]="['Catalog', 'Categories List']"></app-page-header>
   <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
-
-    <h4 class="mb-0">Categories</h4>
-
+  <div class="d-flex justify-content-end align-items-center mb-3">
     <div class="d-flex gap-2">
-
       <!-- Global Search -->
       <div class="input-group" style="width: 280px;">
         <input type="text" class="form-control" placeholder="Search by name..." [value]="globalSearch()"
           (input)="onGlobalSearch($event)" />
-
         @if (globalSearch()) {
         <button class="btn btn-outline-secondary" type="button" (click)="clearGlobalSearch()">
           ×
         </button>
         }
       </div>
-
       <!-- Advance Filter -->
       <button type="button" class="btn btn-outline-secondary" (click)="toggleAdvanceFilter()">
-
         🔎 Advance Filter
       </button>
-
       <!-- New Category -->
       <a routerLink="/categories/new" class="btn btn-primary">
         + New Category
       </a>
-
     </div>
-
   </div>
-
-
   <!-- Error -->
   @if (errorMessage()) {
   <div class="alert alert-danger py-2">
     {{ errorMessage() }}
   </div>
   }
-
-
   <!-- Loading -->
   @if (loading()) {
-
   <p class="text-muted">Loading...</p>
-
   } @else {
-
   <div class="card">
-
     <div class="card-body p-0">
-
       <div class="table-responsive">
-
         <table class="table table-hover align-middle mb-0">
-
           <thead>
-
             <!-- Column headings -->
             <tr>
-
               <th style="width: 70px;">
                 Sr.
               </th>
-
               <th>
                 Name
               </th>
-
               <th>
                 Description
               </th>
-
               <th style="width: 180px;">
                 Actions
               </th>
-
             </tr>
-
-
             <!-- Advance Filters -->
             @if (showAdvanceFilter()) {
-
             <tr class="filter-row">
-
               <!-- Sr -->
               <th></th>
-
               <!-- Name Filter -->
               <th>
                 <input type="text" class="form-control form-control-sm" placeholder="Search Name" [value]="nameFilter()"
                   (input)="onNameFilter($event)" />
               </th>
-
-
               <!-- Description Filter -->
               <th>
                 <input type="text" class="form-control form-control-sm" placeholder="Search Description"
                   [value]="descriptionFilter()" (input)="onDescriptionFilter($event)" />
               </th>
-
-
               <!-- Actions -->
               <th>
-
                 <button type="button" class="btn btn-sm btn-outline-danger" (click)="clearFilters()">
                   Clear
                 </button>
-
               </th>
-
             </tr>
-
             }
-
           </thead>
-
-
           <tbody>
-
             @for (category of filteredCategories(); track category.id) {
-
             <tr>
-
               <td>
                 {{ $index + 1 }}
               </td>
-
               <td>
                 <strong>
                   {{ category.name }}
                 </strong>
               </td>
-
               <td class="text-muted">
                 {{ category.description || '—' }}
               </td>
-
               <td class="">
-
                 <a [routerLink]="['/categories', category.id, 'edit']" class="btn btn-outline-secondary btn-sm me-1">
                   Edit
                 </a>
-
                 <button type="button" class="btn btn-outline-danger btn-sm" (click)="remove(category)">
                   Delete
                 </button>
-
               </td>
-
             </tr>
-
             } @empty {
-
             <tr>
-
               <td colspan="4" class="text-center text-muted py-4">
-
                 No categories found.
-
               </td>
-
             </tr>
-
             }
-
           </tbody>
-
         </table>
-
       </div>
-
     </div>
-
   </div>
-
   }
-
 </div>
