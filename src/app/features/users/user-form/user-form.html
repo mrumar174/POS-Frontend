@@ -1,0 +1,80 @@
+<div class="container">
+  <app-page-header [segments]="['Identity & Asscess', isEditMode() ? 'Edit User' : 'Create User']"></app-page-header>
+  <div class="row">
+    <div class="col-3"></div>
+    <div class="col-8">
+      <form [formGroup]="form" (ngSubmit)="submit()">
+    <div class="row g-2">
+      <div class="col-md-6 mb-2">
+        <label class="form-label">Username</label>
+        <input type="text" class="form-control" formControlName="userName" autocomplete="username" />
+      </div>
+      <div class="col-md-6 mb-2">
+        <label class="form-label">Full Name</label>
+        <input type="text" class="form-control" formControlName="fullName" />
+      </div>
+      @if (!isEditMode()) {
+        <div class="col-md-6 mb-2">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-control" formControlName="password" autocomplete="new-password" />
+        </div>
+      }
+      <div class="col-md-6 mb-2">
+        <label class="form-label">Contact No</label>
+        <input type="text" class="form-control" formControlName="contactNo" />
+      </div>
+      <div class="col-12 mb-2">
+        <label class="form-label">Address</label>
+        <input type="text" class="form-control" formControlName="address" />
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6">
+        <label class="form-label">Roles</label>
+        <div class="border rounded p-2 mb-3" style="max-height: 220px; overflow-y: auto;">
+          @for (r of allRoles(); track r.id) {
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                [id]="'role-' + r.id"
+                [checked]="isRoleChecked(r.id!)"
+                (change)="toggleRole(r.id!, $any($event.target).checked)"
+              />
+              <label class="form-check-label" [for]="'role-' + r.id">{{ r.name }}</label>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Shops</label>
+        <div class="border rounded p-2 mb-3" style="max-height: 220px; overflow-y: auto;">
+          @for (s of allShops(); track s.id) {
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                [id]="'shop-' + s.id"
+                [checked]="isShopChecked(s.id!)"
+                (change)="toggleShop(s.id!, $any($event.target).checked)"
+              />
+              <label class="form-check-label" [for]="'shop-' + s.id">{{ s.name }}</label>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary" [disabled]="loading()">
+        @if (loading()) { Saving... } @else { Save }
+      </button>
+      <a routerLink="/users" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+  </form>
+    </div>
+    <div class="col"></div>
+  </div>
+</div>

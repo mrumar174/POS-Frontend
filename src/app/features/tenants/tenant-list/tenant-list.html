@@ -1,0 +1,39 @@
+<div class="container">
+  <app-page-header [segments]="['Tenancy','Tenants List']"></app-page-header>
+  <p class="text-muted small">New tenants are created through Signup, not here. Editing business details only.</p>
+
+  @if (loading()) {
+    <p class="text-muted">Loading...</p>
+  } @else if (tenants().length === 0) {
+    <p class="text-muted">No tenants yet.</p>
+  } @else {
+    <table class="table table-hover align-middle">
+      <thead>
+        <tr>
+          <th style="width: 60px;">Sr</th>
+          <th>Code</th>
+          <th>Business</th>
+          <th>Owner</th>
+          <th>Shops</th>
+          <th>Users</th>
+          <th style="width: 100px;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (t of tenants(); track t.id) {
+          <tr>
+            <td>{{ $index+1 }}</td>
+            <td>{{ t.code }}</td>
+            <td>{{ t.businessName }}</td>
+            <td class="text-muted">{{ t.ownerName }}</td>
+            <td>{{ t.shopCount }}</td>
+            <td>{{ t.userCount }}</td>
+            <td class="text-end">
+              <a [routerLink]="['/tenants', t.id, 'edit']" class="btn btn-outline-secondary btn-sm">Edit</a>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

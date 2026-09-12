@@ -1,0 +1,43 @@
+<div class="container">
+    <app-page-header [segments]="['Identity & Asscess', 'Users List']"></app-page-header>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Users</h4>
+    <a routerLink="/users/new" class="btn btn-primary btn-sm">+ New User</a>
+  </div>
+
+  @if (loading()) {
+    <p class="text-muted">Loading...</p>
+  } @else if (users().length === 0) {
+    <p class="text-muted">No users yet.</p>
+  } @else {
+    <table class="table table-hover align-middle">
+      <thead>
+        <tr>
+          <th style="width: 60px;">Sr</th>
+          <th>Username</th>
+          <th>Full Name</th>
+          <th>Roles</th>
+          <th style="width: 220px;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (user of users(); track user.id) {
+          <tr>
+            <td>{{ $index+1 }}</td>
+            <td>{{ user.userName }}</td>
+            <td>{{ user.fullName }}</td>
+            <td>
+              @for (r of user.roles; track r) {
+                <span class="badge bg-secondary me-1">{{ r }}</span>
+              }
+            </td>
+            <td class="text-end">
+              <a [routerLink]="['/users', user.id, 'edit']" class="btn btn-outline-secondary btn-sm me-1">Edit</a>
+              <button class="btn btn-outline-danger btn-sm" (click)="remove(user)">Delete</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

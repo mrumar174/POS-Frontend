@@ -1,0 +1,10 @@
+<div class="page-header mb-4">
+  <nav class="breadcrumb-trail">
+    @for (segment of segments; track $index; let last = $last) {
+      <span class="segment" [class.last]="last">{{ segment }}</span>
+      @if (!last) {
+        <span class="separator">.</span>
+      }
+    }
+  </nav>
+</div>

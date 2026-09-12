@@ -1,0 +1,42 @@
+<div class="container">
+  <app-page-header [segments]="['Identity & Success', 'Roles List']"></app-page-header>
+  <div class="d-flex justify-content-end align-items-center mb-3">
+    <a routerLink="/roles/new" class="btn btn-primary btn-sm">+ New Role</a>
+  </div>
+
+  @if (loading()) {
+    <p class="text-muted">Loading...</p>
+  } @else if (roles().length === 0) {
+    <p class="text-muted">No roles yet.</p>
+  } @else {
+    <table class="table table-hover align-middle">
+      <thead>
+        <tr>
+          <th style="width: 60px;">Sr</th>
+          <th>Name</th>
+          <th>Description</th>
+          <th>Permissions</th>
+          <th style="width: 160px;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (role of roles(); track role.id) {
+          <tr>
+            <td>{{ $index+1 }}</td>
+            <td>{{ role.name }}</td>
+            <td class="text-muted">{{ role.description || '—' }}</td>
+            <td>
+              @for (p of role.permissions; track p) {
+                <span class="badge bg-secondary me-1">{{ p }}</span>
+              }
+            </td>
+            <td class="text-end">
+              <a [routerLink]="['/roles', role.id, 'edit']" class="btn btn-outline-secondary btn-sm me-1">Edit</a>
+              <button class="btn btn-outline-danger btn-sm" (click)="remove(role)">Delete</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
