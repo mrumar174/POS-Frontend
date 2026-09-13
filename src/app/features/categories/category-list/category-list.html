@@ -1,116 +1,138 @@
-<div class="container-fluid">
-<app-page-header [segments]="['Catalog', 'Categories List']"></app-page-header>
-  <!-- Header -->
-  <div class="d-flex justify-content-end align-items-center mb-3">
-    <div class="d-flex gap-2">
-      <!-- Global Search -->
-      <div class="input-group" style="width: 280px;">
-        <input type="text" class="form-control" placeholder="Search by name..." [value]="globalSearch()"
-          (input)="onGlobalSearch($event)" />
+<div class="container-fluid category-page">
+  <app-page-header [segments]="['Catalog', 'Categories']"></app-page-header>
+
+  <div class="toolbar d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <h5 class="mb-0">Categories</h5>
+      @if (!loading()) {
+        <span class="badge count-badge">{{ filteredCategories().length }}</span>
+      }
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap">
+      <div class="search-box">
+        <span class="search-icon"><i class="bi bi-search"></i></span>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Search by name..."
+          [value]="globalSearch()"
+          (input)="onGlobalSearch($event)"
+        />
         @if (globalSearch()) {
-        <button class="btn btn-outline-secondary btn-sm" type="button" (click)="clearGlobalSearch()">
-          ×
-        </button>
+          <button class="clear-btn" type="button" (click)="clearGlobalSearch()" title="Clear search">
+            <i class="bi bi-x"></i>
+          </button>
         }
       </div>
-      <!-- Advance Filter -->
-      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="toggleAdvanceFilter()">
-        🔎 Advance Filter
+
+      <button
+        type="button"
+        class="btn btn-sm filter-toggle-btn"
+        [class.active]="showAdvanceFilter()"
+        (click)="toggleAdvanceFilter()"
+      >
+        <i class="bi bi-funnel"></i>
+        Filters
       </button>
-      <!-- New Category -->
-      <a routerLink="/categories/new" class="btn btn-primary btn-sm d-flex ali">
-        + New Category
+
+      <a routerLink="/categories/new" class="btn btn-sm btn-new">
+        <i class="bi bi-plus-lg"></i>
+        New Category
       </a>
     </div>
   </div>
-  <!-- Error -->
+
   @if (errorMessage()) {
-  <div class="alert alert-danger py-2">
-    {{ errorMessage() }}
-  </div>
+    <div class="alert alert-danger py-2">{{ errorMessage() }}</div>
   }
-  <!-- Loading -->
-  @if (loading()) {
-  <p class="text-muted">Loading...</p>
-  } @else {
-  <div class="card">
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead>
-            <!-- Column headings -->
-            <tr>
-              <th style="width: 70px;">
-                Sr.
-              </th>
-              <th>
-                Name
-              </th>
-              <th>
-                Description
-              </th>
-              <th style="width: 180px;">
-                Actions
-              </th>
-            </tr>
-            <!-- Advance Filters -->
-            @if (showAdvanceFilter()) {
-            <tr class="filter-row">
-              <!-- Sr -->
-              <th></th>
-              <!-- Name Filter -->
-              <th>
-                <input type="text" class="form-control form-control-sm" placeholder="Search Name" [value]="nameFilter()"
-                  (input)="onNameFilter($event)" />
-              </th>
-              <!-- Description Filter -->
-              <th>
-                <input type="text" class="form-control form-control-sm" placeholder="Search Description"
-                  [value]="descriptionFilter()" (input)="onDescriptionFilter($event)" />
-              </th>
-              <!-- Actions -->
-              <th>
-                <button type="button" class="btn btn-sm btn-outline-danger" (click)="clearFilters()">
-                  Clear
-                </button>
-              </th>
-            </tr>
-            }
-          </thead>
-          <tbody>
-            @for (category of filteredCategories(); track category.id) {
-            <tr>
-              <td>
-                {{ $index + 1 }}
-              </td>
-              <td>
-                <strong>
-                  {{ category.name }}
-                </strong>
-              </td>
-              <td class="text-muted">
-                {{ category.description || '—' }}
-              </td>
-              <td class="">
-                <a [routerLink]="['/categories', category.id, 'edit']" class="btn btn-outline-secondary btn-sm me-1">
-                  Edit
-                </a>
-                <button type="button" class="btn btn-outline-danger btn-sm" (click)="remove(category)">
-                  Delete
-                </button>
-              </td>
-            </tr>
-            } @empty {
-            <tr>
-              <td colspan="4" class="text-center text-muted py-4">
-                No categories found.
-              </td>
-            </tr>
-            }
-          </tbody>
-        </table>
+
+  @if (showAdvanceFilter()) {
+    <div class="advance-filter-panel mb-3">
+      <div class="row g-2">
+        <div class="col-md-5">
+          <label class="filter-label">Name</label>
+          <input
+            type="text"
+            class="form-control form-control-sm"
+            placeholder="Filter by name"
+            [value]="nameFilter()"
+            (input)="onNameFilter($event)"
+          />
+        </div>
+        <div class="col-md-5">
+          <label class="filter-label">Description</label>
+          <input
+            type="text"
+            class="form-control form-control-sm"
+            placeholder="Filter by description"
+            [value]="descriptionFilter()"
+            (input)="onDescriptionFilter($event)"
+          />
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button type="button" class="btn btn-sm btn-outline-secondary w-100" (click)="clearFilters()">
+            <i class="bi bi-x-circle"></i>
+            Clear all
+          </button>
+        </div>
       </div>
     </div>
-  </div>
+  }
+
+  @if (loading()) {
+    <div class="skeleton-list">
+      @for (i of [1,2,3,4,5]; track i) {
+        <div class="skeleton-row"></div>
+      }
+    </div>
+  } @else if (visibleCategories().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon">
+        <i class="bi bi-tags"></i>
+      </div>
+      <h6>No categories found</h6>
+      <p class="text-muted">Try adjusting your search or filters, or create a new category.</p>
+    </div>
+  } @else {
+    <div class="category-grid">
+      @for (category of visibleCategories(); track category.id) {
+        <div class="category-card">
+          <div class="card-avatar" [style.background]="avatarColor(category.name)">
+            {{ initial(category.name) }}
+          </div>
+          <div class="card-body-content">
+            <div class="card-title">{{ category.name }}</div>
+            <div class="card-description">{{ category.description || 'No description' }}</div>
+          </div>
+          <div class="card-actions">
+            <a
+              [routerLink]="['/categories', category.id, 'edit']"
+              class="icon-btn edit-btn"
+              title="Edit"
+            >
+              <i class="bi bi-pencil"></i>
+            </a>
+
+            <button
+              type="button"
+              class="icon-btn delete-btn"
+              title="Delete"
+              (click)="remove(category)"
+            >
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+
+    <div #scrollSentinel class="scroll-sentinel">
+      @if (hasMore()) {
+        <div class="loading-more">Scroll for more...</div>
+      } @else {
+        <div class="end-message">Showing all {{ filteredCategories().length }} categories.</div>
+      }
+    </div>
   }
 </div>

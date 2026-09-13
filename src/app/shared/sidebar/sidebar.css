@@ -5,7 +5,7 @@
   top: 0;
   transition: width 0.2s ease;
   overflow: hidden;
-  background-color: #f7f6f3;   /* off-white */
+  background-color: #f7f6f3;
   color: #2d2a26;
   border-right: 1px solid #e4e1da;
 }
@@ -28,9 +28,23 @@
   color: #2d2a26;
 }
 
+.nav-icon {
+  font-size: 1.05rem;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.nav-icon-sm {
+  font-size: 0.9rem;
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
 .chevron {
+  font-size: 0.7rem;
   transition: transform 0.15s ease;
-  display: inline-block;
   color: #8a8477;
 }
 
