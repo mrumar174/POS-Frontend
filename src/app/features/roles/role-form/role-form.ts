@@ -9,7 +9,8 @@ import { PageHeader } from "../../../shared/page-header/page-header";
   selector: 'app-role-form',
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink, PageHeader],
-  templateUrl: './role-form.html'
+  templateUrl: './role-form.html',
+  styleUrl: './role-form.css'
 })
 export class RoleForm implements OnInit {
   private fb = inject(FormBuilder);
