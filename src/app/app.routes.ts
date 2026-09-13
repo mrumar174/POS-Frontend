@@ -28,6 +28,13 @@ export const routes: Routes = [
   // Tenants
   { path: 'tenants', canActivate: [authGuard], loadComponent: () => import('./features/tenants/tenant-list/tenant-list').then((m) => m.TenantList) },
   { path: 'tenants/:id/edit', canActivate: [authGuard], loadComponent: () => import('./features/tenants/tenant-form/tenant-form').then((m) => m.TenantForm) },
-
+  // Brands
+  { path: 'brands', canActivate: [authGuard], loadComponent: () => import('./features/brands/brand-list/brand-list').then((m) => m.BrandList) },
+  { path: 'brands/new', canActivate: [authGuard], loadComponent: () => import('./features/brands/brand-form/brand-form').then((m) => m.BrandForm) },
+  { path: 'brands/:id/edit', canActivate: [authGuard], loadComponent: () => import('./features/brands/brand-form/brand-form').then((m) => m.BrandForm) },
+  // Units
+  { path: 'units', canActivate: [authGuard], loadComponent: () => import('./features/units/unit-list/unit-list').then((m) => m.UnitList) },
+  { path: 'units/new', canActivate: [authGuard], loadComponent: () => import('./features/units/unit-form/unit-form').then((m) => m.UnitForm) },
+  { path: 'units/:id/edit', canActivate: [authGuard], loadComponent: () => import('./features/units/unit-form/unit-form').then((m) => m.UnitForm) },
   { path: '**', redirectTo: 'login' }
 ];

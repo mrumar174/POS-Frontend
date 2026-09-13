@@ -1,0 +1,26 @@
+<div class="container">
+    <app-page-header [segments]="breadcrumbSegments"></app-page-header>
+    <div class="row">
+        <div class="col-4"></div>
+        <div class="col-7">
+            <form [formGroup]="form" (ngSubmit)="submit()">
+                <div class="mb-3">
+                    <label class="form-label">Name</label>
+                    <input type="text" class="form-control" formControlName="name" placeholder="e.g. Kilogram" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Short Name</label>
+                    <input type="text" class="form-control" formControlName="shortName" placeholder="e.g. Kg" />
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary" [disabled]="loading()">
+                        @if (loading()) { Saving... } @else { Save }
+                    </button>
+                    <a routerLink="/units" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+        <div class="col"></div>
+    </div>
+
+</div>

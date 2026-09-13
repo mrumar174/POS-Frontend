@@ -1,0 +1,27 @@
+<div class="container">
+    <app-page-header [segments]="breadcrumbSegments"></app-page-header>
+    <div class="row">
+        <div class="col-4"></div>
+        <div class="col-7">
+            <form [formGroup]="form" (ngSubmit)="submit()">
+                <div class="mb-3">
+                    <label class="form-label">Name</label>
+                    <input type="text" class="form-control" formControlName="name" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control" formControlName="description" rows="3"></textarea>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary" [disabled]="loading()">
+                        @if (loading()) { Saving... } @else { Save }
+                    </button>
+                    <a routerLink="/brands" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+        <div class="col"></div>
+    </div>
+
+
+</div>

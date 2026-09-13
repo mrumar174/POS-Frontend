@@ -8,17 +8,17 @@
         <input type="text" class="form-control" placeholder="Search by name..." [value]="globalSearch()"
           (input)="onGlobalSearch($event)" />
         @if (globalSearch()) {
-        <button class="btn btn-outline-secondary" type="button" (click)="clearGlobalSearch()">
+        <button class="btn btn-outline-secondary btn-sm" type="button" (click)="clearGlobalSearch()">
           ×
         </button>
         }
       </div>
       <!-- Advance Filter -->
-      <button type="button" class="btn btn-outline-secondary" (click)="toggleAdvanceFilter()">
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="toggleAdvanceFilter()">
         🔎 Advance Filter
       </button>
       <!-- New Category -->
-      <a routerLink="/categories/new" class="btn btn-primary">
+      <a routerLink="/categories/new" class="btn btn-primary btn-sm d-flex ali">
         + New Category
       </a>
     </div>
