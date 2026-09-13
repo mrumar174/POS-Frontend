@@ -4,8 +4,12 @@
       @if (!collapsed()) {
         <span class="fw-bold fs-5">POS Backend</span>
       }
-      <button class="btn btn-sm btn-outline-secondary border-0" (click)="toggleSidebar()" [title]="collapsed() ? 'Expand' : 'Collapse'">
-        {{ collapsed() ? '»' : '«' }}
+      <button
+        class="btn btn-sm btn-outline-secondary border-0"
+        (click)="toggleSidebar()"
+        [title]="collapsed() ? 'Expand' : 'Collapse'"
+      >
+        <i class="bi" [class.bi-chevron-right]="collapsed()" [class.bi-chevron-left]="!collapsed()"></i>
       </button>
     </div>
 
@@ -14,13 +18,14 @@
         @for (group of groups; track group.label) {
           <li class="nav-item">
             <button
+              type="button"
               class="nav-link d-flex align-items-center gap-2 w-100 border-0 bg-transparent text-start group-toggle"
               (click)="toggleGroup(group.label)"
             >
-              <span>{{ group.icon }}</span>
+              <i class="bi {{ group.icon }} nav-icon"></i>
               @if (!collapsed()) {
                 <span class="flex-grow-1">{{ group.label }}</span>
-                <span class="chevron" [class.rotated]="isGroupExpanded(group.label)">▾</span>
+                <i class="bi bi-chevron-down chevron" [class.rotated]="isGroupExpanded(group.label)"></i>
               }
             </button>
 
@@ -28,12 +33,8 @@
               <ul class="nav flex-column ps-4 gap-1 mt-1">
                 @for (link of group.links; track link.route) {
                   <li class="nav-item">
-                    
-                     <a class="nav-link d-flex align-items-center gap-2 sub-link"
-                      [routerLink]="link.route"
-                      routerLinkActive="active"
-                    >
-                      <span>{{ link.icon }}</span>
+                    <a class="nav-link d-flex align-items-center gap-2 sub-link" [routerLink]="link.route" routerLinkActive="active">
+                      <i class="bi {{ link.icon }} nav-icon-sm"></i>
                       <span>{{ link.label }}</span>
                     </a>
                   </li>
@@ -54,8 +55,13 @@
           }
         </div>
       }
-      <button class="btn btn-outline-secondary btn-sm w-100" (click)="logout()" [title]="collapsed() ? 'Logout' : ''">
-        {{ collapsed() ? '⏻' : 'Logout' }}
+      <button
+        class="btn btn-outline-secondary btn-sm w-100 d-flex align-items-center justify-content-center gap-2"
+        (click)="logout()"
+        [title]="collapsed() ? 'Logout' : ''"
+      >
+        <i class="bi bi-box-arrow-right"></i>
+        @if (!collapsed()) { <span>Logout</span> }
       </button>
     </div>
   </aside>

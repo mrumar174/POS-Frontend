@@ -1,11 +1,12 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, ElementRef, ViewChild, inject, signal, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { Client, CategoryDto } from '../../../core/api/api-client';
-
 import { NotificationService } from '../../../shared/notification/notification.service';
 import { AlertService } from '../../../shared/alert/alert.service';
-import { PageHeader } from "../../../shared/page-header/page-header";
+import { PageHeader } from '../../../shared/page-header/page-header';
+
+const PAGE_SIZE = 20;
 
 @Component({
   selector: 'app-category-list',
@@ -14,288 +15,160 @@ import { PageHeader } from "../../../shared/page-header/page-header";
   templateUrl: './category-list.html',
   styleUrl: './category-list.css'
 })
-export class CategoryList implements OnInit {
-
+export class CategoryList implements OnInit, AfterViewInit, OnDestroy {
   private client = inject(Client);
   private notify = inject(NotificationService);
   private alert = inject(AlertService);
 
+  @ViewChild('scrollSentinel') scrollSentinel?: ElementRef<HTMLDivElement>;
+  private observer?: IntersectionObserver;
 
-  // =========================================================
-  // DATA
-  // =========================================================
-
-  readonly categories = signal<CategoryDto[]>([]);
-
+  // ---------------------------------------------------------
+  // Raw data — fetched once from GetAll()
+  // ---------------------------------------------------------
+  readonly allCategories = signal<CategoryDto[]>([]);
   readonly loading = signal(true);
-
   readonly errorMessage = signal<string | null>(null);
 
-
-  // =========================================================
-  // FILTERS
-  // =========================================================
-
-  // Global search
+  // ---------------------------------------------------------
+  // Filters
+  // ---------------------------------------------------------
   readonly globalSearch = signal('');
-
-  // Column filters
   readonly nameFilter = signal('');
-
   readonly descriptionFilter = signal('');
-
-
-  // Advance filter visibility
   readonly showAdvanceFilter = signal(false);
 
+  // ---------------------------------------------------------
+  // Client-side pagination (how many of the filtered results to show)
+  // ---------------------------------------------------------
+  readonly visibleCount = signal(PAGE_SIZE);
 
-  // =========================================================
-  // FILTERED CATEGORIES
-  // =========================================================
-
+  // ---------------------------------------------------------
+  // Filtered result — recomputed whenever data or filters change
+  // ---------------------------------------------------------
   readonly filteredCategories = computed(() => {
+    const all = this.allCategories();
+    const global = this.globalSearch().trim().toLowerCase();
+    const name = this.nameFilter().trim().toLowerCase();
+    const description = this.descriptionFilter().trim().toLowerCase();
 
-    const categories = this.categories();
+    return all.filter((category) => {
+      const categoryName = (category.name ?? '').toLowerCase();
+      const categoryDescription = (category.description ?? '').toLowerCase();
 
-    const global = this.globalSearch()
-      .trim()
-      .toLowerCase();
-
-    const name = this.nameFilter()
-      .trim()
-      .toLowerCase();
-
-    const description = this.descriptionFilter()
-      .trim()
-      .toLowerCase();
-
-
-    return categories.filter(category => {
-
-      const categoryName =
-        (category.name ?? '').toLowerCase();
-
-      const categoryDescription =
-        (category.description ?? '').toLowerCase();
-
-
-      // -----------------------------------------------------
-      // Global search
-      // Searches ONLY by category name
-      // -----------------------------------------------------
-
-      if (
-        global &&
-        !categoryName.includes(global)
-      ) {
-        return false;
-      }
-
-
-      // -----------------------------------------------------
-      // Name column filter
-      // -----------------------------------------------------
-
-      if (
-        name &&
-        !categoryName.includes(name)
-      ) {
-        return false;
-      }
-
-
-      // -----------------------------------------------------
-      // Description column filter
-      // -----------------------------------------------------
-
-      if (
-        description &&
-        !categoryDescription.includes(description)
-      ) {
-        return false;
-      }
-
+      if (global && !categoryName.includes(global)) return false;
+      if (name && !categoryName.includes(name)) return false;
+      if (description && !categoryDescription.includes(description)) return false;
 
       return true;
-
     });
-
   });
 
+  // Slice of filteredCategories actually rendered right now
+  readonly visibleCategories = computed(() => this.filteredCategories().slice(0, this.visibleCount()));
 
-  // =========================================================
-  // INIT
-  // =========================================================
+  readonly hasMore = computed(() => this.visibleCount() < this.filteredCategories().length);
 
   ngOnInit(): void {
     this.load();
   }
 
+  ngAfterViewInit(): void {
+    if (!this.scrollSentinel) return;
 
-  // =========================================================
-  // LOAD DATA
-  // =========================================================
+    this.observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && this.hasMore()) {
+          this.visibleCount.update((n) => n + PAGE_SIZE);
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    this.observer.observe(this.scrollSentinel.nativeElement);
+  }
+
+  ngOnDestroy(): void {
+    this.observer?.disconnect();
+  }
 
   load(): void {
-
     this.loading.set(true);
-
     this.errorMessage.set(null);
 
     this.client.categoriesAll().subscribe({
-
       next: (data) => {
-
-        this.categories.set(data);
-
+        this.allCategories.set(data);
         this.loading.set(false);
-
       },
-
-      error: (error) => {
-
-        console.error('Categories loading error:', error);
-
-        this.errorMessage.set(
-          'Could not load categories.'
-        );
-
-        this.notify.danger(
-          'Could not load categories.'
-        );
-
+      error: (err) => {
+        console.error('Categories loading error:', err);
+        this.errorMessage.set('Could not load categories.');
+        this.notify.danger('Could not load categories.');
         this.loading.set(false);
-
       }
-
     });
-
   }
 
-
-  // =========================================================
-  // ADVANCE FILTER
-  // =========================================================
-
+  // ---------------------------------------------------------
+  // Filter handlers — any change resets pagination back to page 1
+  // ---------------------------------------------------------
   toggleAdvanceFilter(): void {
-
-    this.showAdvanceFilter.update(
-      value => !value
-    );
-
+    this.showAdvanceFilter.update((v) => !v);
   }
-
-
-  // =========================================================
-  // GLOBAL SEARCH
-  // =========================================================
 
   onGlobalSearch(event: Event): void {
-
-    const input =
-      event.target as HTMLInputElement;
-
-    this.globalSearch.set(input.value);
-
+    this.globalSearch.set((event.target as HTMLInputElement).value);
+    this.visibleCount.set(PAGE_SIZE);
   }
-
 
   clearGlobalSearch(): void {
-
     this.globalSearch.set('');
-
+    this.visibleCount.set(PAGE_SIZE);
   }
-
-
-  // =========================================================
-  // NAME FILTER
-  // =========================================================
 
   onNameFilter(event: Event): void {
-
-    const input =
-      event.target as HTMLInputElement;
-
-    this.nameFilter.set(input.value);
-
+    this.nameFilter.set((event.target as HTMLInputElement).value);
+    this.visibleCount.set(PAGE_SIZE);
   }
-
-
-  // =========================================================
-  // DESCRIPTION FILTER
-  // =========================================================
 
   onDescriptionFilter(event: Event): void {
-
-    const input =
-      event.target as HTMLInputElement;
-
-    this.descriptionFilter.set(input.value);
-
+    this.descriptionFilter.set((event.target as HTMLInputElement).value);
+    this.visibleCount.set(PAGE_SIZE);
   }
-
-
-  // =========================================================
-  // CLEAR ALL FILTERS
-  // =========================================================
 
   clearFilters(): void {
-
     this.globalSearch.set('');
-
     this.nameFilter.set('');
-
     this.descriptionFilter.set('');
-
+    this.visibleCount.set(PAGE_SIZE);
   }
 
-
-  // =========================================================
-  // DELETE
-  // =========================================================
-
+  // ---------------------------------------------------------
+  // Delete
+  // ---------------------------------------------------------
   async remove(category: CategoryDto): Promise<void> {
+    const confirmed = await this.alert.confirmDelete(category.name!);
+    if (!confirmed) return;
 
-    const confirmed =
-      await this.alert.confirmDelete(
-        category.name!
-      );
-
-    if (!confirmed) {
-      return;
-    }
-
-
-    this.client
-      .categoriesDELETE(category.id!)
-      .subscribe({
-
-        next: () => {
-
-          this.categories.update(
-            list =>
-              list.filter(
-                c => c.id !== category.id
-              )
-          );
-
-          this.notify.danger(
-            `Category "${category.name}" was deleted.`,
-            'Deleted'
-          );
-
-        },
-
-        error: () => {
-
-          this.notify.danger(
-            `Could not delete "${category.name}".`
-          );
-
-        }
-
-      });
-
+    this.client.categoriesDELETE(category.id!).subscribe({
+      next: () => {
+        this.allCategories.update((list) => list.filter((c) => c.id !== category.id));
+        this.notify.danger(`Category "${category.name}" was deleted.`, 'Deleted');
+      },
+      error: () => this.notify.danger(`Could not delete "${category.name}".`)
+    });
   }
 
+  // ---------------------------------------------------------
+  // UI helpers
+  // ---------------------------------------------------------
+  avatarColor(name?: string): string {
+    const palette = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ef4444', '#14b8a6'];
+    const code = (name ?? '?').charCodeAt(0) || 0;
+    return palette[code % palette.length];
+  }
+
+  initial(name?: string): string {
+    return (name ?? '?').charAt(0).toUpperCase();
+  }
 }
