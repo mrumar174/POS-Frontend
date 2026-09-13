@@ -1,1 +1,30 @@
 /* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+html,
+body {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  margin: 0;
+}
+
+*,
+*::before,
+*::after {
+  font-family: inherit;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+/* Numbers / prices */
+.price,
+.amount,
+.quantity,
+.total {
+  font-variant-numeric: tabular-nums;
+}
