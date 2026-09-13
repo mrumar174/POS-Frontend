@@ -14,7 +14,11 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
   {
     label: 'Catalog',
     icon: '📁',
-    links: [{ label: 'Categories', route: '/categories', icon: '📂' }]
+    links: [
+      { label: 'Categories', route: '/categories', icon: '📂' },
+      { label: 'Brands', route: '/brands', icon: '🏷️' },
+      { label: 'Units', route: '/units', icon: '📏' }
+    ]
   },
   {
     label: 'Identity & Access',
