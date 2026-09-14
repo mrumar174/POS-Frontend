@@ -1,42 +1,153 @@
-<div class="container">
-  <app-page-header [segments]="['Identity & Success', 'Roles List']"></app-page-header>
-  <div class="d-flex justify-content-end align-items-center mb-3">
-    <a routerLink="/roles/new" class="btn btn-primary btn-sm">+ New Role</a>
+<div class="container-fluid role-page">
+  <app-page-header [segments]="['Identity & Access', 'Roles']"></app-page-header>
+
+  <div class="toolbar d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <h5 class="mb-0">Roles</h5>
+      @if (!loading()) {
+        <span class="badge count-badge">{{ filteredRoles().length }}</span>
+      }
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap">
+      <div class="search-box">
+        <i class="bi bi-search search-icon"></i>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Search by name..."
+          [value]="globalSearch()"
+          (input)="onGlobalSearch($event)"
+        />
+        @if (globalSearch()) {
+          <button class="clear-btn" type="button" (click)="clearGlobalSearch()">×</button>
+        }
+      </div>
+
+      <button
+        type="button"
+        class="btn btn-sm filter-toggle-btn"
+        [class.active]="showAdvanceFilter()"
+        (click)="toggleAdvanceFilter()"
+      >
+        <i class="bi bi-sliders"></i> Filters
+      </button>
+
+      <a routerLink="/roles/new" class="btn btn-sm btn-new">
+        <i class="bi bi-plus-lg"></i> New Role
+      </a>
+    </div>
   </div>
 
+  @if (errorMessage()) {
+    <div class="alert alert-danger py-2">{{ errorMessage() }}</div>
+  }
+
+  @if (showAdvanceFilter()) {
+    <div class="advance-filter-panel mb-3">
+      <div class="row g-2">
+        <div class="col-md-5">
+          <label class="filter-label">Name</label>
+          <input
+            type="text"
+            class="form-control form-control-sm"
+            placeholder="Filter by name"
+            [value]="nameFilter()"
+            (input)="onNameFilter($event)"
+          />
+        </div>
+        <div class="col-md-5">
+          <label class="filter-label">Permission</label>
+          <input
+            type="text"
+            class="form-control form-control-sm"
+            placeholder="Filter by permission"
+            [value]="permissionFilter()"
+            (input)="onPermissionFilter($event)"
+          />
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button type="button" class="btn btn-sm btn-outline-secondary w-100" (click)="clearFilters()">
+            Clear all
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
   @if (loading()) {
-    <p class="text-muted">Loading...</p>
-  } @else if (roles().length === 0) {
-    <p class="text-muted">No roles yet.</p>
+    <div class="skeleton-list">
+      @for (i of [1,2,3,4]; track i) {
+        <div class="skeleton-row"></div>
+      }
+    </div>
+  } @else if (filteredRoles().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon"><i class="bi bi-person-badge"></i></div>
+      <h6>No roles found</h6>
+      <p class="text-muted">Try adjusting your search or filters, or create a new role.</p>
+    </div>
   } @else {
-    <table class="table table-hover align-middle">
-      <thead>
-        <tr>
-          <th style="width: 60px;">Sr</th>
-          <th>Name</th>
-          <th>Description</th>
-          <th>Permissions</th>
-          <th style="width: 160px;"></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (role of roles(); track role.id) {
-          <tr>
-            <td>{{ $index+1 }}</td>
-            <td>{{ role.name }}</td>
-            <td class="text-muted">{{ role.description || '—' }}</td>
-            <td>
-              @for (p of role.permissions; track p) {
-                <span class="badge bg-secondary me-1">{{ p }}</span>
-              }
-            </td>
-            <td class="text-end">
-              <a [routerLink]="['/roles', role.id, 'edit']" class="btn btn-outline-secondary btn-sm me-1">Edit</a>
-              <button class="btn btn-outline-danger btn-sm" (click)="remove(role)">Delete</button>
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
+    <div class="table-card">
+      <div class="table-responsive">
+        <table class="role-table">
+          <thead>
+            <tr>
+              <th class="col-role">Role</th>
+              <th>Permissions</th>
+              <th class="col-actions"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (role of filteredRoles(); track role.id) {
+              <tr>
+                <td class="col-role">
+                  <div class="role-cell">
+                    <div class="avatar" [style.background]="avatarColor(role.name)">
+                      {{ initial(role.name) }}
+                    </div>
+                    <div class="role-name-block">
+                      <div class="role-name">{{ role.name }}</div>
+                      @if (role.description) {
+                        <div class="role-desc">{{ role.description }}</div>
+                      }
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="permission-badges">
+                    @for (p of visiblePermissions(role); track p) {
+                      <span class="perm-badge">{{ p }}</span>
+                    }
+                    @if (hiddenPermissionCount(role) > 0) {
+                      <span class="perm-badge perm-more" [title]="role.permissions?.join(', ')">
+                        +{{ hiddenPermissionCount(role) }} more
+                      </span>
+                    }
+                    @if (!role.permissions?.length) {
+                      <span class="no-perm">No permissions assigned</span>
+                    }
+                  </div>
+                </td>
+                <td class="col-actions">
+                  <div class="row-actions">
+                    <a [routerLink]="['/roles', role.id, 'edit']" class="icon-btn edit-btn" title="Edit">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <button type="button" class="icon-btn delete-btn" title="Delete" (click)="remove(role)">
+                      <i class="bi bi-trash3"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="list-footer">
+      Showing all {{ filteredRoles().length }} role{{ filteredRoles().length === 1 ? '' : 's' }}.
+    </div>
   }
 </div>

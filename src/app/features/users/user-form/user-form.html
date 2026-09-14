@@ -1,80 +1,203 @@
-<div class="container">
-  <app-page-header [segments]="['Identity & Asscess', isEditMode() ? 'Edit User' : 'Create User']"></app-page-header>
-  <div class="row">
-    <div class="col-3"></div>
-    <div class="col-8">
-      <form [formGroup]="form" (ngSubmit)="submit()">
-    <div class="row g-2">
-      <div class="col-md-6 mb-2">
-        <label class="form-label">Username</label>
-        <input type="text" class="form-control" formControlName="userName" autocomplete="username" />
-      </div>
-      <div class="col-md-6 mb-2">
-        <label class="form-label">Full Name</label>
-        <input type="text" class="form-control" formControlName="fullName" />
-      </div>
-      @if (!isEditMode()) {
-        <div class="col-md-6 mb-2">
-          <label class="form-label">Password</label>
-          <input type="password" class="form-control" formControlName="password" autocomplete="new-password" />
-        </div>
-      }
-      <div class="col-md-6 mb-2">
-        <label class="form-label">Contact No</label>
-        <input type="text" class="form-control" formControlName="contactNo" />
-      </div>
-      <div class="col-12 mb-2">
-        <label class="form-label">Address</label>
-        <input type="text" class="form-control" formControlName="address" />
-      </div>
-    </div>
+<div class="container-fluid form-page">
+  <app-page-header [segments]="breadcrumbSegments"></app-page-header>
 
-    <div class="row">
-      <div class="col-md-6">
-        <label class="form-label">Roles</label>
-        <div class="border rounded p-2 mb-3" style="max-height: 220px; overflow-y: auto;">
-          @for (r of allRoles(); track r.id) {
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                [id]="'role-' + r.id"
-                [checked]="isRoleChecked(r.id!)"
-                (change)="toggleRole(r.id!, $any($event.target).checked)"
-              />
-              <label class="form-check-label" [for]="'role-' + r.id">{{ r.name }}</label>
-            </div>
+  <div class="row g-4 form-layout">
+    <!-- Left: info panel -->
+    <div class="col-lg-4">
+      <div class="info-panel">
+        <div class="info-icon">
+          <i class="bi" [class.bi-pencil]="isEditMode()" [class.bi-person-plus]="!isEditMode()"></i>
+        </div>
+        <h5 class="info-title">
+          {{ isEditMode() ? 'Editing a User' : 'Add a New User' }}
+        </h5>
+        <p class="info-text">
+          @if (isEditMode()) {
+            You're updating an existing user's details, roles, and shop
+            access. Password can only be changed from a separate
+            "Change Password" action, not here.
+          } @else {
+            Create a login for a team member. Assign at least one shop so
+            they can operate the till, and a role to control what they're
+            allowed to do.
           }
-        </div>
-      </div>
+        </p>
 
-      <div class="col-md-6">
-        <label class="form-label">Shops</label>
-        <div class="border rounded p-2 mb-3" style="max-height: 220px; overflow-y: auto;">
-          @for (s of allShops(); track s.id) {
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                [id]="'shop-' + s.id"
-                [checked]="isShopChecked(s.id!)"
-                (change)="toggleShop(s.id!, $any($event.target).checked)"
-              />
-              <label class="form-check-label" [for]="'shop-' + s.id">{{ s.name }}</label>
-            </div>
+        <ul class="info-tips">
+          <li>
+            <i class="bi bi-check-circle-fill tip-icon"></i>
+            A user needs at least one Shop to log in and use the POS.
+          </li>
+          <li>
+            <i class="bi bi-check-circle-fill tip-icon"></i>
+            Roles determine what actions this user can perform.
+          </li>
+          <li>
+            <i class="bi bi-check-circle-fill tip-icon"></i>
+            You can assign multiple roles and shops to one user.
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Right: the form -->
+    <div class="col-lg-8">
+      <div class="form-card">
+        @if (loading()) {
+          <div class="skeleton-form">
+            <div class="skeleton-line skeleton-label"></div>
+            <div class="skeleton-line skeleton-input"></div>
+            <div class="skeleton-line skeleton-label"></div>
+            <div class="skeleton-line skeleton-input"></div>
+          </div>
+        } @else {
+          <div class="form-header">
+            <h5 class="mb-0">{{ isEditMode() ? 'Edit User' : 'New User' }}</h5>
+            <p class="form-subtitle mb-0">
+              {{ isEditMode() ? 'Update this user\'s details and access.' : 'Fill in the details below.' }}
+            </p>
+          </div>
+
+          @if (errorMessage()) {
+            <div class="alert alert-danger py-2">{{ errorMessage() }}</div>
           }
-        </div>
+
+          <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="field-label" for="userName">
+                  Username <span class="required-mark">*</span>
+                </label>
+                <input
+                  #userNameInput
+                  id="userName"
+                  type="text"
+                  class="form-control"
+                  [class.is-invalid]="userNameControl.invalid && userNameControl.touched"
+                  formControlName="userName"
+                  autocomplete="username"
+                  placeholder="e.g. jsmith"
+                />
+                @if (userNameControl.invalid && userNameControl.touched) {
+                  <div class="field-error">Username is required.</div>
+                }
+              </div>
+
+              <div class="col-md-6">
+                <label class="field-label" for="fullName">
+                  Full Name <span class="required-mark">*</span>
+                </label>
+                <input
+                  id="fullName"
+                  type="text"
+                  class="form-control"
+                  [class.is-invalid]="fullNameControl.invalid && fullNameControl.touched"
+                  formControlName="fullName"
+                  placeholder="e.g. John Smith"
+                />
+                @if (fullNameControl.invalid && fullNameControl.touched) {
+                  <div class="field-error">Full name is required.</div>
+                }
+              </div>
+
+              @if (!isEditMode()) {
+                <div class="col-md-6">
+                  <label class="field-label" for="password">
+                    Password <span class="required-mark">*</span>
+                  </label>
+                  <div class="password-wrapper">
+                    <input
+                      id="password"
+                      [type]="showPassword() ? 'text' : 'password'"
+                      class="form-control"
+                      [class.is-invalid]="passwordControl.invalid && passwordControl.touched"
+                      formControlName="password"
+                      autocomplete="new-password"
+                      placeholder="At least 6 characters"
+                    />
+                    <button type="button" class="password-toggle" (click)="togglePasswordVisibility()" tabindex="-1">
+                      <i class="bi" [class.bi-eye]="!showPassword()" [class.bi-eye-slash]="showPassword()"></i>
+                    </button>
+                  </div>
+                  @if (passwordControl.invalid && passwordControl.touched) {
+                    <div class="field-error">
+                      @if (passwordControl.hasError('required')) { Password is required. }
+                      @if (passwordControl.hasError('minlength')) { At least 6 characters required. }
+                    </div>
+                  }
+                </div>
+              }
+
+              <div class="col-md-6">
+                <label class="field-label" for="contactNo">Contact No</label>
+                <input id="contactNo" type="text" class="form-control" formControlName="contactNo" placeholder="Optional" />
+              </div>
+
+              <div class="col-12">
+                <label class="field-label" for="address">Address</label>
+                <input id="address" type="text" class="form-control" formControlName="address" placeholder="Optional" />
+              </div>
+            </div>
+
+            <div class="row g-3 mt-1">
+              <div class="col-md-6">
+                <label class="field-label">Roles</label>
+                <div class="picker-box">
+                  @if (allRoles().length === 0) {
+                    <div class="picker-empty">No roles available.</div>
+                  } @else {
+                    @for (r of allRoles(); track r.id) {
+                      <label class="picker-chip" [class.selected]="isRoleChecked(r.id!)">
+                        <input
+                          type="checkbox"
+                          [checked]="isRoleChecked(r.id!)"
+                          (change)="toggleRole(r.id!, $any($event.target).checked)"
+                        />
+                        <span class="chip-check"><i class="bi bi-check"></i></span>
+                        <span>{{ r.name }}</span>
+                      </label>
+                    }
+                  }
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="field-label">Shops</label>
+                <div class="picker-box">
+                  @if (allShops().length === 0) {
+                    <div class="picker-empty">No shops available.</div>
+                  } @else {
+                    @for (s of allShops(); track s.id) {
+                      <label class="picker-chip" [class.selected]="isShopChecked(s.id!)">
+                        <input
+                          type="checkbox"
+                          [checked]="isShopChecked(s.id!)"
+                          (change)="toggleShop(s.id!, $any($event.target).checked)"
+                        />
+                        <span class="chip-check"><i class="bi bi-check"></i></span>
+                        <span>{{ s.name }}</span>
+                      </label>
+                    }
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="btn btn-cancel" (click)="cancel()" [disabled]="saving()">
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-save" [disabled]="saving()">
+                @if (saving()) {
+                  <span class="spinner"></span> Saving...
+                } @else {
+                  {{ isEditMode() ? 'Save Changes' : 'Create User' }}
+                }
+              </button>
+            </div>
+          </form>
+        }
       </div>
     </div>
-
-    <div class="d-flex gap-2">
-      <button type="submit" class="btn btn-primary" [disabled]="loading()">
-        @if (loading()) { Saving... } @else { Save }
-      </button>
-      <a routerLink="/users" class="btn btn-outline-secondary">Cancel</a>
-    </div>
-  </form>
-    </div>
-    <div class="col"></div>
   </div>
 </div>
