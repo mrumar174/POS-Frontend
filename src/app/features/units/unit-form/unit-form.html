@@ -1,26 +1,152 @@
-<div class="container">
-    <app-page-header [segments]="breadcrumbSegments"></app-page-header>
-    <div class="row">
-        <div class="col-4"></div>
-        <div class="col-7">
-            <form [formGroup]="form" (ngSubmit)="submit()">
-                <div class="mb-3">
-                    <label class="form-label">Name</label>
-                    <input type="text" class="form-control" formControlName="name" placeholder="e.g. Kilogram" />
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Short Name</label>
-                    <input type="text" class="form-control" formControlName="shortName" placeholder="e.g. Kg" />
-                </div>
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary" [disabled]="loading()">
-                        @if (loading()) { Saving... } @else { Save }
-                    </button>
-                    <a routerLink="/units" class="btn btn-outline-secondary">Cancel</a>
-                </div>
-            </form>
+<div class="container-fluid form-page">
+  <app-page-header [segments]="breadcrumbSegments"></app-page-header>
+
+  <div class="row g-4 form-layout">
+    <!-- Left: info panel -->
+    <div class="col-lg-4">
+      <div class="info-panel">
+        <div class="info-icon">
+          <i class="bi" [class.bi-pencil]="isEditMode()" [class.bi-rulers]="!isEditMode()"></i>
         </div>
-        <div class="col"></div>
+        <h5 class="info-title">
+          {{ isEditMode() ? 'Editing a Unit' : 'What is a Unit?' }}
+        </h5>
+        <p class="info-text">
+          @if (isEditMode()) {
+            You're updating an existing unit of measure. Changes here apply
+            immediately to every product currently using it — the products
+            themselves aren't affected, only how this unit is labeled.
+          } @else {
+            Units define how a product is measured or sold — weight, volume,
+            or count — e.g. "Kilogram" (Kg), "Liter" (Ltr), or "Piece" (Pc).
+          }
+        </p>
+
+        <ul class="info-tips">
+          <li>
+            <i class="bi bi-check-circle-fill tip-icon"></i>
+            Short name shows up on invoices and product lists — keep it brief.
+          </li>
+          <li>
+            <i class="bi bi-check-circle-fill tip-icon"></i>
+            Use a consistent format across units (e.g. all lowercase abbreviations).
+          </li>
+          <li>
+            <i class="bi bi-check-circle-fill tip-icon"></i>
+            You can rename a unit anytime without affecting its products.
+          </li>
+        </ul>
+      </div>
     </div>
 
+    <!-- Right: the form -->
+    <div class="col-lg-8">
+      <div class="form-card">
+        @if (loading()) {
+          <div class="skeleton-form">
+            <div class="skeleton-line skeleton-label"></div>
+            <div class="skeleton-line skeleton-input"></div>
+            <div class="skeleton-line skeleton-label"></div>
+            <div class="skeleton-line skeleton-input"></div>
+          </div>
+        } @else {
+          <div class="form-header">
+            <h5 class="mb-0">{{ isEditMode() ? 'Edit Unit' : 'New Unit' }}</h5>
+            <p class="form-subtitle mb-0">
+              {{ isEditMode() ? 'Update the details for this unit.' : 'Fill in the details below.' }}
+            </p>
+          </div>
+
+          @if (errorMessage()) {
+            <div class="alert alert-danger py-2">{{ errorMessage() }}</div>
+          }
+
+          <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+            <div class="field-group">
+              <label class="field-label" for="name">
+                Name <span class="required-mark">*</span>
+              </label>
+              <input
+                #nameInput
+                id="name"
+                type="text"
+                class="form-control"
+                [class.is-invalid]="nameControl.invalid && nameControl.touched"
+                formControlName="name"
+                placeholder="e.g. Kilogram"
+                [maxlength]="nameMaxLength"
+              />
+              <div class="field-footer">
+                @if (nameControl.invalid && nameControl.touched) {
+                  <span class="field-error">
+                    @if (nameControl.hasError('required')) { Name is required. }
+                    @if (nameControl.hasError('maxlength')) { Name is too long. }
+                  </span>
+                } @else {
+                  <span></span>
+                }
+                <span class="char-count" [class.char-count-warn]="(nameControl.value?.length ?? 0) > nameMaxLength * 0.9">
+                  {{ nameControl.value?.length ?? 0 }}/{{ nameMaxLength }}
+                </span>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label" for="shortName">
+                Short Name <span class="required-mark">*</span>
+              </label>
+              <input
+                id="shortName"
+                type="text"
+                class="form-control short-name-input"
+                [class.is-invalid]="shortNameControl.invalid && shortNameControl.touched"
+                formControlName="shortName"
+                placeholder="e.g. Kg"
+                [maxlength]="shortNameMaxLength"
+              />
+              <div class="field-footer">
+                @if (shortNameControl.invalid && shortNameControl.touched) {
+                  <span class="field-error">
+                    @if (shortNameControl.hasError('required')) { Short name is required. }
+                    @if (shortNameControl.hasError('maxlength')) { Short name is too long. }
+                  </span>
+                } @else {
+                  <span></span>
+                }
+                <span
+                  class="char-count"
+                  [class.char-count-warn]="(shortNameControl.value?.length ?? 0) > shortNameMaxLength * 0.9"
+                >
+                  {{ shortNameControl.value?.length ?? 0 }}/{{ shortNameMaxLength }}
+                </span>
+              </div>
+            </div>
+
+            @if (nameControl.value || shortNameControl.value) {
+              <div class="preview-box">
+                <span class="preview-label">Preview:</span>
+                <span class="preview-badge">
+                  {{ nameControl.value || 'Unit name' }}
+                  @if (shortNameControl.value) { ({{ shortNameControl.value }}) }
+                </span>
+              </div>
+            }
+
+            <div class="form-actions">
+              <button type="button" class="btn btn-cancel" (click)="cancel()" [disabled]="saving()">
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-save" [disabled]="saving()">
+                @if (saving()) {
+                  <span class="spinner"></span> Saving...
+                } @else {
+                  {{ isEditMode() ? 'Save Changes' : 'Create Unit' }}
+                }
+              </button>
+            </div>
+          </form>
+        }
+      </div>
+    </div>
+  </div>
 </div>

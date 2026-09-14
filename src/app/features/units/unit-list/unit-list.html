@@ -1,33 +1,117 @@
-<div class="container">
+<div class="container-fluid unit-page">
   <app-page-header [segments]="['Catalog', 'Units']"></app-page-header>
 
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="mb-0">Units</h4>
-    <a routerLink="/units/new" class="btn btn-primary btn-sm">+ New Unit</a>
+  <div class="toolbar d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <h5 class="mb-0">Units</h5>
+      @if (!loading()) {
+        <span class="badge count-badge">{{ filteredUnits().length }}</span>
+      }
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap">
+      <div class="search-box">
+        <i class="bi bi-search search-icon"></i>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Search by name..."
+          [value]="globalSearch()"
+          (input)="onGlobalSearch($event)"
+        />
+        @if (globalSearch()) {
+          <button class="clear-btn" type="button" (click)="clearGlobalSearch()">×</button>
+        }
+      </div>
+
+      <button
+        type="button"
+        class="btn btn-sm filter-toggle-btn"
+        [class.active]="showAdvanceFilter()"
+        (click)="toggleAdvanceFilter()"
+      >
+        <i class="bi bi-sliders"></i> Filters
+      </button>
+
+      <a routerLink="/units/new" class="btn btn-sm btn-new">
+        <i class="bi bi-plus-lg"></i> New Unit
+      </a>
+    </div>
   </div>
 
+  @if (errorMessage()) {
+    <div class="alert alert-danger py-2">{{ errorMessage() }}</div>
+  }
+
+  @if (showAdvanceFilter()) {
+    <div class="advance-filter-panel mb-3">
+      <div class="row g-2">
+        <div class="col-md-5">
+          <label class="filter-label">Name</label>
+          <input
+            type="text"
+            class="form-control form-control-sm"
+            placeholder="Filter by name"
+            [value]="nameFilter()"
+            (input)="onNameFilter($event)"
+          />
+        </div>
+        <div class="col-md-5">
+          <label class="filter-label">Short Name</label>
+          <input
+            type="text"
+            class="form-control form-control-sm"
+            placeholder="Filter by short name"
+            [value]="shortNameFilter()"
+            (input)="onShortNameFilter($event)"
+          />
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button type="button" class="btn btn-sm btn-outline-secondary w-100" (click)="clearFilters()">
+            Clear all
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
   @if (loading()) {
-    <p class="text-muted">Loading...</p>
-  } @else if (units().length === 0) {
-    <p class="text-muted">No units yet.</p>
+    <div class="skeleton-list">
+      @for (i of [1,2,3,4,5]; track i) {
+        <div class="skeleton-row"></div>
+      }
+    </div>
+  } @else if (filteredUnits().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon"><i class="bi bi-rulers"></i></div>
+      <h6>No units found</h6>
+      <p class="text-muted">Try adjusting your search or filters, or create a new unit.</p>
+    </div>
   } @else {
-    <table class="table table-hover align-middle">
-      <thead>
-        <tr><th style="width: 60px;">Sr.</th><th>Name</th><th>Short Name</th><th style="width: 160px;"></th></tr>
-      </thead>
-      <tbody>
-        @for (unit of units(); track unit.id) {
-          <tr>
-            <td>{{ $index+1 }}</td>
-            <td>{{ unit.name }}</td>
-            <td>{{ unit.shortName }}</td>
-            <td class="text-end">
-              <a [routerLink]="['/units', unit.id, 'edit']" class="btn btn-outline-secondary btn-sm me-1">Edit</a>
-              <button class="btn btn-outline-danger btn-sm" (click)="remove(unit)">Delete</button>
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
+    <div class="unit-grid">
+      @for (unit of filteredUnits(); track unit.id) {
+        <div class="unit-card">
+          <div class="card-avatar" [style.background]="avatarColor(unit.name)">
+            {{ unit.shortName }}
+          </div>
+          <div class="card-body-content">
+            <div class="card-title">{{ unit.name }}</div>
+            <div class="card-description">Short name: {{ unit.shortName }}</div>
+          </div>
+          <div class="card-actions">
+            <a [routerLink]="['/units', unit.id, 'edit']" class="icon-btn edit-btn" title="Edit">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <button type="button" class="icon-btn delete-btn" title="Delete" (click)="remove(unit)">
+              <i class="bi bi-trash3"></i>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="list-footer">
+      Showing all {{ filteredUnits().length }} unit{{ filteredUnits().length === 1 ? '' : 's' }}.
+    </div>
   }
 </div>
