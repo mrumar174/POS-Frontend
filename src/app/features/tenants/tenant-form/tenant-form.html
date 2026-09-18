@@ -1,53 +1,185 @@
-<div class="container">
-  <app-page-header [segments]="['Tenancy','Edit Tenant']"></app-page-header>
+<div class="container-fluid form-page">
+  <app-page-header [segments]="['Tenancy', 'Edit Tenant']"></app-page-header>
 
-  <div class="row">
-    <div class="col-3"></div>
-    <div class="col-8">
-      <form [formGroup]="form" (ngSubmit)="submit()">
-    <div class="row g-2">
-      <div class="col-md-6 mb-2">
-        <label class="form-label">Business Name</label>
-        <input type="text" class="form-control" formControlName="businessName" />
-      </div>
-      <div class="col-md-6 mb-2">
-        <label class="form-label">Owner Name</label>
-        <input type="text" class="form-control" formControlName="ownerName" />
-      </div>
-      <div class="col-md-6 mb-2">
-        <label class="form-label">Contact No</label>
-        <input type="text" class="form-control" formControlName="contactNo" />
-      </div>
-      <div class="col-md-6 mb-2">
-        <label class="form-label">Email</label>
-        <input type="email" class="form-control" formControlName="email" />
-      </div>
-      <div class="col-md-6 mb-2">
-        <label class="form-label">Address</label>
-        <input type="text" class="form-control" formControlName="address" />
-      </div>
-      <div class="col-md-6 mb-2">
-        <label class="form-label">City</label>
-        <input type="text" class="form-control" formControlName="city" />
-      </div>
-      <div class="col-md-6 mb-2">
-        <label class="form-label">Max Shops</label>
-        <input type="number" class="form-control" formControlName="maxShops" min="1" />
-      </div>
-      <div class="col-md-6 mb-2">
-        <label class="form-label">Max Users</label>
-        <input type="number" class="form-control" formControlName="maxUsers" min="1" />
+  <div class="row g-4 form-layout">
+    <!-- Left: info panel -->
+    <div class="col-lg-4">
+      <div class="info-panel">
+        <div class="info-icon"><i class="bi bi-building"></i></div>
+        <h5 class="info-title">Tenant Details</h5>
+        <p class="info-text">
+          Update this business's contact information and account limits.
+          New tenants are created through Signup, not from this screen.
+        </p>
+
+        @if (!loading() && tenant(); as t) {
+          <div class="tenant-stats">
+            <div class="stat-item">
+              <i class="bi bi-shop stat-icon stat-icon-blue"></i>
+              <div>
+                <div class="stat-value">{{ t.shopCount }}</div>
+                <div class="stat-label">Active Shops</div>
+              </div>
+            </div>
+            <div class="stat-item">
+              <i class="bi bi-people stat-icon stat-icon-green"></i>
+              <div>
+                <div class="stat-value">{{ t.userCount }}</div>
+                <div class="stat-label">Active Users</div>
+              </div>
+            </div>
+          </div>
+        }
+
+        <ul class="info-tips">
+          <li>
+            <i class="bi bi-check-circle-fill tip-icon"></i>
+            Max Shops can't be set below the current shop count.
+          </li>
+          <li>
+            <i class="bi bi-check-circle-fill tip-icon"></i>
+            These limits are enforced when creating new shops or users.
+          </li>
+        </ul>
       </div>
     </div>
 
-    <div class="d-flex gap-2 mt-2">
-      <button type="submit" class="btn btn-primary" [disabled]="loading()">
-        @if (loading()) { Saving... } @else { Save }
-      </button>
-      <a routerLink="/tenants" class="btn btn-outline-secondary">Cancel</a>
+    <!-- Right: the form -->
+    <div class="col-lg-8">
+      <div class="form-card">
+        @if (loading()) {
+          <div class="skeleton-form">
+            <div class="skeleton-line skeleton-label"></div>
+            <div class="skeleton-line skeleton-input"></div>
+            <div class="skeleton-line skeleton-label"></div>
+            <div class="skeleton-line skeleton-input"></div>
+          </div>
+        } @else {
+          <div class="form-header">
+            <h5 class="mb-0">Edit Tenant</h5>
+            <p class="form-subtitle mb-0">Update the business details below.</p>
+          </div>
+
+          @if (errorMessage()) {
+            <div class="alert alert-danger py-2">{{ errorMessage() }}</div>
+          }
+
+          <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+            <div class="section-label">Business Information</div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="field-label" for="businessName">
+                  Business Name <span class="required-mark">*</span>
+                </label>
+                <input
+                  #businessNameInput
+                  id="businessName"
+                  type="text"
+                  class="form-control"
+                  [class.is-invalid]="businessNameControl.invalid && businessNameControl.touched"
+                  formControlName="businessName"
+                />
+                @if (businessNameControl.invalid && businessNameControl.touched) {
+                  <div class="field-error">Business name is required.</div>
+                }
+              </div>
+
+              <div class="col-md-6">
+                <label class="field-label" for="ownerName">
+                  Owner Name <span class="required-mark">*</span>
+                </label>
+                <input
+                  id="ownerName"
+                  type="text"
+                  class="form-control"
+                  [class.is-invalid]="ownerNameControl.invalid && ownerNameControl.touched"
+                  formControlName="ownerName"
+                />
+                @if (ownerNameControl.invalid && ownerNameControl.touched) {
+                  <div class="field-error">Owner name is required.</div>
+                }
+              </div>
+
+              <div class="col-md-6">
+                <label class="field-label" for="contactNo">
+                  Contact No <span class="required-mark">*</span>
+                </label>
+                <input
+                  id="contactNo"
+                  type="text"
+                  class="form-control"
+                  [class.is-invalid]="contactNoControl.invalid && contactNoControl.touched"
+                  formControlName="contactNo"
+                />
+                @if (contactNoControl.invalid && contactNoControl.touched) {
+                  <div class="field-error">Contact number is required.</div>
+                }
+              </div>
+
+              <div class="col-md-6">
+                <label class="field-label" for="email">Email</label>
+                <input id="email" type="email" class="form-control" formControlName="email" placeholder="Optional" />
+              </div>
+
+              <div class="col-md-6">
+                <label class="field-label" for="address">Address</label>
+                <input id="address" type="text" class="form-control" formControlName="address" placeholder="Optional" />
+              </div>
+
+              <div class="col-md-6">
+                <label class="field-label" for="city">City</label>
+                <input id="city" type="text" class="form-control" formControlName="city" placeholder="Optional" />
+              </div>
+            </div>
+
+            <div class="section-label section-label-spaced">Account Limits</div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="field-label" for="maxShops">Max Shops</label>
+                <input
+                  id="maxShops"
+                  type="number"
+                  class="form-control"
+                  [class.is-invalid]="maxShopsControl.invalid && maxShopsControl.touched"
+                  formControlName="maxShops"
+                  min="1"
+                />
+                @if (tenant(); as t) {
+                  <div class="field-hint">Currently using {{ t.shopCount }} shop{{ t.shopCount === 1 ? '' : 's' }}.</div>
+                }
+              </div>
+
+              <div class="col-md-6">
+                <label class="field-label" for="maxUsers">Max Users</label>
+                <input
+                  id="maxUsers"
+                  type="number"
+                  class="form-control"
+                  [class.is-invalid]="maxUsersControl.invalid && maxUsersControl.touched"
+                  formControlName="maxUsers"
+                  min="1"
+                />
+                @if (tenant(); as t) {
+                  <div class="field-hint">Currently using {{ t.userCount }} user{{ t.userCount === 1 ? '' : 's' }}.</div>
+                }
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="btn btn-cancel" (click)="cancel()" [disabled]="saving()">
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-save" [disabled]="saving()">
+                @if (saving()) {
+                  <span class="spinner"></span> Saving...
+                } @else {
+                  Save Changes
+                }
+              </button>
+            </div>
+          </form>
+        }
+      </div>
     </div>
-  </form>
-    </div>
-    <div class="col"></div>
   </div>
 </div>

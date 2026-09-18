@@ -1,34 +1,103 @@
-<div class="container">
+<div class="container-fluid form-page">
   <app-page-header [segments]="['Identity & Access', 'Create Permissions']"></app-page-header>
-  <p class="text-muted small">Add one or more permissions in a batch (e.g. "Sales.Create" / module "Sales"). Duplicates are skipped automatically.</p>
 
-  <form [formGroup]="form" (ngSubmit)="submit()">
-    <div formArrayName="rows">
-      @for (row of rows.controls; track $index) {
-        <div [formGroupName]="$index" class="row g-2 mb-2 align-items-center">
-          <div class="col-md-4">
-            <input type="text" class="form-control form-control-sm" placeholder="Name e.g. Sales.Create" formControlName="name" />
-          </div>
-          <div class="col-md-3">
-            <input type="text" class="form-control form-control-sm" placeholder="Module e.g. Sales" formControlName="module" />
-          </div>
-          <div class="col-md-4">
-            <input type="text" class="form-control form-control-sm" placeholder="Description (optional)" formControlName="description" />
-          </div>
-          <div class="col-md-1">
-            <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeRow($index)">✕</button>
-          </div>
-        </div>
-      }
+  <div class="form-card">
+    <div class="form-header">
+      <div class="form-icon"><i class="bi bi-key"></i></div>
+      <div>
+        <h5 class="mb-0">Add Permissions</h5>
+        <p class="form-subtitle mb-0">
+          Add one or more permissions in a batch — e.g. "Sales.Create" under module "Sales". Duplicates are skipped automatically.
+        </p>
+      </div>
     </div>
 
-    <button type="button" class="btn btn-outline-secondary btn-sm mb-3" (click)="addRow()">+ Add another row</button>
+    @if (errorMessage()) {
+      <div class="alert alert-danger py-2">{{ errorMessage() }}</div>
+    }
 
-    <div class="d-flex gap-2">
-      <button type="submit" class="btn btn-primary" [disabled]="loading()">
-        @if (loading()) { Saving... } @else { Save all }
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="rows-header">
+        <span class="col-label col-name">Name</span>
+        <span class="col-label col-module">Module</span>
+        <span class="col-label col-desc">Description</span>
+        <span class="col-label col-remove"></span>
+      </div>
+
+      <div formArrayName="rows" class="rows-list">
+        @for (row of rows.controls; track $index) {
+          <div [formGroupName]="$index" class="permission-row-card">
+            <span class="row-index">{{ $index + 1 }}</span>
+
+            <div class="col-name">
+              <input
+                type="text"
+                class="form-control form-control-sm"
+                [class.is-invalid]="rowControl($index, 'name').invalid && rowControl($index, 'name').touched"
+                placeholder="e.g. Sales.Create"
+                formControlName="name"
+              />
+              @if (rowControl($index, 'name').invalid && rowControl($index, 'name').touched) {
+                <div class="row-error">Name is required.</div>
+              }
+            </div>
+
+            <div class="col-module">
+              <input
+                type="text"
+                class="form-control form-control-sm"
+                [class.is-invalid]="rowControl($index, 'module').invalid && rowControl($index, 'module').touched"
+                placeholder="e.g. Sales"
+                formControlName="module"
+              />
+              @if (rowControl($index, 'module').invalid && rowControl($index, 'module').touched) {
+                <div class="row-error">Module is required.</div>
+              }
+            </div>
+
+            <div class="col-desc">
+              <input
+                type="text"
+                class="form-control form-control-sm"
+                placeholder="Optional"
+                formControlName="description"
+              />
+            </div>
+
+            <div class="col-remove">
+              <button
+                type="button"
+                class="remove-row-btn"
+                title="Remove row"
+                (click)="removeRow($index)"
+                [disabled]="rowCount() === 1"
+              >
+                <i class="bi bi-trash3"></i>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <button type="button" class="add-row-btn" (click)="addRow()">
+        <i class="bi bi-plus-lg"></i> Add another row
       </button>
-      <a routerLink="/permissions" class="btn btn-outline-secondary">Cancel</a>
-    </div>
-  </form>
+
+      <div class="form-actions">
+        <span class="row-count-badge">{{ rowCount() }} row{{ rowCount() === 1 ? '' : 's' }}</span>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-cancel" (click)="cancel()" [disabled]="saving()">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-save" [disabled]="saving()">
+            @if (saving()) {
+              <span class="spinner"></span> Saving...
+            } @else {
+              <i class="bi bi-check-lg"></i> Save all
+            }
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
 </div>

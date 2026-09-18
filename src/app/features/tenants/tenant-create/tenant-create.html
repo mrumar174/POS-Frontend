@@ -1,0 +1,114 @@
+<div class="container-fluid form-page">
+  <app-page-header [segments]="['Tenancy', 'New Tenant']"></app-page-header>
+
+  <div class="row g-4 form-layout">
+    <div class="col-lg-4">
+      <div class="info-panel">
+        <div class="info-icon"><i class="bi bi-building-add"></i></div>
+        <h5 class="info-title">Create a New Tenant</h5>
+        <p class="info-text">
+          This creates a new business account with its own main shop and
+          admin login — completely separate from your own account. You'll
+          stay logged in as yourself.
+        </p>
+        <ul class="info-tips">
+          <li><i class="bi bi-check-circle-fill tip-icon"></i> A main shop is created automatically.</li>
+          <li><i class="bi bi-check-circle-fill tip-icon"></i> The admin login can manage this tenant independently.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+      <div class="form-card">
+        <div class="form-header">
+          <h5 class="mb-0">New Tenant</h5>
+          <p class="form-subtitle mb-0">Fill in the business and admin login details.</p>
+        </div>
+
+        @if (errorMessage()) {
+          <div class="alert alert-danger py-2">{{ errorMessage() }}</div>
+        }
+
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <div class="section-label">Business Details</div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="field-label" for="businessName">Business Name <span class="required-mark">*</span></label>
+              <input #businessNameInput id="businessName" type="text" class="form-control" formControlName="businessName" />
+            </div>
+            <div class="col-md-6">
+              <label class="field-label" for="ownerName">Owner Name <span class="required-mark">*</span></label>
+              <input id="ownerName" type="text" class="form-control" formControlName="ownerName" />
+            </div>
+            <div class="col-md-6">
+              <label class="field-label" for="contactNo">Contact No <span class="required-mark">*</span></label>
+              <input id="contactNo" type="text" class="form-control" formControlName="contactNo" />
+            </div>
+            <div class="col-md-6">
+              <label class="field-label" for="email">Email</label>
+              <input id="email" type="email" class="form-control" formControlName="email" placeholder="Optional" />
+            </div>
+            <div class="col-md-6">
+              <label class="field-label" for="address">Address</label>
+              <input id="address" type="text" class="form-control" formControlName="address" placeholder="Optional" />
+            </div>
+            <div class="col-md-6">
+              <label class="field-label" for="city">City</label>
+              <input id="city" type="text" class="form-control" formControlName="city" placeholder="Optional" />
+            </div>
+          </div>
+
+          <div class="section-label section-label-spaced">Main Shop &amp; Limits</div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="field-label" for="mainShopName">Main Shop Name</label>
+              <input id="mainShopName" type="text" class="form-control" formControlName="mainShopName" />
+            </div>
+            <div class="col-md-3">
+              <label class="field-label" for="maxShops">Max Shops</label>
+              <input id="maxShops" type="number" class="form-control" formControlName="maxShops" min="1" />
+            </div>
+            <div class="col-md-3">
+              <label class="field-label" for="maxUsers">Max Users</label>
+              <input id="maxUsers" type="number" class="form-control" formControlName="maxUsers" min="1" />
+            </div>
+          </div>
+
+          <div class="section-label section-label-spaced">Admin Login</div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="field-label" for="adminUserName">Username <span class="required-mark">*</span></label>
+              <input id="adminUserName" type="text" class="form-control" formControlName="adminUserName" autocomplete="off" />
+            </div>
+            <div class="col-md-6">
+              <label class="field-label" for="adminFullName">Full Name <span class="required-mark">*</span></label>
+              <input id="adminFullName" type="text" class="form-control" formControlName="adminFullName" />
+            </div>
+            <div class="col-md-6">
+              <label class="field-label" for="adminPassword">Password <span class="required-mark">*</span></label>
+              <div class="password-wrapper">
+                <input
+                  id="adminPassword"
+                  [type]="showPassword() ? 'text' : 'password'"
+                  class="form-control"
+                  formControlName="adminPassword"
+                  autocomplete="new-password"
+                />
+                <button type="button" class="password-toggle" (click)="togglePasswordVisibility()" tabindex="-1">
+                  <i class="bi" [class.bi-eye]="!showPassword()" [class.bi-eye-slash]="showPassword()"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <a routerLink="/tenants" class="btn btn-cancel">Cancel</a>
+            <button type="submit" class="btn btn-save" [disabled]="saving()">
+              @if (saving()) { <span class="spinner"></span> Creating... } @else { Create Tenant }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

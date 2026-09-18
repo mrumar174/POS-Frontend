@@ -17,7 +17,8 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
     links: [
       { label: 'Categories', route: '/categories', icon: 'bi-tags' },
       { label: 'Brands', route: '/brands', icon: 'bi-award' },
-      { label: 'Units', route: '/units', icon: 'bi-rulers' }
+      { label: 'Units', route: '/units', icon: 'bi-rulers' },
+      { label: 'Products', route: '/products', icon: 'bi-box-seam' }
     ]
   },
   {

@@ -4,6 +4,7 @@ import { Client, UserDto } from '../../../core/api/api-client';
 import { NotificationService } from '../../../shared/notification/notification.service';
 import { AlertService } from '../../../shared/alert/alert.service';
 import { PageHeader } from '../../../shared/page-header/page-header';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-user-list',
@@ -13,6 +14,10 @@ import { PageHeader } from '../../../shared/page-header/page-header';
   styleUrl: './user-list.css'
 })
 export class UserList implements OnInit {
+  protected auth = inject(AuthService);
+
+  readonly isSuperAdmin = computed(() => this.auth.hasRole('SuperAdmin'));
+  readonly canCreateUser = computed(() => this.auth.hasRole('Admin') || this.isSuperAdmin());
   private client = inject(Client);
   private notify = inject(NotificationService);
   private alert = inject(AlertService);
