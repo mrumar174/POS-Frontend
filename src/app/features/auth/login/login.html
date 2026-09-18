@@ -1,34 +1,134 @@
-<div class="container" style="max-width: 420px; margin-top: 4rem;">
-  <div class="card shadow-sm">
-    <div class="card-body p-4">
-      <h4 class="card-title mb-3">Log in</h4>
-      @if (errorMessage()) {
-        <div class="alert alert-danger py-2">{{ errorMessage() }}</div>
-      }
-      <form [formGroup]="form" (ngSubmit)="submit()">
-        <div class="mb-3">
-          <label class="form-label">Tenant ID</label>
-          <input type="number" class="form-control" formControlName="tenantId" min="1" />
+<div class="login-page">
+  <div class="login-split">
+    <!-- Left: branding panel -->
+    <div class="brand-panel">
+      <div class="brand-content">
+        <div class="brand-logo">
+          <i class="bi bi-shop"></i>
         </div>
-        <div class="mb-3">
-          <label class="form-label">Username</label>
-          <input type="text" class="form-control" formControlName="userName" autocomplete="username" />
+        <h2 class="brand-title">POS Backend</h2>
+        <p class="brand-subtitle">
+          Multi-tenant point-of-sale management — categories, inventory,
+          roles, and shops, all in one place.
+        </p>
+
+        <ul class="brand-features">
+          <li>
+            <i class="bi bi-check-circle-fill"></i>
+            Manage multiple shops under one account
+          </li>
+          <li>
+            <i class="bi bi-check-circle-fill"></i>
+            Role-based access for your whole team
+          </li>
+          <li>
+            <i class="bi bi-check-circle-fill"></i>
+            Full catalog, stock, and sales tracking
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Right: login form -->
+    <div class="form-panel">
+      <div class="login-card">
+        <div class="login-header">
+          <h4 class="mb-1">Welcome back</h4>
+          <p class="text-muted mb-0">Log in to your account to continue.</p>
         </div>
-        <div class="mb-3">
-          <label class="form-label">Password</label>
-          <input type="password" class="form-control" formControlName="password" autocomplete="current-password" />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Shop ID <span class="text-muted">(optional)</span></label>
-          <input type="number" class="form-control" formControlName="shopId" min="1" />
-        </div>
-        <button type="submit" class="btn btn-primary w-100" [disabled]="loading()">
-          @if (loading()) { Logging in... } @else { Log in }
-        </button>
-      </form>
-      <p class="text-center mt-3 mb-0">
-        No account yet? <a routerLink="/signup">Sign up your business</a>
-      </p>
+
+        @if (errorMessage()) {
+          <div class="alert alert-danger py-2 d-flex align-items-center gap-2">
+            <i class="bi bi-exclamation-circle"></i>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <div class="field-group">
+            <label class="field-label" for="userName">Username</label>
+            <div class="input-with-icon">
+              <i class="bi bi-person"></i>
+              <input
+                #userNameInput
+                id="userName"
+                type="text"
+                class="form-control"
+                [class.is-invalid]="userNameControl.invalid && userNameControl.touched"
+                formControlName="userName"
+                autocomplete="username"
+                placeholder="Enter your username"
+              />
+            </div>
+            @if (userNameControl.invalid && userNameControl.touched) {
+              <div class="field-error">Username is required.</div>
+            }
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="password">Password</label>
+            <div class="input-with-icon">
+              <i class="bi bi-lock"></i>
+              <input
+                id="password"
+                [type]="showPassword() ? 'text' : 'password'"
+                class="form-control"
+                [class.is-invalid]="passwordControl.invalid && passwordControl.touched"
+                formControlName="password"
+                autocomplete="current-password"
+                placeholder="Enter your password"
+              />
+              <button type="button" class="password-toggle" (click)="togglePasswordVisibility()" tabindex="-1">
+                <i class="bi" [class.bi-eye]="!showPassword()" [class.bi-eye-slash]="showPassword()"></i>
+              </button>
+            </div>
+            @if (passwordControl.invalid && passwordControl.touched) {
+              <div class="field-error">Password is required.</div>
+            }
+          </div>
+
+          <button type="button" class="advanced-toggle" (click)="toggleAdvanced()">
+            <i class="bi bi-chevron-right" [class.rotated]="showAdvanced()"></i>
+            Tenant &amp; shop options
+          </button>
+
+          @if (showAdvanced()) {
+            <div class="advanced-fields">
+              <div class="row g-2">
+                <div class="col-6">
+                  <label class="field-label" for="tenantId">Tenant ID</label>
+                  <input
+                    id="tenantId"
+                    type="number"
+                    class="form-control"
+                    [class.is-invalid]="tenantIdControl.invalid && tenantIdControl.touched"
+                    formControlName="tenantId"
+                    min="1"
+                  />
+                </div>
+                <div class="col-6">
+                  <label class="field-label" for="shopId">
+                    Shop ID <span class="optional-tag">optional</span>
+                  </label>
+                  <input id="shopId" type="number" class="form-control" formControlName="shopId" min="1" />
+                </div>
+              </div>
+            </div>
+          }
+
+          <button type="submit" class="btn-login" [disabled]="loading()">
+            @if (loading()) {
+              <span class="spinner"></span> Logging in...
+            } @else {
+              Log in <i class="bi bi-arrow-right"></i>
+            }
+          </button>
+        </form>
+
+        <!-- <p class="signup-prompt">
+          No account yet? <a routerLink="/signup">Sign up your business</a>
+        </p> -->
+      </div>
     </div>
   </div>
 </div>

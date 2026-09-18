@@ -1,50 +1,132 @@
-<div class="container">
-  <app-page-header [segments]="['Tenancy', 'Shops List']"></app-page-header>
-  <div class="d-flex justify-content-end align-items-center mb-3">
-    <a routerLink="/shops/new" class="btn btn-primary btn-sm">+ New Shop</a>
+<div class="container-fluid shop-page">
+  <app-page-header [segments]="['Tenancy', 'Shops']"></app-page-header>
+
+  <div class="toolbar d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <h5 class="mb-0">Shops</h5>
+      @if (!loading()) {
+        <span class="badge count-badge">{{ filteredShops().length }}</span>
+      }
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap">
+      <div class="search-box">
+        <i class="bi bi-search search-icon"></i>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Search name or code..."
+          [value]="globalSearch()"
+          (input)="onGlobalSearch($event)"
+        />
+        @if (globalSearch()) {
+          <button class="clear-btn" type="button" (click)="clearGlobalSearch()">×</button>
+        }
+      </div>
+
+      <button
+        type="button"
+        class="btn btn-sm filter-toggle-btn"
+        [class.active]="showAdvanceFilter()"
+        (click)="toggleAdvanceFilter()"
+      >
+        <i class="bi bi-sliders"></i> Filters
+      </button>
+
+      <a routerLink="/shops/new" class="btn btn-sm btn-new">
+        <i class="bi bi-plus-lg"></i> New Shop
+      </a>
+    </div>
   </div>
 
   @if (errorMessage()) {
     <div class="alert alert-danger py-2">{{ errorMessage() }}</div>
   }
 
+  @if (showAdvanceFilter()) {
+    <div class="advance-filter-panel mb-3">
+      <div class="row g-2">
+        <div class="col-md-10">
+          <label class="filter-label">City</label>
+          <input
+            type="text"
+            class="form-control form-control-sm"
+            placeholder="Filter by city"
+            [value]="cityFilter()"
+            (input)="onCityFilter($event)"
+          />
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button type="button" class="btn btn-sm btn-outline-secondary w-100" (click)="clearFilters()">
+            Clear all
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
   @if (loading()) {
-    <p class="text-muted">Loading...</p>
-  } @else if (shops().length === 0) {
-    <p class="text-muted">No shops yet.</p>
+    <div class="skeleton-list">
+      @for (i of [1,2,3,4]; track i) {
+        <div class="skeleton-row"></div>
+      }
+    </div>
+  } @else if (filteredShops().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon"><i class="bi bi-shop"></i></div>
+      <h6>No shops found</h6>
+      <p class="text-muted">Try adjusting your search or filters, or create a new shop.</p>
+    </div>
   } @else {
-    <table class="table table-hover align-middle">
-      <thead>
-        <tr>
-          <th style="width: 60px;">Sr.</th>
-          <th>Code</th>
-          <th>Name</th>
-          <th>City</th>
-          <th>Contact</th>
-          <th style="width: 90px;">Main?</th>
-          <th style="width: 160px;"></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (shop of shops(); track shop.id) {
-          <tr>
-            <td>{{ $index+1 }}</td>
-            <td>{{ shop.code }}</td>
-            <td>{{ shop.name }}</td>
-            <td class="text-muted">{{ shop.city || '—' }}</td>
-            <td class="text-muted">{{ shop.contactNo || '—' }}</td>
-            <td>
-              @if (shop.isMainBranch) {
-                <span class="badge bg-primary">Main</span>
+    <div class="shop-grid">
+      @for (shop of filteredShops(); track shop.id) {
+        <div class="shop-card" [class.main-branch]="shop.isMainBranch">
+          <div class="shop-card-top">
+            <div class="avatar" [style.background]="avatarColor(shop.name)">
+              {{ initial(shop.name) }}
+            </div>
+            @if (shop.isMainBranch) {
+              <span class="main-badge"><i class="bi bi-star-fill"></i> Main Branch</span>
+            }
+          </div>
+
+          <div class="shop-card-body">
+            <div class="shop-name">{{ shop.name }}</div>
+            <code class="shop-code">{{ shop.code }}</code>
+
+            <div class="shop-meta">
+              @if (shop.city) {
+                <div class="meta-row"><i class="bi bi-geo-alt"></i> {{ shop.city }}</div>
               }
-            </td>
-            <td class="text-end">
-              <a [routerLink]="['/shops', shop.id, 'edit']" class="btn btn-outline-secondary btn-sm me-1">Edit</a>
-              <button class="btn btn-outline-danger btn-sm" (click)="remove(shop)" [disabled]="shop.isMainBranch">Delete</button>
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
+              @if (shop.contactNo) {
+                <div class="meta-row"><i class="bi bi-telephone"></i> {{ shop.contactNo }}</div>
+              }
+              @if (!shop.city && !shop.contactNo) {
+                <div class="meta-row meta-empty">No additional details</div>
+              }
+            </div>
+          </div>
+
+          <div class="shop-card-actions">
+            <a [routerLink]="['/shops', shop.id, 'edit']" class="icon-btn edit-btn" title="Edit">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <button
+              type="button"
+              class="icon-btn delete-btn"
+              title="Delete"
+              (click)="remove(shop)"
+              [disabled]="shop.isMainBranch"
+            >
+              <i class="bi bi-trash3"></i>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="list-footer">
+      Showing all {{ filteredShops().length }} shop{{ filteredShops().length === 1 ? '' : 's' }}.
+    </div>
   }
 </div>

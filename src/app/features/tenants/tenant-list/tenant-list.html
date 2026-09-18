@@ -1,39 +1,108 @@
-<div class="container">
-  <app-page-header [segments]="['Tenancy','Tenants List']"></app-page-header>
-  <p class="text-muted small">New tenants are created through Signup, not here. Editing business details only.</p>
+<div class="container-fluid tenant-page">
+  <app-page-header [segments]="['Tenancy', 'Tenants']"></app-page-header>
+
+  <div class="toolbar d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <h5 class="mb-0">Tenants</h5>
+      @if (!loading()) {
+        <span class="badge count-badge">{{ filteredTenants().length }}</span>
+      }
+    </div>
+
+    <div class="search-box">
+      <i class="bi bi-search search-icon"></i>
+      <input
+        type="text"
+        class="form-control"
+        placeholder="Search business, owner, or code..."
+        [value]="globalSearch()"
+        (input)="onGlobalSearch($event)"
+      />
+      @if (globalSearch()) {
+        <button class="clear-btn" type="button" (click)="clearGlobalSearch()">×</button>
+      }
+    </div>
+  </div>
+
+  <p class="info-note">
+    <i class="bi bi-info-circle"></i>
+    New tenants are created through Signup, not here. This screen is for editing business details only.
+  </p>
+
+  @if (errorMessage()) {
+    <div class="alert alert-danger py-2">{{ errorMessage() }}</div>
+  }
 
   @if (loading()) {
-    <p class="text-muted">Loading...</p>
-  } @else if (tenants().length === 0) {
-    <p class="text-muted">No tenants yet.</p>
+    <div class="skeleton-list">
+      @for (i of [1,2,3]; track i) {
+        <div class="skeleton-row"></div>
+      }
+    </div>
+  } @else if (filteredTenants().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon"><i class="bi bi-diagram-3"></i></div>
+      <h6>No tenants found</h6>
+      <p class="text-muted">Try adjusting your search.</p>
+    </div>
   } @else {
-    <table class="table table-hover align-middle">
-      <thead>
-        <tr>
-          <th style="width: 60px;">Sr.</th>
-          <th>Code</th>
-          <th>Business</th>
-          <th>Owner</th>
-          <th>Shops</th>
-          <th>Users</th>
-          <th style="width: 100px;"></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (t of tenants(); track t.id) {
-          <tr>
-            <td>{{ $index+1 }}</td>
-            <td>{{ t.code }}</td>
-            <td>{{ t.businessName }}</td>
-            <td class="text-muted">{{ t.ownerName }}</td>
-            <td>{{ t.shopCount }}</td>
-            <td>{{ t.userCount }}</td>
-            <td class="text-end">
-              <a [routerLink]="['/tenants', t.id, 'edit']" class="btn btn-outline-secondary btn-sm">Edit</a>
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
+    <div class="table-card">
+      <div class="table-responsive">
+        <table class="tenant-table">
+          <thead>
+            <tr>
+              <th class="col-tenant">Business</th>
+              <th>Code</th>
+              <th>Owner</th>
+              <th class="text-center">Shops</th>
+              <th class="text-center">Users</th>
+              <th class="col-actions"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (t of filteredTenants(); track t.id) {
+              <tr>
+                <td class="col-tenant">
+                  <div class="tenant-cell">
+                    <div class="avatar" [style.background]="avatarColor(t.businessName)">
+                      {{ initial(t.businessName) }}
+                    </div>
+                    <div class="tenant-name-block">
+                      <div class="tenant-name">{{ t.businessName }}</div>
+                      @if (t.city) {
+                        <div class="tenant-meta"><i class="bi bi-geo-alt"></i> {{ t.city }}</div>
+                      }
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <code class="code-chip">{{ t.code }}</code>
+                </td>
+                <td class="text-muted">{{ t.ownerName }}</td>
+                <td class="text-center">
+                  <span class="stat-pill stat-shops">
+                    <i class="bi bi-shop"></i> {{ t.shopCount }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <span class="stat-pill stat-users">
+                    <i class="bi bi-people"></i> {{ t.userCount }}
+                  </span>
+                </td>
+                <td class="col-actions">
+                  <a [routerLink]="['/tenants', t.id, 'edit']" class="icon-btn edit-btn" title="Edit">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="list-footer">
+      Showing all {{ filteredTenants().length }} tenant{{ filteredTenants().length === 1 ? '' : 's' }}.
+    </div>
   }
 </div>

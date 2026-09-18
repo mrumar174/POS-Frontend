@@ -5,147 +5,132 @@
     <div class="d-flex align-items-center gap-2">
       <h5 class="mb-0">Users</h5>
       @if (!loading()) {
-        <span class="badge count-badge">{{ filteredUsers().length }}</span>
+      <span class="badge count-badge">{{ filteredUsers().length }}</span>
       }
     </div>
 
     <div class="d-flex gap-2 flex-wrap">
       <div class="search-box">
         <i class="bi bi-search search-icon"></i>
-        <input
-          type="text"
-          class="form-control"
-          placeholder="Search name or username..."
-          [value]="globalSearch()"
-          (input)="onGlobalSearch($event)"
-        />
+        <input type="text" class="form-control" placeholder="Search name or username..." [value]="globalSearch()"
+          (input)="onGlobalSearch($event)" />
         @if (globalSearch()) {
-          <button class="clear-btn" type="button" (click)="clearGlobalSearch()">×</button>
+        <button class="clear-btn" type="button" (click)="clearGlobalSearch()">×</button>
         }
       </div>
 
-      <button
-        type="button"
-        class="btn btn-sm filter-toggle-btn"
-        [class.active]="showAdvanceFilter()"
-        (click)="toggleAdvanceFilter()"
-      >
-        <i class="bi bi-sliders"></i> Filters
-      </button>
-
-      <a routerLink="/users/new" class="btn btn-sm btn-new">
-        <i class="bi bi-plus-lg"></i> New User
-      </a>
+      <div class="d-flex gap-2 flex-wrap">
+        @if (isSuperAdmin()) {
+        <a routerLink="/tenants/new" class="btn btn-sm btn-outline-dark d-flex align-items-center">
+          <i class="bi bi-building-add"></i> New Tenant
+        </a>
+        }
+        @if (canCreateUser()) {
+        <a routerLink="/users/new" class="btn btn-sm btn-new">
+          <i class="bi bi-plus-lg"></i> New User
+        </a>
+        }
+      </div>
     </div>
   </div>
 
   @if (errorMessage()) {
-    <div class="alert alert-danger py-2">{{ errorMessage() }}</div>
+  <div class="alert alert-danger py-2">{{ errorMessage() }}</div>
   }
 
   @if (showAdvanceFilter()) {
-    <div class="advance-filter-panel mb-3">
-      <div class="row g-2">
-        <div class="col-md-5">
-          <label class="filter-label">Username</label>
-          <input
-            type="text"
-            class="form-control form-control-sm"
-            placeholder="Filter by username"
-            [value]="usernameFilter()"
-            (input)="onUsernameFilter($event)"
-          />
-        </div>
-        <div class="col-md-5">
-          <label class="filter-label">Role</label>
-          <input
-            type="text"
-            class="form-control form-control-sm"
-            placeholder="Filter by role"
-            [value]="roleFilter()"
-            (input)="onRoleFilter($event)"
-          />
-        </div>
-        <div class="col-md-2 d-flex align-items-end">
-          <button type="button" class="btn btn-sm btn-outline-secondary w-100" (click)="clearFilters()">
-            Clear all
-          </button>
-        </div>
+  <div class="advance-filter-panel mb-3">
+    <div class="row g-2">
+      <div class="col-md-5">
+        <label class="filter-label">Username</label>
+        <input type="text" class="form-control form-control-sm" placeholder="Filter by username"
+          [value]="usernameFilter()" (input)="onUsernameFilter($event)" />
+      </div>
+      <div class="col-md-5">
+        <label class="filter-label">Role</label>
+        <input type="text" class="form-control form-control-sm" placeholder="Filter by role" [value]="roleFilter()"
+          (input)="onRoleFilter($event)" />
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <button type="button" class="btn btn-sm btn-outline-secondary w-100" (click)="clearFilters()">
+          Clear all
+        </button>
       </div>
     </div>
+  </div>
   }
 
   @if (loading()) {
-    <div class="skeleton-list">
-      @for (i of [1,2,3,4,5]; track i) {
-        <div class="skeleton-row"></div>
-      }
-    </div>
+  <div class="skeleton-list">
+    @for (i of [1,2,3,4,5]; track i) {
+    <div class="skeleton-row"></div>
+    }
+  </div>
   } @else if (filteredUsers().length === 0) {
-    <div class="empty-state">
-      <div class="empty-icon"><i class="bi bi-people"></i></div>
-      <h6>No users found</h6>
-      <p class="text-muted">Try adjusting your search or filters, or create a new user.</p>
-    </div>
+  <div class="empty-state">
+    <div class="empty-icon"><i class="bi bi-people"></i></div>
+    <h6>No users found</h6>
+    <p class="text-muted">Try adjusting your search or filters, or create a new user.</p>
+  </div>
   } @else {
-    <div class="table-card">
-      <div class="table-responsive">
-        <table class="user-table">
-          <thead>
-            <tr>
-              <th class="col-user">User</th>
-              <th>Username</th>
-              <th>Roles</th>
-              <th class="col-actions"></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (user of filteredUsers(); track user.id) {
-              <tr>
-                <td class="col-user">
-                  <div class="user-cell">
-                    <div class="avatar" [style.background]="avatarColor(user.fullName)">
-                      {{ initials(user.fullName) }}
-                    </div>
-                    <div class="user-name-block">
-                      <div class="user-fullname">{{ user.fullName }}</div>
-                      @if (user.contactNo) {
-                        <div class="user-meta"><i class="bi bi-telephone"></i> {{ user.contactNo }}</div>
-                      }
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <code class="username-chip">{{ user.userName }}</code>
-                </td>
-                <td>
-                  <div class="role-badges">
-                    @for (role of user.roles; track role) {
-                      <span class="role-badge" [class]="roleBadgeColor(role)">{{ role }}</span>
-                    } @empty {
-                      <span class="no-role">No role assigned</span>
-                    }
-                  </div>
-                </td>
-                <td class="col-actions">
-                  <div class="row-actions">
-                    <a [routerLink]="['/users', user.id, 'edit']" class="icon-btn edit-btn" title="Edit">
-                      <i class="bi bi-pencil"></i>
-                    </a>
-                    <button type="button" class="icon-btn delete-btn" title="Delete" (click)="remove(user)">
-                      <i class="bi bi-trash3"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+  <div class="table-card">
+    <div class="table-responsive">
+      <table class="user-table">
+        <thead>
+          <tr>
+            <th class="col-user">User</th>
+            <th>Username</th>
+            <th>Roles</th>
+            <th class="col-actions"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of filteredUsers(); track user.id) {
+          <tr>
+            <td class="col-user">
+              <div class="user-cell">
+                <div class="avatar" [style.background]="avatarColor(user.fullName)">
+                  {{ initials(user.fullName) }}
+                </div>
+                <div class="user-name-block">
+                  <div class="user-fullname">{{ user.fullName }}</div>
+                  @if (user.contactNo) {
+                  <div class="user-meta"><i class="bi bi-telephone"></i> {{ user.contactNo }}</div>
+                  }
+                </div>
+              </div>
+            </td>
+            <td>
+              <code class="username-chip">{{ user.userName }}</code>
+            </td>
+            <td>
+              <div class="role-badges">
+                @for (role of user.roles; track role) {
+                <span class="role-badge" [class]="roleBadgeColor(role)">{{ role }}</span>
+                } @empty {
+                <span class="no-role">No role assigned</span>
+                }
+              </div>
+            </td>
+            <td class="col-actions">
+              <div class="row-actions">
+                <a [routerLink]="['/users', user.id, 'edit']" class="icon-btn edit-btn" title="Edit">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <button type="button" class="icon-btn delete-btn" title="Delete" (click)="remove(user)">
+                  <i class="bi bi-trash3"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
     </div>
+  </div>
 
-    <div class="list-footer">
-      Showing all {{ filteredUsers().length }} user{{ filteredUsers().length === 1 ? '' : 's' }}.
-    </div>
+  <div class="list-footer">
+    Showing all {{ filteredUsers().length }} user{{ filteredUsers().length === 1 ? '' : 's' }}.
+  </div>
   }
 </div>

@@ -40,19 +40,45 @@
   font-size: 0.88rem;
   color: #6b665c;
   line-height: 1.55;
-  margin-bottom: 1.1rem;
+  margin-bottom: 1.25rem;
 }
 
-.selected-summary {
+/* Tenant stats mini-cards */
+.tenant-stats {
+  display: flex;
+  gap: 0.7rem;
+  margin-bottom: 1.25rem;
+}
+
+.stat-item {
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: #eef2ff;
-  color: #3730a3;
-  border-radius: 8px;
-  padding: 0.65rem 0.85rem;
-  font-size: 0.82rem;
-  margin-bottom: 1.25rem;
+  gap: 0.6rem;
+  background: #fff;
+  border: 1px solid #ece9e1;
+  border-radius: 10px;
+  padding: 0.75rem;
+}
+
+.stat-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.stat-icon-blue { color: #1d4ed8; }
+.stat-icon-green { color: #047857; }
+
+.stat-value {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #1c1a17;
+  line-height: 1.1;
+}
+
+.stat-label {
+  font-size: 0.72rem;
+  color: #9a958a;
 }
 
 .info-tips {
@@ -98,6 +124,19 @@
   color: #9a958a;
 }
 
+.section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9a958a;
+  margin-bottom: 0.75rem;
+}
+
+.section-label-spaced {
+  margin-top: 1.75rem;
+}
+
 .field-label {
   display: block;
   font-size: 0.85rem;
@@ -134,166 +173,10 @@
   margin-top: 0.3rem;
 }
 
-/* Permissions section */
-.permissions-section {
-  margin-top: 1.5rem;
-}
-
-.permissions-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.permissions-count {
-  font-size: 0.78rem;
+.field-hint {
+  font-size: 0.76rem;
   color: #9a958a;
-  font-weight: 500;
-}
-
-.picker-empty {
-  font-size: 0.82rem;
-  color: #b5afa2;
-  padding: 1rem;
-  text-align: center;
-  border: 1px solid #ece9e1;
-  border-radius: 10px;
-}
-
-.permissions-scroll {
-  max-height: 420px;
-  overflow-y: auto;
-  border: 1px solid #ece9e1;
-  border-radius: 10px;
-  padding: 0.75rem;
-  background: #fafaf8;
-}
-
-.module-group {
-  margin-bottom: 0.9rem;
-}
-
-.module-group:last-child {
-  margin-bottom: 0;
-}
-
-.module-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-  border: none;
-  background: transparent;
-  padding: 0.3rem 0.2rem;
-  cursor: pointer;
-  margin-bottom: 0.4rem;
-}
-
-.module-check {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  border: 1.5px solid #d5d2c8;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #fff;
-  flex-shrink: 0;
-}
-
-.module-check i {
-  font-size: 0.65rem;
-  color: transparent;
-}
-
-.module-check i.visible {
-  color: #fff;
-}
-
-.module-header.module-selected .module-check {
-  background: #4f46e5;
-  border-color: #4f46e5;
-}
-
-.module-name {
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #6b665c;
-}
-
-.module-count {
-  font-size: 0.7rem;
-  color: #b5afa2;
-  margin-left: auto;
-}
-
-/* Permission grid (from user's existing CSS, integrated) */
-.permissions-container {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.permission-item {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.5rem 0.6rem;
-  border-radius: 8px;
-  border: 1px solid #ece9e1;
-  background: #fff;
-  cursor: pointer;
-  transition: background-color 0.12s ease, border-color 0.12s ease;
-}
-
-.permission-item:hover {
-  border-color: #c7d2fe;
-}
-
-.permission-item.selected {
-  background-color: #eef2ff;
-  border-color: #a5b4fc;
-}
-
-.permission-item input {
-  display: none;
-}
-
-.permission-check {
-  flex-shrink: 0;
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  border: 1.5px solid #d5d2c8;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #fff;
-  font-size: 0.65rem;
-  color: transparent;
-}
-
-.permission-item.selected .permission-check {
-  background: #4f46e5;
-  border-color: #4f46e5;
-  color: #fff;
-}
-
-.permission-content {
-  min-width: 0;
-}
-
-.permission-name {
-  font-size: 0.82rem;
-  color: #2d2a26;
-  line-height: 1.3;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: block;
+  margin-top: 0.3rem;
 }
 
 /* Actions */
@@ -301,7 +184,7 @@
   display: flex;
   justify-content: flex-end;
   gap: 0.6rem;
-  margin-top: 1.5rem;
+  margin-top: 1.75rem;
   padding-top: 1.1rem;
   border-top: 1px solid #f0eee7;
 }
@@ -382,12 +265,6 @@
 @keyframes shimmer {
   0% { background-position: 100% 50%; }
   100% { background-position: 0 50%; }
-}
-
-@media (max-width: 767px) {
-  .permissions-container {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 991px) {

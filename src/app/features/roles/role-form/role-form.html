@@ -1,43 +1,173 @@
-<div class="container">
-  <app-page-header [segments]="['Identity & Assess', isEditMode() ? 'Edit Role' : 'Create Role' ]"></app-page-header>
-  <div class="row">
-    <div class="col-4"></div>
-    <div class="col-7">
-      <form [formGroup]="form" (ngSubmit)="submit()">
-        <div class="mb-3">
-          <label class="form-label">Name</label>
-          <input type="text" class="form-control" formControlName="name" />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Description</label>
-          <input type="text" class="form-control" formControlName="description" />
-        </div>
+<div class="container-fluid form-page">
+  <app-page-header [segments]="breadcrumbSegments"></app-page-header>
 
-        <label class="form-label">Permissions</label>
-        <div class="border rounded p-2 mb-3" style="max-height: 300px; overflow-y: auto;">
-          <div class="row">
-            @for (p of allPermissions(); track p.id) {
-            <div class="col-md-6">
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" [id]="'perm-' + p.id" [checked]="isChecked(p.id!)"
-                  (change)="togglePermission(p.id!, $any($event.target).checked)" />
-                <label class="form-check-label" [for]="'perm-' + p.id">
-                  <span class="badge bg-secondary me-1">{{ p.module }}</span>{{ p.name }}
+  <div class="row g-4 form-layout">
+    <!-- Left: info panel -->
+    <div class="col-lg-4">
+      <div class="info-panel">
+        <div class="info-icon">
+          <i class="bi" [class.bi-pencil]="isEditMode()" [class.bi-person-badge]="!isEditMode()"></i>
+        </div>
+        <h5 class="info-title">
+          {{ isEditMode() ? 'Editing a Role' : 'What is a Role?' }}
+        </h5>
+        <p class="info-text">
+          @if (isEditMode()) {
+            You're updating an existing role. Changes to its permissions
+            apply the next time each assigned user logs in — they won't
+            take effect on an already-open session.
+          } @else {
+            Roles group permissions together so you can assign the same
+            access to multiple users at once — e.g. "Cashier", "Manager",
+            or "Admin".
+          }
+        </p>
+
+        @if (!loading()) {
+          <div class="selected-summary">
+            <i class="bi bi-shield-check"></i>
+            <span><strong>{{ selectedCount() }}</strong> of {{ totalCount() }} permissions selected</span>
+          </div>
+        }
+
+        <ul class="info-tips">
+          <li>
+            <i class="bi bi-check-circle-fill tip-icon"></i>
+            Click a module header to select or clear all its permissions.
+          </li>
+          <li>
+            <i class="bi bi-check-circle-fill tip-icon"></i>
+            Users must re-login to see updated permissions.
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Right: the form -->
+    <div class="col-lg-8">
+      <div class="form-card">
+        @if (loading()) {
+          <div class="skeleton-form">
+            <div class="skeleton-line skeleton-label"></div>
+            <div class="skeleton-line skeleton-input"></div>
+            <div class="skeleton-line skeleton-label"></div>
+            <div class="skeleton-line skeleton-input"></div>
+          </div>
+        } @else {
+          <div class="form-header">
+            <h5 class="mb-0">{{ isEditMode() ? 'Edit Role' : 'New Role' }}</h5>
+            <p class="form-subtitle mb-0">
+              {{ isEditMode() ? 'Update the details and permissions for this role.' : 'Fill in the details below.' }}
+            </p>
+          </div>
+
+          @if (errorMessage()) {
+            <div class="alert alert-danger py-2">{{ errorMessage() }}</div>
+          }
+
+          <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="field-label" for="name">
+                  Name <span class="required-mark">*</span>
                 </label>
+                <input
+                  #nameInput
+                  id="name"
+                  type="text"
+                  class="form-control"
+                  [class.is-invalid]="nameControl.invalid && nameControl.touched"
+                  formControlName="name"
+                  placeholder="e.g. Cashier"
+                  [maxlength]="nameMaxLength"
+                />
+                @if (nameControl.invalid && nameControl.touched) {
+                  <div class="field-error">
+                    @if (nameControl.hasError('required')) { Name is required. }
+                    @if (nameControl.hasError('maxlength')) { Name is too long. }
+                  </div>
+                }
+              </div>
+
+              <div class="col-md-6">
+                <label class="field-label" for="description">Description</label>
+                <input
+                  id="description"
+                  type="text"
+                  class="form-control"
+                  [class.is-invalid]="descriptionControl.invalid && descriptionControl.touched"
+                  formControlName="description"
+                  placeholder="Optional"
+                  [maxlength]="descriptionMaxLength"
+                />
+                @if (descriptionControl.invalid && descriptionControl.touched) {
+                  <div class="field-error">Description is too long.</div>
+                }
               </div>
             </div>
-            }
-          </div>
-        </div>
 
-        <div class="d-flex gap-2">
-          <button type="submit" class="btn btn-primary" [disabled]="loading()">
-            @if (loading()) { Saving... } @else { Save }
-          </button>
-          <a routerLink="/roles" class="btn btn-outline-secondary">Cancel</a>
-        </div>
-      </form>
+            <div class="permissions-section">
+              <div class="permissions-header">
+                <label class="field-label mb-0">Permissions</label>
+                <span class="permissions-count">{{ selectedCount() }} selected</span>
+              </div>
+
+              @if (permissionGroups().length === 0) {
+                <div class="picker-empty">No permissions available.</div>
+              } @else {
+                <div class="permissions-scroll">
+                  @for (group of permissionGroups(); track group.module) {
+                    <div class="module-group">
+                      <button
+                        type="button"
+                        class="module-header"
+                        [class.module-selected]="isModuleFullySelected(group)"
+                        (click)="toggleModule(group)"
+                      >
+                        <span class="module-check">
+                          <i class="bi bi-check" [class.visible]="isModuleFullySelected(group)"></i>
+                        </span>
+                        <span class="module-name">{{ group.module }}</span>
+                        <span class="module-count">{{ group.permissions.length }}</span>
+                      </button>
+
+                      <div class="permissions-container">
+                        @for (p of group.permissions; track p.id) {
+                          <label class="permission-item" [class.selected]="isChecked(p.id!)">
+                            <input
+                              class="permission-checkbox"
+                              type="checkbox"
+                              [checked]="isChecked(p.id!)"
+                              (change)="togglePermission(p.id!, $any($event.target).checked)"
+                            />
+                            <span class="permission-check"><i class="bi bi-check"></i></span>
+                            <span class="permission-content">
+                              <span class="permission-name">{{ p.name }}</span>
+                            </span>
+                          </label>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="btn btn-cancel" (click)="cancel()" [disabled]="saving()">
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-save" [disabled]="saving()">
+                @if (saving()) {
+                  <span class="spinner"></span> Saving...
+                } @else {
+                  {{ isEditMode() ? 'Save Changes' : 'Create Role' }}
+                }
+              </button>
+            </div>
+          </form>
+        }
+      </div>
     </div>
   </div>
-  <div class="col"></div>
 </div>

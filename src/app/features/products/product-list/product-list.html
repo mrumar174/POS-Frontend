@@ -1,0 +1,158 @@
+<div class="container-fluid product-page">
+  <app-page-header [segments]="['Catalog', 'Products']"></app-page-header>
+
+  <div class="toolbar d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <h5 class="mb-0">Products</h5>
+      @if (!loading()) {
+        <span class="badge count-badge">{{ totalCount() }}</span>
+      }
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap">
+      <div class="search-box">
+        <i class="bi bi-search search-icon"></i>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Search name or code..."
+          [value]="globalSearch()"
+          (input)="onGlobalSearch($event)"
+        />
+        @if (globalSearch()) {
+          <button class="clear-btn" type="button" (click)="clearGlobalSearch()">×</button>
+        }
+      </div>
+
+      <button
+        type="button"
+        class="btn btn-sm filter-toggle-btn"
+        [class.active]="showAdvanceFilter()"
+        (click)="toggleAdvanceFilter()"
+      >
+        <i class="bi bi-sliders"></i> Filters
+      </button>
+
+      <a routerLink="/products/new" class="btn btn-sm btn-new">
+        <i class="bi bi-plus-lg"></i> New Product
+      </a>
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="alert alert-danger py-2">{{ errorMessage() }}</div>
+  }
+
+  @if (showAdvanceFilter()) {
+    <div class="advance-filter-panel mb-3">
+      <div class="row g-2">
+        <div class="col-md-4">
+          <label class="filter-label">Category</label>
+          <select class="form-select form-select-sm" (change)="onCategoryFilter($event)">
+            <option value="">All categories</option>
+            @for (c of allCategories(); track c.id) {
+              <option [value]="c.id">{{ c.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="filter-label">Brand</label>
+          <select class="form-select form-select-sm" (change)="onBrandFilter($event)">
+            <option value="">All brands</option>
+            @for (b of allBrands(); track b.id) {
+              <option [value]="b.id">{{ b.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="filter-label">Unit</label>
+          <select class="form-select form-select-sm" (change)="onUnitFilter($event)">
+            <option value="">All units</option>
+            @for (u of allUnits(); track u.id) {
+              <option [value]="u.id">{{ u.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-md-1 d-flex align-items-end">
+          <button type="button" class="btn btn-sm btn-outline-secondary w-100" (click)="clearFilters()" title="Clear all">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="skeleton-list">
+      @for (i of [1,2,3,4,5]; track i) {
+        <div class="skeleton-row"></div>
+      }
+    </div>
+  } @else if (products().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon"><i class="bi bi-box-seam"></i></div>
+      <h6>No products found</h6>
+      <p class="text-muted">Try adjusting your search or filters, or create a new product.</p>
+    </div>
+  } @else {
+    <div class="table-card">
+      <div class="table-responsive">
+        <table class="product-table">
+          <thead>
+            <tr>
+              <th class="col-product">Product</th>
+              <th>Category</th>
+              <th>Brand</th>
+              <th class="text-end">Purchase</th>
+              <th class="text-end">Sale</th>
+              <th class="text-center">Min. Stock</th>
+              <th class="col-actions"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (product of products(); track product.id) {
+              <tr>
+                <td class="col-product">
+                  <div class="product-cell">
+                    <div class="avatar" [style.background]="avatarColor(product.name)">
+                      {{ initial(product.name) }}
+                    </div>
+                    <div class="product-name-block">
+                      <div class="product-name">{{ product.name }}</div>
+                      <code class="product-code">{{ product.productCode }}</code>
+                    </div>
+                  </div>
+                </td>
+                <td class="text-muted">{{ product.categoryName || '—' }}</td>
+                <td class="text-muted">{{ product.brandName || '—' }}</td>
+                <td class="text-end price-cell">{{ product.purchasePrice | number: '1.2-2' }}</td>
+                <td class="text-end price-cell price-sale">{{ product.salePrice | number: '1.2-2' }}</td>
+                <td class="text-center">
+                  <span class="stock-pill">{{ product.minimumStock }} {{ product.unitName }}</span>
+                </td>
+                <td class="col-actions">
+                  <div class="row-actions">
+                    <a [routerLink]="['/products', product.id, 'edit']" class="icon-btn edit-btn" title="Edit">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <button type="button" class="icon-btn delete-btn" title="Delete" (click)="remove(product)">
+                      <i class="bi bi-trash3"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div #scrollSentinel class="scroll-sentinel">
+      @if (loadingMore()) {
+        <div class="loading-more"><span class="spinner"></span> Loading more...</div>
+      } @else if (!hasMore()) {
+        <div class="end-message">You've reached the end — {{ totalCount() }} products total.</div>
+      }
+    </div>
+  }
+</div>

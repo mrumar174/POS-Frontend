@@ -68,4 +68,7 @@ export class AuthService {
       return null;
     }
   }
+  hasRole(role: string): boolean {
+    return this.roles().includes(role);
+  }
 }
