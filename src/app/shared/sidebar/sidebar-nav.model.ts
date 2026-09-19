@@ -11,6 +11,7 @@ export interface SidebarGroup {
 }
 
 export const SIDEBAR_GROUPS: SidebarGroup[] = [
+  // Catalog
   {
     label: 'Catalog',
     icon: 'bi-grid-3x3-gap',
@@ -21,6 +22,7 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
       { label: 'Products', route: '/products', icon: 'bi-box-seam' }
     ]
   },
+  // Identity & Access
   {
     label: 'Identity & Access',
     icon: 'bi-shield-lock',
@@ -30,6 +32,7 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
       { label: 'Permissions', route: '/permissions', icon: 'bi-key' }
     ]
   },
+  // Tenancy
   {
     label: 'Tenancy',
     icon: 'bi-building',
@@ -37,5 +40,13 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
       { label: 'Tenants', route: '/tenants', icon: 'bi-diagram-3' },
       { label: 'Shops', route: '/shops', icon: 'bi-shop' }
     ]
-  }
+  },
+  // purchasing
+  {
+    label: 'Purchasing',
+    icon: 'bi-truck',
+    links: [
+      { label: 'Suppliers', route: '/suppliers', icon: 'bi-building' }
+    ]
+  },
 ];

@@ -277,6 +277,11 @@ export const routes: Routes = [
       import('./features/products/product-form/product-form')
         .then((m) => m.ProductForm)
   },
+  // Supliers
+  { path: 'suppliers', canActivate: [authGuard], loadComponent: () => import('./features/suppliers/supplier-list/supplier-list').then((m) => m.SupplierList) },
+  { path: 'suppliers/new', canActivate: [authGuard], loadComponent: () => import('./features/suppliers/supplier-form/supplier-form').then((m) => m.SupplierForm) },
+  { path: 'suppliers/:id/edit', canActivate: [authGuard], loadComponent: () => import('./features/suppliers/supplier-form/supplier-form').then((m) => m.SupplierForm) },
+  
   {
     path: '**',
     redirectTo: 'login'

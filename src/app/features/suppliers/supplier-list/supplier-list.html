@@ -1,0 +1,102 @@
+<div class="container-fluid supplier-page">
+  <app-page-header [segments]="['Purchasing', 'Suppliers']"></app-page-header>
+
+  <div class="toolbar d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <h5 class="mb-0">Suppliers</h5>
+      @if (!loading()) {
+        <span class="badge count-badge">{{ filteredSuppliers().length }}</span>
+      }
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap">
+      <div class="search-box">
+        <i class="bi bi-search search-icon"></i>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Search name, contact, phone..."
+          [value]="globalSearch()"
+          (input)="onGlobalSearch($event)"
+        />
+        @if (globalSearch()) {
+          <button class="clear-btn" type="button" (click)="clearGlobalSearch()">×</button>
+        }
+      </div>
+
+      <a routerLink="/suppliers/new" class="btn btn-sm btn-new">
+        <i class="bi bi-plus-lg"></i> New Supplier
+      </a>
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="alert alert-danger py-2">{{ errorMessage() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="skeleton-list">
+      @for (i of [1,2,3,4]; track i) {
+        <div class="skeleton-row"></div>
+      }
+    </div>
+  } @else if (filteredSuppliers().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon"><i class="bi bi-truck"></i></div>
+      <h6>No suppliers found</h6>
+      <p class="text-muted">Try adjusting your search, or create a new supplier.</p>
+    </div>
+  } @else {
+    <div class="table-card">
+      <div class="table-responsive">
+        <table class="supplier-table">
+          <thead>
+            <tr>
+              <th class="col-supplier">Supplier</th>
+              <th>Contact Person</th>
+              <th>Phone</th>
+              <th>Email</th>
+              <th class="col-actions"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (supplier of filteredSuppliers(); track supplier.id) {
+              <tr>
+                <td class="col-supplier">
+                  <div class="supplier-cell">
+                    <div class="avatar" [style.background]="avatarColor(supplier.name)">
+                      {{ initial(supplier.name) }}
+                    </div>
+                    <div class="supplier-name-block">
+                      <div class="supplier-name">{{ supplier.name }}</div>
+                      @if (supplier.address) {
+                        <div class="supplier-meta"><i class="bi bi-geo-alt"></i> {{ supplier.address }}</div>
+                      }
+                    </div>
+                  </div>
+                </td>
+                <td class="text-muted">{{ supplier.contactPerson || '—' }}</td>
+                <td class="text-muted">{{ supplier.contactNo || '—' }}</td>
+                <td class="text-muted">{{ supplier.email || '—' }}</td>
+                <td class="col-actions">
+                  <div class="row-actions">
+                    <a [routerLink]="['/suppliers', supplier.id, 'edit']" class="icon-btn edit-btn" title="Edit">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <button type="button" class="icon-btn delete-btn" title="Delete" (click)="remove(supplier)">
+                      <i class="bi bi-trash3"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="list-footer">
+      Showing all {{ filteredSuppliers().length }} supplier{{ filteredSuppliers().length === 1 ? '' : 's' }}.
+    </div>
+  }
+</div>
