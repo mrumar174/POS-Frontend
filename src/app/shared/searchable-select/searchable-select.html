@@ -1,0 +1,30 @@
+<div class="searchable-select">
+  <button type="button" class="select-trigger" (click)="toggleOpen()" [disabled]="disabled()">
+    <span [class.placeholder]="!selectedLabel()">{{ selectedLabel() || placeholder }}</span>
+    <i class="bi bi-chevron-down"></i>
+  </button>
+
+  @if (isOpen()) {
+    <div class="select-dropdown">
+      <div class="search-box-inner">
+        <i class="bi bi-search"></i>
+        <input type="text" [value]="search()" (input)="onSearchInput($event)" placeholder="Type to search..." />
+      </div>
+      <div class="options-list">
+        @for (option of filteredOptions(); track option.id) {
+          <button
+            type="button"
+            class="option-item"
+            [class.selected]="option.id === selectedId()"
+            (click)="select(option)"
+          >
+            <span class="option-label">{{ option.label }}</span>
+            @if (option.sublabel) { <span class="option-sublabel">{{ option.sublabel }}</span> }
+          </button>
+        } @empty {
+          <div class="no-options">No matches found.</div>
+        }
+      </div>
+    </div>
+  }
+</div>

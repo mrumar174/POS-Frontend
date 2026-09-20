@@ -1,0 +1,46 @@
+<div class="container-fluid">
+  <app-page-header [segments]="['Purchasing', 'Payment Methods']"></app-page-header>
+
+  <div class="toolbar d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex align-items-center gap-2">
+      <h5 class="mb-0">Payment Methods</h5>
+      @if (!loading()) { <span class="badge count-badge">{{ methods().length }}</span> }
+    </div>
+    <a routerLink="/payment-methods/new" class="btn btn-sm btn-new">
+      <i class="bi bi-plus-lg"></i> New Payment Method
+    </a>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="alert alert-danger py-2">{{ errorMessage() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="skeleton-list">
+      @for (i of [1,2,3]; track i) { <div class="skeleton-row"></div> }
+    </div>
+  } @else if (methods().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon"><i class="bi bi-credit-card"></i></div>
+      <h6>No payment methods yet</h6>
+      <p class="text-muted">Create one to use during purchases and payments.</p>
+    </div>
+  } @else {
+    <div class="method-grid">
+      @for (method of methods(); track method.id) {
+        <div class="method-card">
+          <div class="card-avatar" [style.background]="avatarColor(method.name)">{{ initial(method.name) }}</div>
+          <div class="card-title">{{ method.name }}</div>
+          <div class="card-actions">
+            <a [routerLink]="['/payment-methods', method.id, 'edit']" class="icon-btn edit-btn" title="Edit">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <button type="button" class="icon-btn delete-btn" title="Delete" (click)="remove(method)">
+              <i class="bi bi-trash3"></i>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

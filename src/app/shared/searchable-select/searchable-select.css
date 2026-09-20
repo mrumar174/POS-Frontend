@@ -1,0 +1,112 @@
+.searchable-select {
+  position: relative;
+  width: 100%;
+}
+
+.select-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid #e2e0d8;
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+}
+
+.select-trigger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.select-trigger span.placeholder {
+  color: #b5afa2;
+}
+
+.select-trigger i {
+  font-size: 0.7rem;
+  color: #9a958a;
+  flex-shrink: 0;
+  margin-left: 0.4rem;
+}
+
+.select-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: #fff;
+  border: 1px solid #ece9e1;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  min-width: 260px;
+}
+
+.search-box-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.7rem;
+  border-bottom: 1px solid #f0eee7;
+}
+
+.search-box-inner i {
+  color: #9a958a;
+  font-size: 0.8rem;
+}
+
+.search-box-inner input {
+  border: none;
+  outline: none;
+  font-size: 0.85rem;
+  flex-grow: 1;
+}
+
+.options-list {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.option-item {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  padding: 0.5rem 0.7rem;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.option-item:hover {
+  background: #faf9f6;
+}
+
+.option-item.selected {
+  background: #eef2ff;
+}
+
+.option-label {
+  color: #1c1a17;
+  font-weight: 500;
+}
+
+.option-sublabel {
+  color: #9a958a;
+  font-size: 0.74rem;
+}
+
+.no-options {
+  padding: 0.75rem;
+  text-align: center;
+  font-size: 0.82rem;
+  color: #b5afa2;
+}
