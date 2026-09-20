@@ -76,7 +76,8 @@
 .items-table-wrapper {
     border: 1px solid #ece9e1;
     border-radius: 10px;
-    overflow-x: auto;
+    /* Removed overflow-x: auto to fix the dropdown clipping */
+    overflow: visible; 
     background: #fafaf8;
 }
 
@@ -106,13 +107,21 @@
     border-bottom: 1px solid #f0eee7;
 }
 
+/* Modified widths to fit the new separated columns */
 .col-product {
-    min-width: 220px;
+    min-width: 200px;
 }
 
 .col-qty,
-.col-price {
-    width: 100px;
+.col-price,
+.col-discount-val,
+.col-discount-amt,
+.col-tax {
+    width: 90px;
+}
+
+.col-discount-type {
+    width: 120px;
 }
 
 .col-total {
@@ -128,6 +137,12 @@
     font-weight: 600;
     font-size: 0.85rem;
     color: #1c1a17;
+}
+
+.discount-amt-text {
+    font-size: 0.85rem;
+    color: #b91c1c;
+    font-weight: 500;
 }
 
 .remove-row-btn {
@@ -297,6 +312,22 @@
 .new-link:hover {
   color: #2c2b2b;
   text-decoration: underline;
+}
+
+.discount-cell {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.discount-cell .form-select {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 90px;
+  font-size: 0.78rem;
+}
+
+.discount-cell .form-control {
+  flex: 1;
 }
 
 @keyframes shimmer {

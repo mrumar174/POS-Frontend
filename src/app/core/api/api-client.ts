@@ -4928,7 +4928,8 @@ export class CreatePurchaseDetailDto implements ICreatePurchaseDetailDto {
     productId?: number;
     quantity?: number;
     purchasePrice?: number;
-    discount?: number;
+    discountType?: DiscountType;
+    discountValue?: number;
     tax?: number;
     total?: number;
 
@@ -4946,7 +4947,8 @@ export class CreatePurchaseDetailDto implements ICreatePurchaseDetailDto {
             this.productId = _data["productId"];
             this.quantity = _data["quantity"];
             this.purchasePrice = _data["purchasePrice"];
-            this.discount = _data["discount"];
+            this.discountType = _data["discountType"];
+            this.discountValue = _data["discountValue"];
             this.tax = _data["tax"];
             this.total = _data["total"];
         }
@@ -4964,7 +4966,8 @@ export class CreatePurchaseDetailDto implements ICreatePurchaseDetailDto {
         data["productId"] = this.productId;
         data["quantity"] = this.quantity;
         data["purchasePrice"] = this.purchasePrice;
-        data["discount"] = this.discount;
+        data["discountType"] = this.discountType;
+        data["discountValue"] = this.discountValue;
         data["tax"] = this.tax;
         data["total"] = this.total;
         return data;
@@ -4975,7 +4978,8 @@ export interface ICreatePurchaseDetailDto {
     productId?: number;
     quantity?: number;
     purchasePrice?: number;
-    discount?: number;
+    discountType?: DiscountType;
+    discountValue?: number;
     tax?: number;
     total?: number;
 }
@@ -4983,7 +4987,8 @@ export interface ICreatePurchaseDetailDto {
 export class CreatePurchaseDto implements ICreatePurchaseDto {
     supplierId?: number;
     purchaseDate?: Date;
-    discount?: number;
+    discountType?: DiscountType;
+    discountValue?: number;
     tax?: number;
     paidAmount?: number;
     paymentMethodId?: number | undefined;
@@ -5003,7 +5008,8 @@ export class CreatePurchaseDto implements ICreatePurchaseDto {
         if (_data) {
             this.supplierId = _data["supplierId"];
             this.purchaseDate = _data["purchaseDate"] ? new Date(_data["purchaseDate"].toString()) : undefined as any;
-            this.discount = _data["discount"];
+            this.discountType = _data["discountType"];
+            this.discountValue = _data["discountValue"];
             this.tax = _data["tax"];
             this.paidAmount = _data["paidAmount"];
             this.paymentMethodId = _data["paymentMethodId"];
@@ -5027,7 +5033,8 @@ export class CreatePurchaseDto implements ICreatePurchaseDto {
         data = typeof data === 'object' ? data : {};
         data["supplierId"] = this.supplierId;
         data["purchaseDate"] = this.purchaseDate ? this.purchaseDate.toISOString() : undefined as any;
-        data["discount"] = this.discount;
+        data["discountType"] = this.discountType;
+        data["discountValue"] = this.discountValue;
         data["tax"] = this.tax;
         data["paidAmount"] = this.paidAmount;
         data["paymentMethodId"] = this.paymentMethodId;
@@ -5044,7 +5051,8 @@ export class CreatePurchaseDto implements ICreatePurchaseDto {
 export interface ICreatePurchaseDto {
     supplierId?: number;
     purchaseDate?: Date;
-    discount?: number;
+    discountType?: DiscountType;
+    discountValue?: number;
     tax?: number;
     paidAmount?: number;
     paymentMethodId?: number | undefined;
@@ -5413,6 +5421,12 @@ export enum DataIsolationMode {
     _2 = 2,
 }
 
+export enum DiscountType {
+    _1 = 1,
+    _2 = 2,
+    _3 = 3,
+}
+
 export class LoginDto implements ILoginDto {
     tenantId?: number;
     userName?: string | undefined;
@@ -5775,6 +5789,8 @@ export class PurchaseDetailDto implements IPurchaseDetailDto {
     productName?: string | undefined;
     quantity?: number;
     purchasePrice?: number;
+    discountType?: DiscountType;
+    discountValue?: number;
     discount?: number;
     tax?: number;
     total?: number;
@@ -5795,6 +5811,8 @@ export class PurchaseDetailDto implements IPurchaseDetailDto {
             this.productName = _data["productName"];
             this.quantity = _data["quantity"];
             this.purchasePrice = _data["purchasePrice"];
+            this.discountType = _data["discountType"];
+            this.discountValue = _data["discountValue"];
             this.discount = _data["discount"];
             this.tax = _data["tax"];
             this.total = _data["total"];
@@ -5815,6 +5833,8 @@ export class PurchaseDetailDto implements IPurchaseDetailDto {
         data["productName"] = this.productName;
         data["quantity"] = this.quantity;
         data["purchasePrice"] = this.purchasePrice;
+        data["discountType"] = this.discountType;
+        data["discountValue"] = this.discountValue;
         data["discount"] = this.discount;
         data["tax"] = this.tax;
         data["total"] = this.total;
@@ -5828,6 +5848,8 @@ export interface IPurchaseDetailDto {
     productName?: string | undefined;
     quantity?: number;
     purchasePrice?: number;
+    discountType?: DiscountType;
+    discountValue?: number;
     discount?: number;
     tax?: number;
     total?: number;
@@ -5840,6 +5862,8 @@ export class PurchaseDto implements IPurchaseDto {
     supplierName?: string | undefined;
     purchaseDate?: Date;
     subTotal?: number;
+    discountType?: DiscountType;
+    discountValue?: number;
     discount?: number;
     tax?: number;
     grandTotal?: number;
@@ -5867,6 +5891,8 @@ export class PurchaseDto implements IPurchaseDto {
             this.supplierName = _data["supplierName"];
             this.purchaseDate = _data["purchaseDate"] ? new Date(_data["purchaseDate"].toString()) : undefined as any;
             this.subTotal = _data["subTotal"];
+            this.discountType = _data["discountType"];
+            this.discountValue = _data["discountValue"];
             this.discount = _data["discount"];
             this.tax = _data["tax"];
             this.grandTotal = _data["grandTotal"];
@@ -5898,6 +5924,8 @@ export class PurchaseDto implements IPurchaseDto {
         data["supplierName"] = this.supplierName;
         data["purchaseDate"] = this.purchaseDate ? this.purchaseDate.toISOString() : undefined as any;
         data["subTotal"] = this.subTotal;
+        data["discountType"] = this.discountType;
+        data["discountValue"] = this.discountValue;
         data["discount"] = this.discount;
         data["tax"] = this.tax;
         data["grandTotal"] = this.grandTotal;
@@ -5922,6 +5950,8 @@ export interface IPurchaseDto {
     supplierName?: string | undefined;
     purchaseDate?: Date;
     subTotal?: number;
+    discountType?: DiscountType;
+    discountValue?: number;
     discount?: number;
     tax?: number;
     grandTotal?: number;

@@ -25,7 +25,10 @@
         <div class="section-label">Purchase Details</div>
         <div class="row g-3">
           <div class="col-md-4">
-            <label class="field-label" for="supplierId">Supplier <span class="required-mark">*</span></label>
+            <div class="d-flex justify-content-between">
+              <label class="field-label" for="supplierId">Supplier <span class="required-mark">*</span></label>
+              <a routerLink="/suppliers/new" class="new-link me-2"> + New Supplier </a>
+            </div>
             <select id="supplierId" class="form-select" formControlName="supplierId">
               <option [ngValue]="null">Select supplier</option>
               @for (s of allSuppliers(); track s.id) { <option [ngValue]="s.id">{{ s.name }}</option> }
@@ -37,11 +40,11 @@
           </div>
           <div class="col-md-5">
             <div class="field-label-row d-flex justify-content-between">
-                <label class="field-label" for="unitId">
+                <label class="field-label" for="paymentMethodId">
                   Payment Method
                 </label>
 
-                <a routerLink="/payment-methods/new" class="new-link">
+                <a routerLink="/payment-methods/new" class="new-link me-2">
                   + New Payment Method
                 </a>
               </div>
@@ -64,8 +67,10 @@
                 <th class="col-product">Product</th>
                 <th class="col-qty">Qty</th>
                 <th class="col-price">Price</th>
-                <th class="col-price">Discount</th>
-                <th class="col-price">Tax</th>
+                <th class="col-discount-type">Disc. Type</th>
+                <th class="col-discount-val">Disc. Value</th>
+                <th class="col-discount-amt">Disc. Amt</th>
+                <th class="col-tax">Tax</th>
                 <th class="col-total">Total</th>
                 <th class="col-remove"></th>
               </tr>
@@ -74,10 +79,11 @@
               @for (row of items.controls; track $index) {
                 <tr [formGroupName]="$index">
                   <td class="col-product">
-                    <select class="form-select form-select-sm" formControlName="productId" (change)="onProductChange($index, $event)">
-                      <option [ngValue]="0">Select product</option>
-                      @for (p of allProducts(); track p.id) { <option [ngValue]="p.id">{{ p.name }} ({{ p.productCode }})</option> }
-                    </select>
+                    <app-searchable-select
+                      formControlName="productId"
+                      [options]="productOptions()"
+                      placeholder="Select product"
+                    ></app-searchable-select>
                   </td>
                   <td class="col-qty">
                     <input type="number" step="0.001" min="0" class="form-control form-control-sm" formControlName="quantity" />
@@ -85,10 +91,18 @@
                   <td class="col-price">
                     <input type="number" step="0.01" min="0" class="form-control form-control-sm" formControlName="purchasePrice" />
                   </td>
-                  <td class="col-price">
-                    <input type="number" step="0.01" min="0" class="form-control form-control-sm" formControlName="discount" />
+                  <td class="col-discount-type">
+                    <select class="form-select form-select-sm" formControlName="discountType">
+                      @for (dt of discountTypes; track dt.value) { <option [ngValue]="dt.value">{{ dt.label }}</option> }
+                    </select>
                   </td>
-                  <td class="col-price">
+                  <td class="col-discount-val">
+                    <input type="number" step="0.01" min="0" class="form-control form-control-sm" formControlName="discountValue" />
+                  </td>
+                  <td class="col-discount-amt">
+                    <span class="discount-amt-text">−{{ rowDiscountAmount($index) | number: '1.2-2' }}</span>
+                  </td>
+                  <td class="col-tax">
                     <input type="number" step="0.01" min="0" class="form-control form-control-sm" formControlName="tax" />
                   </td>
                   <td class="col-total">
@@ -112,8 +126,13 @@
         <div class="totals-panel">
           <div class="row g-3">
             <div class="col-md-4">
-              <label class="field-label" for="discount">Overall Discount</label>
-              <input id="discount" type="number" step="0.01" min="0" class="form-control" formControlName="discount" />
+              <label class="field-label">Overall Discount</label>
+              <div class="discount-cell">
+                <select class="form-select" formControlName="discountType">
+                  @for (dt of discountTypes; track dt.value) { <option [ngValue]="dt.value">{{ dt.label }}</option> }
+                </select>
+                <input type="number" step="0.01" min="0" class="form-control" formControlName="discountValue" />
+              </div>
             </div>
             <div class="col-md-4">
               <label class="field-label" for="tax">Overall Tax</label>
@@ -129,6 +148,14 @@
             <div class="summary-row">
               <span>Sub Total</span>
               <span>{{ subTotal | number: '1.2-2' }}</span>
+            </div>
+            <div class="summary-row">
+              <span>Total Discount</span>
+              <span>−{{ totalDiscountAmount | number: '1.2-2' }}</span>
+            </div>
+            <div class="summary-row">
+              <span>Total Tax</span>
+              <span>+{{ totalTaxAmount | number: '1.2-2' }}</span>
             </div>
             <div class="summary-row summary-row-total">
               <span>Grand Total</span>
