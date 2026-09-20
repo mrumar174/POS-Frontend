@@ -1,0 +1,97 @@
+<div class="container-fluid form-page">
+  <app-page-header [segments]="breadcrumbSegments"></app-page-header>
+
+  <div class="row g-4 form-layout">
+    <!-- Left: info panel -->
+    <div class="col-lg-4">
+      <div class="info-panel">
+        <div class="info-icon">
+          <i class="bi" [class.bi-pencil]="isEditMode()" [class.bi-credit-card]="!isEditMode()"></i>
+        </div>
+        <h5 class="info-title">
+          {{ isEditMode() ? 'Editing a Payment Method' : 'What is a Payment Method?' }}
+        </h5>
+        <p class="info-text">
+          @if (isEditMode()) {
+            You're updating an existing payment method. Purchases and
+            payments already recorded against it keep their original values.
+          } @else {
+            Payment methods represent how a purchase or payment was
+            settled — e.g. "Cash", "Bank Transfer", or "JazzCash".
+          }
+        </p>
+
+        <ul class="info-tips">
+          <li>
+            <i class="bi bi-check-circle-fill tip-icon"></i>
+            A payment method in use can't be deleted.
+          </li>
+          <li>
+            <i class="bi bi-check-circle-fill tip-icon"></i>
+            You can rename a payment method anytime without affecting past records.
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Right: the form -->
+    <div class="col-lg-8">
+      <div class="form-card">
+        @if (loading()) {
+          <div class="skeleton-form">
+            <div class="skeleton-line skeleton-label"></div>
+            <div class="skeleton-line skeleton-input"></div>
+          </div>
+        } @else {
+          <div class="form-header">
+            <h5 class="mb-0">{{ isEditMode() ? 'Edit Payment Method' : 'New Payment Method' }}</h5>
+            <p class="form-subtitle mb-0">
+              {{ isEditMode() ? 'Update the name for this payment method.' : 'Fill in the details below.' }}
+            </p>
+          </div>
+
+          @if (errorMessage()) {
+            <div class="alert alert-danger py-2">{{ errorMessage() }}</div>
+          }
+
+          <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+            <div class="field-group">
+              <label class="field-label" for="name">
+                Name <span class="required-mark">*</span>
+              </label>
+              <input
+                #nameInput
+                id="name"
+                type="text"
+                class="form-control"
+                [class.is-invalid]="nameControl.invalid && nameControl.touched"
+                formControlName="name"
+                placeholder="e.g. Cash, Card, JazzCash"
+                [maxlength]="nameMaxLength"
+              />
+              @if (nameControl.invalid && nameControl.touched) {
+                <div class="field-error">
+                  @if (nameControl.hasError('required')) { Name is required. }
+                  @if (nameControl.hasError('maxlength')) { Name is too long. }
+                </div>
+              }
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="btn btn-cancel" (click)="cancel()" [disabled]="saving()">
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-save" [disabled]="saving()">
+                @if (saving()) {
+                  <span class="spinner"></span> Saving...
+                } @else {
+                  {{ isEditMode() ? 'Save Changes' : 'Create Payment Method' }}
+                }
+              </button>
+            </div>
+          </form>
+        }
+      </div>
+    </div>
+  </div>
+</div>

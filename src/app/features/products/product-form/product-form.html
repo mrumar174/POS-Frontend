@@ -13,12 +13,12 @@
         </h5>
         <p class="info-text">
           @if (isEditMode()) {
-            You're updating an existing product. Stock quantities are
-            managed separately in Inventory, not on this screen.
+          You're updating an existing product. Stock quantities are
+          managed separately in Inventory, not on this screen.
           } @else {
-            Products belong to a Category and Unit, with an optional Brand.
-            Add barcodes for each pack size or supplier code this product
-            may be scanned under.
+          Products belong to a Category and Unit, with an optional Brand.
+          Add barcodes for each pack size or supplier code this product
+          may be scanned under.
           }
         </p>
 
@@ -43,244 +43,204 @@
     <div class="col-lg-8">
       <div class="form-card">
         @if (loading()) {
-          <div class="skeleton-form">
-            <div class="skeleton-line skeleton-label"></div>
-            <div class="skeleton-line skeleton-input"></div>
-            <div class="skeleton-line skeleton-label"></div>
-            <div class="skeleton-line skeleton-input"></div>
-          </div>
+        <div class="skeleton-form">
+          <div class="skeleton-line skeleton-label"></div>
+          <div class="skeleton-line skeleton-input"></div>
+          <div class="skeleton-line skeleton-label"></div>
+          <div class="skeleton-line skeleton-input"></div>
+        </div>
         } @else {
-          <div class="form-header">
-            <h5 class="mb-0">{{ isEditMode() ? 'Edit Product' : 'New Product' }}</h5>
-            <p class="form-subtitle mb-0">
-              {{ isEditMode() ? 'Update the details for this product.' : 'Fill in the details below.' }}
-            </p>
+        <div class="form-header">
+          <h5 class="mb-0">{{ isEditMode() ? 'Edit Product' : 'New Product' }}</h5>
+          <p class="form-subtitle mb-0">
+            {{ isEditMode() ? 'Update the details for this product.' : 'Fill in the details below.' }}
+          </p>
+        </div>
+
+        @if (errorMessage()) {
+        <div class="alert alert-danger py-2">{{ errorMessage() }}</div>
+        }
+
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <div class="section-label">Basic Information</div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="field-label">Product Code</label>
+              @if (isEditMode()) {
+              <div class="code-display">
+                <code>{{ productCode() }}</code>
+              </div>
+              } @else {
+              <div class="code-display code-pending">
+                <i class="bi bi-magic"></i> Will be generated automatically
+              </div>
+              }
+            </div>
+
+            <div class="col-md-6">
+              <label class="field-label" for="name">
+                Name <span class="required-mark">*</span>
+              </label>
+              <input #nameInput id="name" type="text" class="form-control"
+                [class.is-invalid]="nameControl.invalid && nameControl.touched" formControlName="name"
+                placeholder="e.g. Lays Classic 40g" [maxlength]="nameMaxLength" />
+              @if (nameControl.invalid && nameControl.touched) {
+              <div class="field-error">Name is required.</div>
+              }
+            </div>
+
+            <div class="col-md-4">
+              <div class="field-label-row">
+                <label class="field-label mb-0" for="categoryId">
+                  Category <span class="required-mark">*</span>
+                </label>
+
+                <a routerLink="/categories/new" class="new-link">
+                  + New Category
+                </a>
+              </div>
+
+              <select id="categoryId" class="form-select"
+                [class.is-invalid]="categoryIdControl.invalid && categoryIdControl.touched"
+                formControlName="categoryId">
+                <option [ngValue]="null">Select category</option>
+
+                @for (c of allCategories(); track c.id) {
+                <option [ngValue]="c.id">{{ c.name }}</option>
+                }
+              </select>
+
+              @if (categoryIdControl.invalid && categoryIdControl.touched) {
+              <div class="field-error">Category is required.</div>
+              }
+            </div>
+
+            <div class="col-md-4">
+              <div class="field-label-row">
+                <label class="field-label mb-0" for="brandId">
+                  Brand
+                </label>
+
+                <a routerLink="/brands/new" class="new-link">
+                  + New Brand
+                </a>
+              </div>
+
+              <select id="brandId" class="form-select" formControlName="brandId">
+                <option [ngValue]="null">None</option>
+
+                @for (b of allBrands(); track b.id) {
+                <option [ngValue]="b.id">{{ b.name }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="col-md-4">
+              <div class="field-label-row">
+                <label class="field-label mb-0" for="unitId">
+                  Unit <span class="required-mark">*</span>
+                </label>
+
+                <a routerLink="/units/new" class="new-link">
+                  + New Unit
+                </a>
+              </div>
+
+              <select id="unitId" class="form-select"
+                [class.is-invalid]="unitIdControl.invalid && unitIdControl.touched" formControlName="unitId">
+                <option [ngValue]="null">Select unit</option>
+
+                @for (u of allUnits(); track u.id) {
+                <option [ngValue]="u.id">
+                  {{ u.name }} ({{ u.shortName }})
+                </option>
+                }
+              </select>
+
+              @if (unitIdControl.invalid && unitIdControl.touched) {
+              <div class="field-error">Unit is required.</div>
+              }
+            </div>
           </div>
 
-          @if (errorMessage()) {
-            <div class="alert alert-danger py-2">{{ errorMessage() }}</div>
-          }
-
-          <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-            <div class="section-label">Basic Information</div>
-            <div class="row g-3">
-              <div class="col-md-6">
-                  <label class="field-label">Product Code</label>
-                  @if (isEditMode()) {
-                    <div class="code-display">
-                      <code>{{ productCode() }}</code>
-                    </div>
-                  } @else {
-                    <div class="code-display code-pending">
-                      <i class="bi bi-magic"></i> Will be generated automatically
-                    </div>
-                  }
-              </div>
-
-              <div class="col-md-6">
-                <label class="field-label" for="name">
-                  Name <span class="required-mark">*</span>
-                </label>
-                <input
-                  #nameInput
-                  id="name"
-                  type="text"
-                  class="form-control"
-                  [class.is-invalid]="nameControl.invalid && nameControl.touched"
-                  formControlName="name"
-                  placeholder="e.g. Lays Classic 40g"
-                  [maxlength]="nameMaxLength"
-                />
-                @if (nameControl.invalid && nameControl.touched) {
-                  <div class="field-error">Name is required.</div>
-                }
-              </div>
-
-              <div class="col-md-4">
-  <div class="field-label-row">
-    <label class="field-label mb-0" for="categoryId">
-      Category <span class="required-mark">*</span>
-    </label>
-
-    <a routerLink="/categories/new" class="new-link">
-      + New Category
-    </a>
-  </div>
-
-  <select
-    id="categoryId"
-    class="form-select"
-    [class.is-invalid]="categoryIdControl.invalid && categoryIdControl.touched"
-    formControlName="categoryId"
-  >
-    <option [ngValue]="null">Select category</option>
-
-    @for (c of allCategories(); track c.id) {
-      <option [ngValue]="c.id">{{ c.name }}</option>
-    }
-  </select>
-
-  @if (categoryIdControl.invalid && categoryIdControl.touched) {
-    <div class="field-error">Category is required.</div>
-  }
-</div>
-
-              <div class="col-md-4">
-  <div class="field-label-row">
-    <label class="field-label mb-0" for="brandId">
-      Brand
-    </label>
-
-    <a routerLink="/brands/new" class="new-link">
-      + New Brand
-    </a>
-  </div>
-
-  <select
-    id="brandId"
-    class="form-select"
-    formControlName="brandId"
-  >
-    <option [ngValue]="null">None</option>
-
-    @for (b of allBrands(); track b.id) {
-      <option [ngValue]="b.id">{{ b.name }}</option>
-    }
-  </select>
-</div>
-
-              <div class="col-md-4">
-  <div class="field-label-row">
-    <label class="field-label mb-0" for="unitId">
-      Unit <span class="required-mark">*</span>
-    </label>
-
-    <a routerLink="/units/new" class="new-link">
-      + New Unit
-    </a>
-  </div>
-
-  <select
-    id="unitId"
-    class="form-select"
-    [class.is-invalid]="unitIdControl.invalid && unitIdControl.touched"
-    formControlName="unitId"
-  >
-    <option [ngValue]="null">Select unit</option>
-
-    @for (u of allUnits(); track u.id) {
-      <option [ngValue]="u.id">
-        {{ u.name }} ({{ u.shortName }})
-      </option>
-    }
-  </select>
-
-  @if (unitIdControl.invalid && unitIdControl.touched) {
-    <div class="field-error">Unit is required.</div>
-  }
-</div>
-            </div>
-
-            <div class="section-label section-label-spaced">Pricing &amp; Stock</div>
-            <div class="row g-3">
-              <div class="col-md-4">
-                <label class="field-label" for="purchasePrice">
-                  Purchase Price <span class="required-mark">*</span>
-                </label>
-                <div class="input-with-prefix">
-                  <span>Rs.</span>
-                  <input
-                    id="purchasePrice"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    class="form-control"
-                    [class.is-invalid]="purchasePriceControl.invalid && purchasePriceControl.touched"
-                    formControlName="purchasePrice"
-                  />
-                </div>
-              </div>
-
-              <div class="col-md-4">
-                <label class="field-label" for="salePrice">
-                  Sale Price <span class="required-mark">*</span>
-                </label>
-                <div class="input-with-prefix">
-                  <span>Rs.</span>
-                  <input
-                    id="salePrice"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    class="form-control"
-                    [class.is-invalid]="salePriceControl.invalid && salePriceControl.touched"
-                    formControlName="salePrice"
-                  />
-                </div>
-              </div>
-
-              <div class="col-md-4">
-                <label class="field-label" for="minimumStock">Minimum Stock</label>
-                <input
-                  id="minimumStock"
-                  type="number"
-                  step="0.001"
-                  min="0"
-                  class="form-control"
-                  formControlName="minimumStock"
-                />
+          <div class="section-label section-label-spaced">Pricing &amp; Stock</div>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="field-label" for="purchasePrice">
+                Purchase Price <span class="required-mark">*</span>
+              </label>
+              <div class="input-with-prefix">
+                <span>Rs.</span>
+                <input id="purchasePrice" type="number" step="0.01" min="0" class="form-control"
+                  [class.is-invalid]="purchasePriceControl.invalid && purchasePriceControl.touched"
+                  formControlName="purchasePrice" />
               </div>
             </div>
 
-            <div class="section-label section-label-spaced">Description</div>
-            <textarea class="form-control" formControlName="description" rows="3" placeholder="Optional"></textarea>
-
-            <div class="section-label section-label-spaced">
-              Barcodes
-              <span class="barcode-count">{{ barcodes.length }}</span>
+            <div class="col-md-4">
+              <label class="field-label" for="salePrice">
+                Sale Price <span class="required-mark">*</span>
+              </label>
+              <div class="input-with-prefix">
+                <span>Rs.</span>
+                <input id="salePrice" type="number" step="0.01" min="0" class="form-control"
+                  [class.is-invalid]="salePriceControl.invalid && salePriceControl.touched"
+                  formControlName="salePrice" />
+              </div>
             </div>
-            <div formArrayName="barcodes" class="barcode-list">
-              @for (barcode of barcodes.controls; track $index) {
-                <div class="barcode-row">
-                  @if ($index === 0) {
-                    <span class="primary-tag" title="Primary barcode">
-                      <i class="bi bi-star-fill"></i>
-                    </span>
-                  } @else {
-                    <span class="primary-tag-spacer"></span>
-                  }
-                  <input
-                    type="text"
-                    class="form-control form-control-sm"
-                    [formControlName]="$index"
-                    placeholder="Scan or type a barcode"
-                  />
-                  <button type="button" class="remove-barcode-btn" (click)="removeBarcode($index)">
-                    <i class="bi bi-trash3"></i>
-                  </button>
-                </div>
+
+            <div class="col-md-4">
+              <label class="field-label" for="minimumStock">Minimum Stock</label>
+              <input id="minimumStock" type="number" step="0.001" min="0" class="form-control"
+                formControlName="minimumStock" />
+            </div>
+          </div>
+
+          <div class="section-label section-label-spaced">Description</div>
+          <textarea class="form-control" formControlName="description" rows="3" placeholder="Optional"></textarea>
+
+          <div class="section-label section-label-spaced">
+            Barcodes
+            <span class="barcode-count">{{ barcodes.length }}</span>
+          </div>
+          <div formArrayName="barcodes" class="barcode-list">
+            @for (barcode of barcodes.controls; track $index) {
+            <div class="barcode-row">
+              @if ($index === 0) {
+              <span class="primary-tag" title="Primary barcode">
+                <i class="bi bi-star-fill"></i>
+              </span>
+              } @else {
+              <span class="primary-tag-spacer"></span>
               }
-              @if (barcodes.length === 0) {
-                <div class="no-barcodes">No barcodes added yet.</div>
-              }
+              <input type="text" class="form-control form-control-sm" [formControlName]="$index"
+                placeholder="Scan or type a barcode" />
+              <button type="button" class="remove-barcode-btn" (click)="removeBarcode($index)">
+                <i class="bi bi-trash3"></i>
+              </button>
             </div>
-            <button type="button" class="add-barcode-btn" (click)="addBarcode()">
-              <i class="bi bi-plus-lg"></i> Add barcode
+            }
+            @if (barcodes.length === 0) {
+            <div class="no-barcodes">No barcodes added yet.</div>
+            }
+          </div>
+          <button type="button" class="add-barcode-btn" (click)="addBarcode()">
+            <i class="bi bi-plus-lg"></i> Add barcode
+          </button>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-cancel" (click)="cancel()" [disabled]="saving()">
+              Cancel
             </button>
-
-            <div class="form-actions">
-              <button type="button" class="btn btn-cancel" (click)="cancel()" [disabled]="saving()">
-                Cancel
-              </button>
-              <button type="submit" class="btn btn-save" [disabled]="saving()">
-                @if (saving()) {
-                  <span class="spinner"></span> Saving...
-                } @else {
-                  {{ isEditMode() ? 'Save Changes' : 'Create Product' }}
-                }
-              </button>
-            </div>
-          </form>
+            <button type="submit" class="btn btn-save" [disabled]="saving()">
+              @if (saving()) {
+              <span class="spinner"></span> Saving...
+              } @else {
+              {{ isEditMode() ? 'Save Changes' : 'Create Product' }}
+              }
+            </button>
+          </div>
+        </form>
         }
       </div>
     </div>

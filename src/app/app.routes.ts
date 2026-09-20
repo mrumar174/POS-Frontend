@@ -281,7 +281,15 @@ export const routes: Routes = [
   { path: 'suppliers', canActivate: [authGuard], loadComponent: () => import('./features/suppliers/supplier-list/supplier-list').then((m) => m.SupplierList) },
   { path: 'suppliers/new', canActivate: [authGuard], loadComponent: () => import('./features/suppliers/supplier-form/supplier-form').then((m) => m.SupplierForm) },
   { path: 'suppliers/:id/edit', canActivate: [authGuard], loadComponent: () => import('./features/suppliers/supplier-form/supplier-form').then((m) => m.SupplierForm) },
-  
+  // Payment Method
+  { path: 'payment-methods', canActivate: [authGuard], loadComponent: () => import('./features/payment-methods/payment-method-list/payment-method-list').then((m) => m.PaymentMethodList) },
+  { path: 'payment-methods/new', canActivate: [authGuard], loadComponent: () => import('./features/payment-methods/payment-method-form/payment-method-form').then((m) => m.PaymentMethodForm) },
+  { path: 'payment-methods/:id/edit', canActivate: [authGuard], loadComponent: () => import('./features/payment-methods/payment-method-form/payment-method-form').then((m) => m.PaymentMethodForm) },
+  // Purchases
+  { path: 'purchases', canActivate: [authGuard], loadComponent: () => import('./features/purchases/purchase-list/purchase-list').then((m) => m.PurchaseList) },
+  { path: 'purchases/new', canActivate: [authGuard], loadComponent: () => import('./features/purchases/purchase-form/purchase-form').then((m) => m.PurchaseForm) },
+  { path: 'purchases/:id/edit', canActivate: [authGuard], loadComponent: () => import('./features/purchases/purchase-form/purchase-form').then((m) => m.PurchaseForm) },
+
   {
     path: '**',
     redirectTo: 'login'

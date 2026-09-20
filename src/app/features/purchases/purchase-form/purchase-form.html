@@ -1,0 +1,156 @@
+<div class="container-fluid form-page">
+  <app-page-header [segments]="breadcrumbSegments"></app-page-header>
+
+  @if (loading()) {
+    <div class="skeleton-form">
+      <div class="skeleton-line skeleton-input"></div>
+      <div class="skeleton-line skeleton-input"></div>
+    </div>
+  } @else {
+    <div class="form-card">
+      <div class="form-header d-flex justify-content-between align-items-center">
+        <div>
+          <h5 class="mb-0">{{ isEditMode() ? 'Edit Purchase' : 'New Purchase' }}</h5>
+          <p class="form-subtitle mb-0">
+            {{ isEditMode() ? 'Invoice ' + existingInvoiceNo() : 'Invoice number will be generated automatically.' }}
+          </p>
+        </div>
+      </div>
+
+      @if (errorMessage()) {
+        <div class="alert alert-danger py-2">{{ errorMessage() }}</div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="section-label">Purchase Details</div>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="field-label" for="supplierId">Supplier <span class="required-mark">*</span></label>
+            <select id="supplierId" class="form-select" formControlName="supplierId">
+              <option [ngValue]="null">Select supplier</option>
+              @for (s of allSuppliers(); track s.id) { <option [ngValue]="s.id">{{ s.name }}</option> }
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="field-label" for="purchaseDate">Date <span class="required-mark">*</span></label>
+            <input id="purchaseDate" type="date" class="form-control" formControlName="purchaseDate" />
+          </div>
+          <div class="col-md-5">
+            <div class="field-label-row d-flex justify-content-between">
+                <label class="field-label" for="unitId">
+                  Payment Method
+                </label>
+
+                <a routerLink="/payment-methods/new" class="new-link">
+                  + New Payment Method
+                </a>
+              </div>
+            <select id="paymentMethodId" class="form-select" formControlName="paymentMethodId">
+              <option [ngValue]="null">None</option>
+              @for (m of allPaymentMethods(); track m.id) { <option [ngValue]="m.id">{{ m.name }}</option> }
+            </select>
+          </div>
+        </div>
+
+        <div class="section-label section-label-spaced">
+          Items
+          <span class="items-count">{{ items.length }}</span>
+        </div>
+
+        <div formArrayName="items" class="items-table-wrapper">
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th class="col-product">Product</th>
+                <th class="col-qty">Qty</th>
+                <th class="col-price">Price</th>
+                <th class="col-price">Discount</th>
+                <th class="col-price">Tax</th>
+                <th class="col-total">Total</th>
+                <th class="col-remove"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of items.controls; track $index) {
+                <tr [formGroupName]="$index">
+                  <td class="col-product">
+                    <select class="form-select form-select-sm" formControlName="productId" (change)="onProductChange($index, $event)">
+                      <option [ngValue]="0">Select product</option>
+                      @for (p of allProducts(); track p.id) { <option [ngValue]="p.id">{{ p.name }} ({{ p.productCode }})</option> }
+                    </select>
+                  </td>
+                  <td class="col-qty">
+                    <input type="number" step="0.001" min="0" class="form-control form-control-sm" formControlName="quantity" />
+                  </td>
+                  <td class="col-price">
+                    <input type="number" step="0.01" min="0" class="form-control form-control-sm" formControlName="purchasePrice" />
+                  </td>
+                  <td class="col-price">
+                    <input type="number" step="0.01" min="0" class="form-control form-control-sm" formControlName="discount" />
+                  </td>
+                  <td class="col-price">
+                    <input type="number" step="0.01" min="0" class="form-control form-control-sm" formControlName="tax" />
+                  </td>
+                  <td class="col-total">
+                    <span class="row-total">{{ rowTotal($index) | number: '1.2-2' }}</span>
+                  </td>
+                  <td class="col-remove">
+                    <button type="button" class="remove-row-btn" (click)="removeRow($index)" [disabled]="items.length === 1">
+                      <i class="bi bi-trash3"></i>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <button type="button" class="add-row-btn" (click)="addRow()">
+          <i class="bi bi-plus-lg"></i> Add item
+        </button>
+
+        <div class="totals-panel">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="field-label" for="discount">Overall Discount</label>
+              <input id="discount" type="number" step="0.01" min="0" class="form-control" formControlName="discount" />
+            </div>
+            <div class="col-md-4">
+              <label class="field-label" for="tax">Overall Tax</label>
+              <input id="tax" type="number" step="0.01" min="0" class="form-control" formControlName="tax" />
+            </div>
+            <div class="col-md-4">
+              <label class="field-label" for="paidAmount">Paid Amount</label>
+              <input id="paidAmount" type="number" step="0.01" min="0" class="form-control" formControlName="paidAmount" />
+            </div>
+          </div>
+
+          <div class="summary-rows">
+            <div class="summary-row">
+              <span>Sub Total</span>
+              <span>{{ subTotal | number: '1.2-2' }}</span>
+            </div>
+            <div class="summary-row summary-row-total">
+              <span>Grand Total</span>
+              <span>{{ grandTotal | number: '1.2-2' }}</span>
+            </div>
+            <div class="summary-row" [class.summary-due]="dueAmount > 0">
+              <span>Due</span>
+              <span>{{ dueAmount | number: '1.2-2' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-label section-label-spaced">Remarks</div>
+        <textarea class="form-control" formControlName="remarks" rows="2" placeholder="Optional"></textarea>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-cancel" (click)="cancel()" [disabled]="saving()">Cancel</button>
+          <button type="submit" class="btn btn-save" [disabled]="saving()">
+            @if (saving()) { <span class="spinner"></span> Saving... } @else { {{ isEditMode() ? 'Save Changes' : 'Record Purchase' }} }
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+</div>
