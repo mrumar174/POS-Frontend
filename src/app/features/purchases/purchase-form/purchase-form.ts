@@ -1,7 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, FormArray, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
 import { Client, CreatePurchaseDto, CreatePurchaseDetailDto, SupplierDto, PaymentMethodDto, ProductDto } from '../../../core/api/api-client';
 import { NotificationService } from '../../../shared/notification/notification.service';
 import { SearchableSelect, SearchableOption } from '../../../shared/searchable-select/searchable-select';
@@ -146,9 +145,10 @@ export class PurchaseForm implements OnInit {
           this.form.markAsPristine();
           this.loading.set(false);
         },
-        error: () => {
-          this.errorMessage.set('Could not load this purchase.');
-          this.notify.danger('Could not load this purchase.');
+        error: (err: any) => {
+          const msg = this.extractErrorMessage(err, 'Could not load this purchase.');
+          this.errorMessage.set(msg);
+          this.notify.danger(msg);
           this.loading.set(false);
         }
       });
@@ -158,7 +158,8 @@ export class PurchaseForm implements OnInit {
     }
   }
 
-  private buildRow(productId: number | null, quantity: number, purchasePrice: number, discountType: number, discountValue: number, tax: number, total: number): FormGroup {    const group = this.fb.group({
+  private buildRow(productId: number | null, quantity: number, purchasePrice: number, discountType: number, discountValue: number, tax: number, total: number): FormGroup {    
+    const group = this.fb.group({
       productId: [productId, Validators.required],
       quantity: [quantity, [Validators.required, Validators.min(0.001)]],
       purchasePrice: [purchasePrice, [Validators.required, Validators.min(0)]],
@@ -257,11 +258,11 @@ export class PurchaseForm implements OnInit {
         this.notify.success(this.isEditMode() ? 'Purchase updated successfully.' : 'Purchase recorded successfully.');
         this.router.navigate(['/purchases']);
       },
-      error: (err: HttpErrorResponse) => {
+      error: (err: any) => {
         this.saving.set(false);
-        const message = typeof err.error === 'string' ? err.error : err.error?.message ?? 'Could not save this purchase.';
-        this.errorMessage.set(message);
-        this.notify.danger(message);
+        const msg = this.extractErrorMessage(err, 'Could not save this purchase.');
+        this.errorMessage.set(msg);
+        this.notify.danger(msg);
       }
     });
   }
@@ -285,5 +286,29 @@ export class PurchaseForm implements OnInit {
     if (type === 1) return Math.round(base * (value / 100) * 100) / 100;
     if (type === 2) return Math.round(value * qty * 100) / 100;
     return value;
+  }
+
+  private extractErrorMessage(err: any, defaultMessage: string): string {
+    if (err.response) {
+      try {
+        const parsed = JSON.parse(err.response);
+        if (parsed.message) return parsed.message;
+        if (parsed.detail) return parsed.detail;
+        if (parsed.title) return parsed.title;
+      } catch {
+        if (typeof err.response === 'string' && err.response.trim() !== '') {
+          return err.response;
+        }
+      }
+    }
+
+    if (err.error) {
+      if (typeof err.error === 'string') return err.error;
+      if (err.error.message) return err.error.message;
+      if (err.error.detail) return err.error.detail;
+      if (err.error.title) return err.error.title;
+    }
+    
+    return err.message || defaultMessage;
   }
 }

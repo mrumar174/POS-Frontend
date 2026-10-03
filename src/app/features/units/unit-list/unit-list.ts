@@ -59,9 +59,10 @@ export class UnitList implements OnInit {
         this.units.set(data);
         this.loading.set(false);
       },
-      error: () => {
-        this.errorMessage.set('Could not load units.');
-        this.notify.danger('Could not load units.');
+      error: (err: any) => {
+        const msg = this.extractErrorMessage(err, 'Could not load units.');
+        this.errorMessage.set(msg);
+        this.notify.danger(msg);
         this.loading.set(false);
       }
     });
@@ -102,7 +103,10 @@ export class UnitList implements OnInit {
         this.units.update((list) => list.filter((u) => u.id !== unit.id));
         this.notify.danger(`Unit "${unit.name}" was deleted.`, 'Deleted');
       },
-      error: (err) => this.notify.danger(err.error?.message ?? `Could not delete "${unit.name}".`)
+      error: (err: any) => {
+        const msg = this.extractErrorMessage(err, `Could not delete "${unit.name}".`);
+        this.notify.danger(msg);
+      }
     });
   }
 
@@ -110,5 +114,29 @@ export class UnitList implements OnInit {
     const palette = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ef4444', '#14b8a6'];
     const code = (name ?? '?').charCodeAt(0) || 0;
     return palette[code % palette.length];
+  }
+
+  private extractErrorMessage(err: any, defaultMessage: string): string {
+    if (err.response) {
+      try {
+        const parsed = JSON.parse(err.response);
+        if (parsed.message) return parsed.message;
+        if (parsed.detail) return parsed.detail;
+        if (parsed.title) return parsed.title;
+      } catch {
+        if (typeof err.response === 'string' && err.response.trim() !== '') {
+          return err.response;
+        }
+      }
+    }
+
+    if (err.error) {
+      if (typeof err.error === 'string') return err.error;
+      if (err.error.message) return err.error.message;
+      if (err.error.detail) return err.error.detail;
+      if (err.error.title) return err.error.title;
+    }
+    
+    return err.message || defaultMessage;
   }
 }

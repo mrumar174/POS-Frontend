@@ -54,9 +54,10 @@ export class ShopList implements OnInit {
         this.shops.set(data);
         this.loading.set(false);
       },
-      error: () => {
-        this.errorMessage.set('Could not load shops.');
-        this.notify.danger('Could not load shops.');
+      error: (err: any) => {
+        const msg = this.extractErrorMessage(err, 'Could not load shops.');
+        this.errorMessage.set(msg);
+        this.notify.danger(msg);
         this.loading.set(false);
       }
     });
@@ -92,9 +93,9 @@ export class ShopList implements OnInit {
         this.shops.update((list) => list.filter((s) => s.id !== shop.id));
         this.notify.danger(`Shop "${shop.name}" was deleted.`, 'Deleted');
       },
-      error: (err) => {
-        const message = typeof err.error === 'string' ? err.error : `Could not delete "${shop.name}".`;
-        this.notify.danger(message);
+      error: (err: any) => {
+        const msg = this.extractErrorMessage(err, `Could not delete "${shop.name}".`);
+        this.notify.danger(msg);
       }
     });
   }
@@ -107,5 +108,29 @@ export class ShopList implements OnInit {
 
   initial(name?: string): string {
     return (name ?? '?').charAt(0).toUpperCase();
+  }
+
+  private extractErrorMessage(err: any, defaultMessage: string): string {
+    if (err.response) {
+      try {
+        const parsed = JSON.parse(err.response);
+        if (parsed.message) return parsed.message;
+        if (parsed.detail) return parsed.detail;
+        if (parsed.title) return parsed.title;
+      } catch {
+        if (typeof err.response === 'string' && err.response.trim() !== '') {
+          return err.response;
+        }
+      }
+    }
+
+    if (err.error) {
+      if (typeof err.error === 'string') return err.error;
+      if (err.error.message) return err.error.message;
+      if (err.error.detail) return err.error.detail;
+      if (err.error.title) return err.error.title;
+    }
+    
+    return err.message || defaultMessage;
   }
 }

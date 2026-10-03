@@ -1,7 +1,6 @@
 import { Component, OnInit, AfterViewInit, ElementRef, ViewChild, inject, signal, computed } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
 import { Client, CreateRoleDto, UpdateRoleDto, PermissionDto } from '../../../core/api/api-client';
 import { NotificationService } from '../../../shared/notification/notification.service';
 import { AlertService } from '../../../shared/alert/alert.service';
@@ -84,7 +83,7 @@ export class RoleForm implements OnInit, AfterViewInit {
 
     this.client.permissionsAll(undefined).subscribe({
       next: (data) => this.allPermissions.set(data),
-      error: () => this.notify.danger('Could not load the permission list.')
+      error: (err: any) => this.notify.danger(this.extractErrorMessage(err, 'Could not load the permission list.'))
     });
 
     const idParam = this.route.snapshot.paramMap.get('id');
@@ -106,15 +105,17 @@ export class RoleForm implements OnInit, AfterViewInit {
               .map((p) => p.id!);
             this.selectedPermissionIds.set(new Set(matchedIds));
           };
+          
           if (this.allPermissions().length) trySelect();
           else setTimeout(trySelect, 300);
 
           this.form.markAsPristine();
           this.loading.set(false);
         },
-        error: () => {
-          this.errorMessage.set('Could not load this role.');
-          this.notify.danger('Could not load this role.');
+        error: (err: any) => {
+          const msg = this.extractErrorMessage(err, 'Could not load this role.');
+          this.errorMessage.set(msg);
+          this.notify.danger(msg);
           this.loading.set(false);
         }
       });
@@ -192,11 +193,11 @@ export class RoleForm implements OnInit, AfterViewInit {
         this.notify.success(this.isEditMode() ? 'Role updated successfully.' : 'Role created successfully.');
         this.router.navigate(['/roles']);
       },
-      error: (err: HttpErrorResponse) => {
+      error: (err: any) => {
         this.saving.set(false);
-        const message = typeof err.error === 'string' ? err.error : err.error?.message ?? 'Could not save this role.';
-        this.errorMessage.set(message);
-        this.notify.danger(message);
+        const msg = this.extractErrorMessage(err, 'Could not save this role.');
+        this.errorMessage.set(msg);
+        this.notify.danger(msg);
       }
     });
   }
@@ -210,5 +211,29 @@ export class RoleForm implements OnInit, AfterViewInit {
       if (!confirmed) return;
     }
     this.router.navigate(['/roles']);
+  }
+
+  private extractErrorMessage(err: any, defaultMessage: string): string {
+    if (err.response) {
+      try {
+        const parsed = JSON.parse(err.response);
+        if (parsed.message) return parsed.message;
+        if (parsed.detail) return parsed.detail;
+        if (parsed.title) return parsed.title;
+      } catch {
+        if (typeof err.response === 'string' && err.response.trim() !== '') {
+          return err.response;
+        }
+      }
+    }
+
+    if (err.error) {
+      if (typeof err.error === 'string') return err.error;
+      if (err.error.message) return err.error.message;
+      if (err.error.detail) return err.error.detail;
+      if (err.error.title) return err.error.title;
+    }
+    
+    return err.message || defaultMessage;
   }
 }

@@ -1,7 +1,6 @@
 import { Component, OnInit, AfterViewInit, ElementRef, ViewChild, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
 import { Client, CreatePaymentMethodDto, UpdatePaymentMethodDto } from '../../../core/api/api-client';
 import { NotificationService } from '../../../shared/notification/notification.service';
 import { AlertService } from '../../../shared/alert/alert.service';
@@ -57,9 +56,10 @@ export class PaymentMethodForm implements OnInit, AfterViewInit {
           this.form.markAsPristine();
           this.loading.set(false);
         },
-        error: () => {
-          this.errorMessage.set('Could not load this payment method.');
-          this.notify.danger('Could not load this payment method.');
+        error: (err: any) => {
+          const msg = this.extractErrorMessage(err, 'Could not load this payment method.');
+          this.errorMessage.set(msg);
+          this.notify.danger(msg);
           this.loading.set(false);
         }
       });
@@ -102,11 +102,11 @@ export class PaymentMethodForm implements OnInit, AfterViewInit {
         this.notify.success(this.isEditMode() ? 'Payment method updated successfully.' : 'Payment method created successfully.');
         this.router.navigate(['/payment-methods']);
       },
-      error: (err: HttpErrorResponse) => {
+      error: (err: any) => {
         this.saving.set(false);
-        const message = typeof err.error === 'string' ? err.error : err.error?.message ?? 'Could not save this payment method.';
-        this.errorMessage.set(message);
-        this.notify.danger(message);
+        const msg = this.extractErrorMessage(err, 'Could not save this payment method.');
+        this.errorMessage.set(msg);
+        this.notify.danger(msg);
       }
     });
   }
@@ -120,5 +120,29 @@ export class PaymentMethodForm implements OnInit, AfterViewInit {
       if (!confirmed) return;
     }
     this.router.navigate(['/payment-methods']);
+  }
+
+  private extractErrorMessage(err: any, defaultMessage: string): string {
+    if (err.response) {
+      try {
+        const parsed = JSON.parse(err.response);
+        if (parsed.message) return parsed.message;
+        if (parsed.detail) return parsed.detail;
+        if (parsed.title) return parsed.title;
+      } catch {
+        if (typeof err.response === 'string' && err.response.trim() !== '') {
+          return err.response;
+        }
+      }
+    }
+
+    if (err.error) {
+      if (typeof err.error === 'string') return err.error;
+      if (err.error.message) return err.error.message;
+      if (err.error.detail) return err.error.detail;
+      if (err.error.title) return err.error.title;
+    }
+    
+    return err.message || defaultMessage;
   }
 }

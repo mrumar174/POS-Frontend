@@ -41,8 +41,16 @@ export class PurchaseList implements OnInit {
     this.loading.set(true);
     this.errorMessage.set(null);
     this.client.purchasesAll().subscribe({
-      next: (data) => { this.purchases.set(data); this.loading.set(false); },
-      error: () => { this.errorMessage.set('Could not load purchases.'); this.notify.danger('Could not load purchases.'); this.loading.set(false); }
+      next: (data) => { 
+        this.purchases.set(data); 
+        this.loading.set(false); 
+      },
+      error: (err: any) => { 
+        const msg = this.extractErrorMessage(err, 'Could not load purchases.');
+        this.errorMessage.set(msg);
+        this.notify.danger(msg); 
+        this.loading.set(false); 
+      }
     });
   }
 
@@ -63,7 +71,10 @@ export class PurchaseList implements OnInit {
         this.purchases.update((list) => list.filter((p) => p.id !== purchase.id));
         this.notify.danger(`Purchase "${purchase.invoiceNo}" was deleted.`, 'Deleted');
       },
-      error: (err) => this.notify.danger(err.error?.message ?? `Could not delete "${purchase.invoiceNo}".`)
+      error: (err: any) => {
+        const msg = this.extractErrorMessage(err, `Could not delete "${purchase.invoiceNo}".`);
+        this.notify.danger(msg);
+      }
     });
   }
 
@@ -71,5 +82,29 @@ export class PurchaseList implements OnInit {
     if ((purchase.dueAmount ?? 0) <= 0) return 'paid';
     if ((purchase.paidAmount ?? 0) > 0) return 'partial';
     return 'unpaid';
+  }
+
+  private extractErrorMessage(err: any, defaultMessage: string): string {
+    if (err.response) {
+      try {
+        const parsed = JSON.parse(err.response);
+        if (parsed.message) return parsed.message;
+        if (parsed.detail) return parsed.detail;
+        if (parsed.title) return parsed.title;
+      } catch {
+        if (typeof err.response === 'string' && err.response.trim() !== '') {
+          return err.response;
+        }
+      }
+    }
+
+    if (err.error) {
+      if (typeof err.error === 'string') return err.error;
+      if (err.error.message) return err.error.message;
+      if (err.error.detail) return err.error.detail;
+      if (err.error.title) return err.error.title;
+    }
+    
+    return err.message || defaultMessage;
   }
 }

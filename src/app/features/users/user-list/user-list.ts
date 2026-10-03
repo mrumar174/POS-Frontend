@@ -65,9 +65,10 @@ export class UserList implements OnInit {
         this.users.set(data);
         this.loading.set(false);
       },
-      error: () => {
-        this.errorMessage.set('Could not load users.');
-        this.notify.danger('Could not load users.');
+      error: (err: any) => {
+        const msg = this.extractErrorMessage(err, 'Could not load users.');
+        this.errorMessage.set(msg);
+        this.notify.danger(msg);
         this.loading.set(false);
       }
     });
@@ -108,9 +109,9 @@ export class UserList implements OnInit {
         this.users.update((list) => list.filter((u) => u.id !== user.id));
         this.notify.danger(`User "${user.userName}" was deleted.`, 'Deleted');
       },
-      error: (err) => {
-        const message = typeof err.error === 'string' ? err.error : `Could not delete "${user.userName}".`;
-        this.notify.danger(message);
+      error: (err: any) => {
+        const msg = this.extractErrorMessage(err, `Could not delete "${user.userName}".`);
+        this.notify.danger(msg);
       }
     });
   }
@@ -132,5 +133,29 @@ export class UserList implements OnInit {
     const palette = ['role-indigo', 'role-pink', 'role-amber', 'role-green', 'role-blue'];
     const code = role.charCodeAt(0) || 0;
     return palette[code % palette.length];
+  }
+
+  private extractErrorMessage(err: any, defaultMessage: string): string {
+    if (err.response) {
+      try {
+        const parsed = JSON.parse(err.response);
+        if (parsed.message) return parsed.message;
+        if (parsed.detail) return parsed.detail;
+        if (parsed.title) return parsed.title;
+      } catch {
+        if (typeof err.response === 'string' && err.response.trim() !== '') {
+          return err.response;
+        }
+      }
+    }
+
+    if (err.error) {
+      if (typeof err.error === 'string') return err.error;
+      if (err.error.message) return err.error.message;
+      if (err.error.detail) return err.error.detail;
+      if (err.error.title) return err.error.title;
+    }
+    
+    return err.message || defaultMessage;
   }
 }
