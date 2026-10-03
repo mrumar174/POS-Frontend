@@ -1,7 +1,6 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, FormArray, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
 import { Client, CreatePermissionDto } from '../../../core/api/api-client';
 import { NotificationService } from '../../../shared/notification/notification.service';
 import { AlertService } from '../../../shared/alert/alert.service';
@@ -103,11 +102,11 @@ export class PermissionForm {
         this.notify.success(`${created.length} permission${created.length === 1 ? '' : 's'} created.`);
         this.router.navigate(['/permissions']);
       },
-      error: (err: HttpErrorResponse) => {
+      error: (err: any) => {
         this.saving.set(false);
-        const message = typeof err.error === 'string' ? err.error : err.error?.message ?? 'Could not create permissions.';
-        this.errorMessage.set(message);
-        this.notify.danger(message);
+        const msg = this.extractErrorMessage(err, 'Could not create permissions.');
+        this.errorMessage.set(msg);
+        this.notify.danger(msg);
       }
     });
   }
@@ -122,5 +121,29 @@ export class PermissionForm {
       if (!confirmed) return;
     }
     this.router.navigate(['/permissions']);
+  }
+
+  private extractErrorMessage(err: any, defaultMessage: string): string {
+    if (err.response) {
+      try {
+        const parsed = JSON.parse(err.response);
+        if (parsed.message) return parsed.message;
+        if (parsed.detail) return parsed.detail;
+        if (parsed.title) return parsed.title;
+      } catch {
+        if (typeof err.response === 'string' && err.response.trim() !== '') {
+          return err.response;
+        }
+      }
+    }
+
+    if (err.error) {
+      if (typeof err.error === 'string') return err.error;
+      if (err.error.message) return err.error.message;
+      if (err.error.detail) return err.error.detail;
+      if (err.error.title) return err.error.title;
+    }
+    
+    return err.message || defaultMessage;
   }
 }

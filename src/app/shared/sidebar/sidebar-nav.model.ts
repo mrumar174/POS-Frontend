@@ -48,7 +48,9 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
     links: [
       { label: 'Suppliers', route: '/suppliers', icon: 'bi-building' },
       { label: 'Payment Methods', route: '/payment-methods', icon: 'bi-credit-card' },
-      { label: 'Purchases', route: '/purchases', icon: 'bi-receipt' }
+      { label: 'Purchases', route: '/purchases', icon: 'bi-receipt' },
+      { label: 'Purchase Returns', route: '/purchase-returns', icon: 'bi-arrow-return-left' },
+      { label: 'Supplier Payments', route: '/supplier-payments', icon: 'bi-cash-stack' }
     ]
-  },
+  }
 ];

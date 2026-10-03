@@ -59,9 +59,10 @@ export class BrandList implements OnInit {
         this.brands.set(data);
         this.loading.set(false);
       },
-      error: () => {
-        this.errorMessage.set('Could not load brands.');
-        this.notify.danger('Could not load brands.');
+      error: (err: any) => {
+        const msg = this.extractErrorMessage(err, 'Could not load brands.');
+        this.errorMessage.set(msg);
+        this.notify.danger(msg);
         this.loading.set(false);
       }
     });
@@ -102,7 +103,10 @@ export class BrandList implements OnInit {
         this.brands.update((list) => list.filter((b) => b.id !== brand.id));
         this.notify.danger(`Brand "${brand.name}" was deleted.`, 'Deleted');
       },
-      error: (err) => this.notify.danger(err.error?.message ?? `Could not delete "${brand.name}".`)
+      error: (err: any) => {
+        const msg = this.extractErrorMessage(err, `Could not delete "${brand.name}".`);
+        this.notify.danger(msg);
+      }
     });
   }
 
@@ -114,5 +118,29 @@ export class BrandList implements OnInit {
 
   initial(name?: string): string {
     return (name ?? '?').charAt(0).toUpperCase();
+  }
+
+  private extractErrorMessage(err: any, defaultMessage: string): string {
+    if (err.response) {
+      try {
+        const parsed = JSON.parse(err.response);
+        if (parsed.message) return parsed.message;
+        if (parsed.detail) return parsed.detail;
+        if (parsed.title) return parsed.title;
+      } catch {
+        if (typeof err.response === 'string' && err.response.trim() !== '') {
+          return err.response;
+        }
+      }
+    }
+
+    if (err.error) {
+      if (typeof err.error === 'string') return err.error;
+      if (err.error.message) return err.error.message;
+      if (err.error.detail) return err.error.detail;
+      if (err.error.title) return err.error.title;
+    }
+    
+    return err.message || defaultMessage;
   }
 }

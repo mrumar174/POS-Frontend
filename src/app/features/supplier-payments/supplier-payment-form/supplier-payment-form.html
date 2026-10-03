@@ -1,0 +1,189 @@
+<div class="container-fluid form-page">
+  <app-page-header [segments]="breadcrumbSegments"></app-page-header>
+
+  <div class="row g-4 form-layout">
+    <!-- Left: info panel -->
+    <div class="col-lg-4">
+      <div class="info-panel">
+        <div class="info-icon">
+          <i class="bi" [class.bi-pencil]="isEditMode()" [class.bi-cash-coin]="!isEditMode()"></i>
+        </div>
+        <h5 class="info-title">
+          {{ isEditMode() ? 'Editing a Payment' : 'Record a Supplier Payment' }}
+        </h5>
+        <p class="info-text">
+          @if (isEditMode()) {
+            You're updating this payment. If you change the linked purchase
+            or amount, the due balances on both the old and new purchase
+            are adjusted automatically.
+          } @else {
+            Select a supplier to see their unpaid or partially-paid
+            purchases. Linking a payment to a purchase updates its due
+            balance automatically.
+          }
+        </p>
+
+        @if (selectedPurchase(); as purchase) {
+          <div class="purchase-summary">
+            <div class="summary-item">
+              <span class="summary-label">Invoice</span>
+              <span class="summary-value">{{ purchase.invoiceNo }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Grand Total</span>
+              <span class="summary-value">{{ purchase.grandTotal | number: '1.2-2' }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Already Paid</span>
+              <span class="summary-value">{{ purchase.paidAmount | number: '1.2-2' }}</span>
+            </div>
+            <div class="summary-item summary-due">
+              <span class="summary-label">Due</span>
+              <span class="summary-value">{{ ((purchase.grandTotal ?? 0) - (purchase.paidAmount ?? 0)) | number: '1.2-2' }}</span>
+            </div>
+          </div>
+        }
+
+        <ul class="info-tips">
+          <li>
+            <i class="bi bi-check-circle-fill tip-icon"></i>
+            Only unpaid or partially-paid purchases appear in the dropdown.
+          </li>
+          <li>
+            <i class="bi bi-check-circle-fill tip-icon"></i>
+            You must link a purchase invoice to record a payment.
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Right: the form -->
+    <div class="col-lg-8">
+      <div class="form-card">
+        @if (loading()) {
+          <div class="skeleton-form">
+            <div class="skeleton-line skeleton-label"></div>
+            <div class="skeleton-line skeleton-input"></div>
+            <div class="skeleton-line skeleton-label"></div>
+            <div class="skeleton-line skeleton-input"></div>
+          </div>
+        } @else {
+          <div class="form-header">
+            <h5 class="mb-0">{{ isEditMode() ? 'Edit Payment' : 'New Payment' }}</h5>
+            <p class="form-subtitle mb-0">
+              {{ isEditMode() ? 'Update the details for this payment.' : 'Fill in the details below.' }}
+            </p>
+          </div>
+
+          @if (errorMessage()) {
+            <div class="alert alert-danger py-2">{{ errorMessage() }}</div>
+          }
+
+          <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+            <div class="section-label">Payment Details</div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="field-label">
+                  Supplier <span class="required-mark">*</span>
+                </label>
+                <app-searchable-select
+                  formControlName="supplierId"
+                  [options]="supplierOptions()"
+                  placeholder="Select supplier"
+                ></app-searchable-select>
+                @if (supplierIdControl.invalid && supplierIdControl.touched) {
+                  <div class="field-error">Supplier is required.</div>
+                }
+              </div>
+
+              <div class="col-md-6">
+                <label class="field-label">
+                  Purchase Invoice <span class="required-mark">*</span>
+                </label>
+                @if (loadingPurchases()) {
+                  <div class="loading-purchases"><span class="spinner-sm"></span> Loading purchases...</div>
+                } @else if (!supplierIdControl.value) {
+                  <div class="select-hint">Select a supplier first</div>
+                } @else if (purchaseOptions().length === 0) {
+                  <div class="select-hint">No unpaid purchases for this supplier</div>
+                } @else {
+                  <app-searchable-select
+                    formControlName="purchaseId"
+                    [options]="purchaseOptions()"
+                    placeholder="Select invoice"
+                  ></app-searchable-select>
+                }
+                @if (purchaseIdControl.invalid && purchaseIdControl.touched) {
+                  <div class="field-error">Purchase Invoice is required.</div>
+                }
+              </div>
+
+              <div class="col-md-4">
+                <label class="field-label" for="paymentDate">Date <span class="required-mark">*</span></label>
+                <input id="paymentDate" type="date" class="form-control" formControlName="paymentDate" />
+              </div>
+
+              <div class="col-md-4">
+                <label class="field-label" for="amount">Amount <span class="required-mark">*</span></label>
+                <div class="input-with-prefix">
+                  <span>Rs.</span>
+                  <input
+                    #amountInput
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    class="form-control"
+                    [class.is-invalid]="(amountControl.invalid || (maxPayable() !== null && amountControl.value! > maxPayable()!)) && amountControl.touched"
+                    formControlName="amount"
+                  />
+                </div>
+                @if (maxPayable() !== null) {
+                  <div class="field-hint" [class.text-danger]="amountControl.value! > maxPayable()!">
+                    Max Payable: {{ maxPayable() | number: '1.2-2' }}
+                  </div>
+                  @if (amountControl.value! > maxPayable()!) {
+                    <div class="field-error">Amount cannot exceed max payable.</div>
+                  }
+                }
+              </div>
+
+              <div class="col-md-4">
+                <label class="field-label" for="paymentMethodId">
+                  Payment Method <span class="required-mark">*</span>
+                </label>
+                <select
+                  id="paymentMethodId"
+                  class="form-select"
+                  [class.is-invalid]="paymentMethodIdControl.invalid && paymentMethodIdControl.touched"
+                  formControlName="paymentMethodId"
+                >
+                  <option [ngValue]="null">Select method</option>
+                  @for (m of allPaymentMethods(); track m.id) { <option [ngValue]="m.id">{{ m.name }}</option> }
+                </select>
+                @if (paymentMethodIdControl.invalid && paymentMethodIdControl.touched) {
+                  <div class="field-error">Payment method is required.</div>
+                }
+              </div>
+
+              <div class="col-md-6">
+                <label class="field-label" for="referenceNo" >Reference No</label>
+                <input id="referenceNo" type="text" class="form-control" formControlName="referenceNo" readonly/>
+              </div>
+            </div>
+
+            <div class="section-label section-label-spaced">Remarks</div>
+            <textarea class="form-control" formControlName="remarks" rows="2" placeholder="Optional"></textarea>
+
+            <div class="form-actions">
+              <button type="button" class="btn btn-cancel" (click)="cancel()" [disabled]="saving()">Cancel</button>
+              <button type="submit" class="btn btn-save" [disabled]="saving()">
+                @if (saving()) { <span class="spinner"></span> Saving... } @else { {{ isEditMode() ? 'Save Changes' : 'Record Payment' }} }
+              </button>
+            </div>
+          </form>
+        }
+      </div>
+    </div>
+  </div>
+</div>

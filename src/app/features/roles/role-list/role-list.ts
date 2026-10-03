@@ -61,9 +61,10 @@ export class RoleList implements OnInit {
         this.roles.set(data);
         this.loading.set(false);
       },
-      error: () => {
-        this.errorMessage.set('Could not load roles.');
-        this.notify.danger('Could not load roles.');
+      error: (err: any) => {
+        const msg = this.extractErrorMessage(err, 'Could not load roles.');
+        this.errorMessage.set(msg);
+        this.notify.danger(msg);
         this.loading.set(false);
       }
     });
@@ -104,9 +105,9 @@ export class RoleList implements OnInit {
         this.roles.update((list) => list.filter((r) => r.id !== role.id));
         this.notify.danger(`Role "${role.name}" was deleted.`, 'Deleted');
       },
-      error: (err) => {
-        const message = typeof err.error === 'string' ? err.error : `Could not delete "${role.name}".`;
-        this.notify.danger(message);
+      error: (err: any) => {
+        const msg = this.extractErrorMessage(err, `Could not delete "${role.name}".`);
+        this.notify.danger(msg);
       }
     });
   }
@@ -127,5 +128,29 @@ export class RoleList implements OnInit {
 
   initial(name?: string): string {
     return (name ?? '?').charAt(0).toUpperCase();
+  }
+
+  private extractErrorMessage(err: any, defaultMessage: string): string {
+    if (err.response) {
+      try {
+        const parsed = JSON.parse(err.response);
+        if (parsed.message) return parsed.message;
+        if (parsed.detail) return parsed.detail;
+        if (parsed.title) return parsed.title;
+      } catch {
+        if (typeof err.response === 'string' && err.response.trim() !== '') {
+          return err.response;
+        }
+      }
+    }
+
+    if (err.error) {
+      if (typeof err.error === 'string') return err.error;
+      if (err.error.message) return err.error.message;
+      if (err.error.detail) return err.error.detail;
+      if (err.error.title) return err.error.title;
+    }
+    
+    return err.message || defaultMessage;
   }
 }

@@ -1,0 +1,127 @@
+<div class="container-fluid return-page">
+  <app-page-header [segments]="['Purchasing', 'Purchase Returns']"></app-page-header>
+
+  <div class="toolbar d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <h5 class="mb-0">Purchase Returns</h5>
+      @if (!loading()) { <span class="badge count-badge">{{ totalCount() }}</span> }
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap">
+      <div class="search-box">
+        <i class="bi bi-search search-icon"></i>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Search return no..."
+          [value]="globalSearch()"
+          (input)="onGlobalSearch($event)"
+        />
+        @if (globalSearch()) { <button class="clear-btn" type="button" (click)="clearGlobalSearch()">×</button> }
+      </div>
+
+      <button type="button" class="btn btn-sm filter-toggle-btn" [class.active]="showAdvanceFilter()" (click)="toggleAdvanceFilter()">
+        <i class="bi bi-sliders"></i> Filters
+      </button>
+
+      <a routerLink="/purchase-returns/new" class="btn btn-sm btn-new">
+        <i class="bi bi-plus-lg"></i> New Return
+      </a>
+    </div>
+  </div>
+
+  @if (errorMessage()) { <div class="alert alert-danger py-2">{{ errorMessage() }}</div> }
+
+  @if (showAdvanceFilter()) {
+    <div class="advance-filter-panel mb-3">
+      <div class="row g-2">
+        <div class="col-md-4">
+          <label class="filter-label">Supplier</label>
+          <select class="form-select form-select-sm" (change)="onSupplierFilter($event)">
+            <option value="">All suppliers</option>
+            @for (s of allSuppliers(); track s.id) { <option [value]="s.id">{{ s.name }}</option> }
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="filter-label">From Date</label>
+          <input type="date" class="form-control form-control-sm" (change)="onFromDate($event)" />
+        </div>
+        <div class="col-md-3">
+          <label class="filter-label">To Date</label>
+          <input type="date" class="form-control form-control-sm" (change)="onToDate($event)" />
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button type="button" class="btn btn-sm btn-outline-secondary w-100" (click)="clearFilters()" title="Clear all">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="skeleton-list">
+      @for (i of [1,2,3,4,5]; track i) { <div class="skeleton-row"></div> }
+    </div>
+  } @else if (returns().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon"><i class="bi bi-arrow-return-left"></i></div>
+      <h6>No purchase returns found</h6>
+      <p class="text-muted">Try adjusting your filters, or record a new return.</p>
+    </div>
+  } @else {
+    <div class="table-card">
+      <div class="table-responsive">
+        <table class="return-table">
+          <thead>
+            <tr>
+              <th>Return No</th>
+              <th>Supplier</th>
+              <th>Invoice</th>
+              <th>Date</th>
+              <th class="text-end">Grand Total</th>
+              <th class="col-actions"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (purchaseReturn of returns(); track purchaseReturn.id) {
+              <tr>
+                <td><code class="return-chip">{{ purchaseReturn.returnNo }}</code></td>
+                <td class="fw-medium">{{ purchaseReturn.supplierName }}</td>
+                <td class="text-muted">
+                  @if (purchaseReturn.purchaseId) {
+                    <a [routerLink]="['/purchases', purchaseReturn.purchaseId, 'edit']" class="invoice-link">
+                      <i class="bi bi-receipt"></i> View
+                    </a>
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
+                <td class="text-muted">{{ purchaseReturn.returnDate | date: 'mediumDate' }}</td>
+                <td class="text-end price-cell">{{ purchaseReturn.grandTotal | number: '1.2-2' }}</td>
+                <td class="col-actions">
+                  <div class="row-actions">
+                    <a [routerLink]="['/purchase-returns', purchaseReturn.id, 'edit']" class="icon-btn edit-btn" title="Edit">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <button type="button" class="icon-btn delete-btn" title="Delete" (click)="remove(purchaseReturn)">
+                      <i class="bi bi-trash3"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div #scrollSentinel class="scroll-sentinel">
+      @if (loadingMore()) {
+        <div class="loading-more"><span class="spinner"></span> Loading more...</div>
+      } @else if (!hasMore()) {
+        <div class="end-message">You've reached the end — {{ totalCount() }} returns total.</div>
+      }
+    </div>
+  }
+</div>

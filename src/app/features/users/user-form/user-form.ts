@@ -1,7 +1,6 @@
 import { Component, OnInit, AfterViewInit, ElementRef, ViewChild, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
 import { Client, CreateUserDto, UpdateUserDto, RoleDto, ShopDto } from '../../../core/api/api-client';
 import { NotificationService } from '../../../shared/notification/notification.service';
 import { AlertService } from '../../../shared/alert/alert.service';
@@ -66,11 +65,12 @@ export class UserForm implements OnInit, AfterViewInit {
 
     this.client.rolesAll().subscribe({
       next: (data) => this.allRoles.set(data),
-      error: () => this.notify.danger('Could not load the role list.')
+      error: (err: any) => this.notify.danger(this.extractErrorMessage(err, 'Could not load the role list.'))
     });
+    
     this.client.shopsAll().subscribe({
       next: (data) => this.allShops.set(data),
-      error: () => this.notify.danger('Could not load the shop list.')
+      error: (err: any) => this.notify.danger(this.extractErrorMessage(err, 'Could not load the shop list.'))
     });
 
     const idParam = this.route.snapshot.paramMap.get('id');
@@ -94,15 +94,17 @@ export class UserForm implements OnInit, AfterViewInit {
             const matchedIds = this.allRoles().filter((r) => names.has(r.name!)).map((r) => r.id!);
             this.selectedRoleIds.set(new Set(matchedIds));
           };
+          
           if (this.allRoles().length) trySelectRoles();
           else setTimeout(trySelectRoles, 300);
 
           this.form.markAsPristine();
           this.loading.set(false);
         },
-        error: () => {
-          this.errorMessage.set('Could not load this user.');
-          this.notify.danger('Could not load this user.');
+        error: (err: any) => {
+          const msg = this.extractErrorMessage(err, 'Could not load this user.');
+          this.errorMessage.set(msg);
+          this.notify.danger(msg);
           this.loading.set(false);
         }
       });
@@ -167,6 +169,7 @@ export class UserForm implements OnInit, AfterViewInit {
 
     this.errorMessage.set(null);
     this.saving.set(true);
+    
     const v = this.form.getRawValue();
     const roleIds = Array.from(this.selectedRoleIds());
     const shopIds = Array.from(this.selectedShopIds());
@@ -198,11 +201,11 @@ export class UserForm implements OnInit, AfterViewInit {
         this.notify.success(this.isEditMode() ? 'User updated successfully.' : 'User created successfully.');
         this.router.navigate(['/users']);
       },
-      error: (err: HttpErrorResponse) => {
+      error: (err: any) => {
         this.saving.set(false);
-        const message = typeof err.error === 'string' ? err.error : err.error?.message ?? 'Could not save this user.';
-        this.errorMessage.set(message);
-        this.notify.danger(message);
+        const msg = this.extractErrorMessage(err, 'Could not save this user.');
+        this.errorMessage.set(msg);
+        this.notify.danger(msg);
       }
     });
   }
@@ -216,5 +219,29 @@ export class UserForm implements OnInit, AfterViewInit {
       if (!confirmed) return;
     }
     this.router.navigate(['/users']);
+  }
+
+  private extractErrorMessage(err: any, defaultMessage: string): string {
+    if (err.response) {
+      try {
+        const parsed = JSON.parse(err.response);
+        if (parsed.message) return parsed.message;
+        if (parsed.detail) return parsed.detail;
+        if (parsed.title) return parsed.title;
+      } catch {
+        if (typeof err.response === 'string' && err.response.trim() !== '') {
+          return err.response;
+        }
+      }
+    }
+
+    if (err.error) {
+      if (typeof err.error === 'string') return err.error;
+      if (err.error.message) return err.error.message;
+      if (err.error.detail) return err.error.detail;
+      if (err.error.title) return err.error.title;
+    }
+    
+    return err.message || defaultMessage;
   }
 }

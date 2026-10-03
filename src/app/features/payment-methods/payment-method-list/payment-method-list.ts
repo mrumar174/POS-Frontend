@@ -29,8 +29,16 @@ export class PaymentMethodList implements OnInit {
     this.loading.set(true);
     this.errorMessage.set(null);
     this.client.paymentMethodsAll().subscribe({
-      next: (data) => { this.methods.set(data); this.loading.set(false); },
-      error: () => { this.errorMessage.set('Could not load payment methods.'); this.notify.danger('Could not load payment methods.'); this.loading.set(false); }
+      next: (data) => {
+        this.methods.set(data);
+        this.loading.set(false);
+      },
+      error: (err: any) => {
+        const msg = this.extractErrorMessage(err, 'Could not load payment methods.');
+        this.errorMessage.set(msg);
+        this.notify.danger(msg);
+        this.loading.set(false);
+      }
     });
   }
 
@@ -43,7 +51,10 @@ export class PaymentMethodList implements OnInit {
         this.methods.update((list) => list.filter((m) => m.id !== method.id));
         this.notify.danger(`Payment method "${method.name}" was deleted.`, 'Deleted');
       },
-      error: (err) => this.notify.danger(err.error?.message ?? `Could not delete "${method.name}".`)
+      error: (err: any) => {
+        const msg = this.extractErrorMessage(err, `Could not delete "${method.name}".`);
+        this.notify.danger(msg);
+      }
     });
   }
 
@@ -55,5 +66,29 @@ export class PaymentMethodList implements OnInit {
 
   initial(name?: string): string {
     return (name ?? '?').charAt(0).toUpperCase();
+  }
+
+  private extractErrorMessage(err: any, defaultMessage: string): string {
+    if (err.response) {
+      try {
+        const parsed = JSON.parse(err.response);
+        if (parsed.message) return parsed.message;
+        if (parsed.detail) return parsed.detail;
+        if (parsed.title) return parsed.title;
+      } catch {
+        if (typeof err.response === 'string' && err.response.trim() !== '') {
+          return err.response;
+        }
+      }
+    }
+
+    if (err.error) {
+      if (typeof err.error === 'string') return err.error;
+      if (err.error.message) return err.error.message;
+      if (err.error.detail) return err.error.detail;
+      if (err.error.title) return err.error.title;
+    }
+    
+    return err.message || defaultMessage;
   }
 }
