@@ -1,0 +1,84 @@
+<div class="container-fluid form-page">
+  <app-page-header [segments]="['Tenancy', 'Company Settings']"></app-page-header>
+
+  @if (loading()) {
+    <div class="skeleton-form mt-4">
+      <div class="skeleton-line skeleton-input"></div>
+      <div class="skeleton-line skeleton-input" style="width: 50%;"></div>
+    </div>
+  } @else {
+    <div class="row g-4 mt-1">
+      <div class="col-lg-4">
+        <div class="info-panel">
+          <h5 class="info-title">Company Profile</h5>
+          <p class="info-desc">
+            These settings apply globally across all your shops and branches.
+            The company name, contact info, and headers/footers are utilized on receipts, invoices, and reports.
+          </p>
+        </div>
+      </div>
+      
+      <div class="col-lg-8">
+        <div class="form-card">
+          <div class="form-header">
+            <h5 class="mb-0">Global Settings</h5>
+          </div>
+
+          @if (errorMessage()) {
+            <div class="alert alert-danger py-2">{{ errorMessage() }}</div>
+          }
+
+          <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="field-label" for="companyName">Company Name <span class="required-mark">*</span></label>
+                <input id="companyName" type="text" class="form-control" formControlName="companyName" placeholder="e.g. My Amazing Business" />
+              </div>
+              <div class="col-md-6">
+                <label class="field-label" for="currency">Default Currency <span class="required-mark">*</span></label>
+                <input id="currency" type="text" class="form-control" formControlName="currency" placeholder="e.g. PKR, USD" />
+              </div>
+              <div class="col-md-6">
+                <label class="field-label" for="contactNo">Contact No.</label>
+                <input id="contactNo" type="text" class="form-control" formControlName="contactNo" placeholder="Phone or mobile" />
+              </div>
+              <div class="col-md-6">
+                <label class="field-label" for="email">Email</label>
+                <input id="email" type="email" class="form-control" formControlName="email" placeholder="Business email address" />
+              </div>
+              <div class="col-md-6">
+                <label class="field-label" for="taxNumber">Tax / VAT Number</label>
+                <input id="taxNumber" type="text" class="form-control" formControlName="taxNumber" placeholder="Registration #" />
+              </div>
+              <div class="col-md-6">
+                <label class="field-label" for="logoPath">Logo URL / Path</label>
+                <input id="logoPath" type="text" class="form-control" formControlName="logoPath" placeholder="/assets/logo.png" />
+              </div>
+              <div class="col-md-12">
+                <label class="field-label" for="address">Address</label>
+                <input id="address" type="text" class="form-control" formControlName="address" placeholder="Physical location" />
+              </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="field-label" for="receiptHeader">Receipt Header</label>
+                <textarea id="receiptHeader" class="form-control" formControlName="receiptHeader" rows="3" placeholder="Prints at the top of receipts"></textarea>
+              </div>
+              <div class="col-md-6">
+                <label class="field-label" for="receiptFooter">Receipt Footer</label>
+                <textarea id="receiptFooter" class="form-control" formControlName="receiptFooter" rows="3" placeholder="Prints at the bottom of receipts"></textarea>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-save" [disabled]="saving() || form.pristine">
+                @if (saving()) { <span class="spinner"></span> Saving... } @else { Save Changes }
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+</div>

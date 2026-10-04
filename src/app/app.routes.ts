@@ -297,6 +297,32 @@ export const routes: Routes = [
   { path: 'purchase-returns', canActivate: [authGuard], loadComponent: () => import('./features/purchase-returns/purchase-return-list/purchase-return-list').then((m) => m.PurchaseReturnList) },
   { path: 'purchase-returns/new', canActivate: [authGuard], loadComponent: () => import('./features/purchase-returns/purchase-return-form/purchase-return-form').then((m) => m.PurchaseReturnForm) },
   { path: 'purchase-returns/:id/edit', canActivate: [authGuard], loadComponent: () => import('./features/purchase-returns/purchase-return-form/purchase-return-form').then((m) => m.PurchaseReturnForm) },
+  // Inventory & Stock
+  { 
+    path: 'stock', 
+    canActivate: [authGuard], 
+    loadComponent: () => import('./features/stocks/stock-list/stock-list').then((m) => m.StockList) 
+  },
+  { 
+    path: 'stock-adjustments', 
+    canActivate: [authGuard], 
+    loadComponent: () => import('./features/stocks/stock-adjustment-list/stock-adjustment-list').then((m) => m.StockAdjustmentList) 
+  },
+  { 
+    path: 'stock-adjustments/new', 
+    canActivate: [authGuard], 
+    loadComponent: () => import('./features/stocks/stock-adjustment-form/stock-adjustment-form').then((m) => m.StockAdjustmentForm) 
+  },
+  { 
+    path: 'stock-adjustments/:id/edit', 
+    canActivate: [authGuard], 
+    loadComponent: () => import('./features/stocks/stock-adjustment-form/stock-adjustment-form').then((m) => m.StockAdjustmentForm) 
+  },
+  { 
+    path: 'company-settings', 
+    canActivate: [authGuard], 
+    loadComponent: () => import('./features/settings/company-settings/company-settings').then((m) => m.CompanySettingsComponent) 
+  },
   {
     path: '**',
     redirectTo: 'login'

@@ -1,0 +1,71 @@
+<div class="container-fluid list-page">
+  <app-page-header [segments]="['Inventory', 'Stock Adjustments']"></app-page-header>
+
+  <div class="toolbar d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <h5 class="mb-0">Stock Adjustments</h5>
+      @if (!loading()) { <span class="badge count-badge">{{ filteredAdjustments().length }}</span> }
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap">
+      <div class="search-box">
+        <i class="bi bi-search search-icon"></i>
+        <input type="text" class="form-control" placeholder="Search reference or reason..." [value]="globalSearch()" (input)="onGlobalSearch($event)" />
+        @if (globalSearch()) { <button class="clear-btn" type="button" (click)="clearGlobalSearch()">×</button> }
+      </div>
+      <a routerLink="/stock-adjustments/new" class="btn btn-sm btn-new">
+        <i class="bi bi-plus-lg"></i> New Adjustment
+      </a>
+    </div>
+  </div>
+
+  @if (errorMessage()) { <div class="alert alert-danger py-2">{{ errorMessage() }}</div> }
+
+  @if (loading()) {
+    <div class="skeleton-list">
+      @for (i of [1,2,3,4]; track i) { <div class="skeleton-row"></div> }
+    </div>
+  } @else if (filteredAdjustments().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon"><i class="bi bi-clipboard-check"></i></div>
+      <h6>No adjustments found</h6>
+      <p class="text-muted">Record physical counts to correct system variances.</p>
+    </div>
+  } @else {
+    <div class="table-card">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Reference</th>
+              <th>Date</th>
+              <th>Reason</th>
+              <th class="text-center">Items Count</th>
+              <th class="col-actions"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (adj of filteredAdjustments(); track adj.id) {
+              <tr>
+                <td><code class="ref-chip">{{ adj.adjustmentNo }}</code></td>
+                <td class="text-muted">{{ adj.adjustmentDate | date: 'mediumDate' }}</td>
+                <td>{{ adj.reason || '-' }}</td>
+                <td class="text-center">{{ adj.items?.length || 0 }}</td>
+                <td class="col-actions">
+                  <div class="row-actions">
+                    <a [routerLink]="['/stock-adjustments', adj.id, 'edit']" class="icon-btn edit-btn" title="Edit">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <button type="button" class="icon-btn delete-btn" title="Delete" (click)="remove(adj)">
+                      <i class="bi bi-trash3"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>
