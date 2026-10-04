@@ -38,7 +38,8 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
     icon: 'bi-building',
     links: [
       { label: 'Tenants', route: '/tenants', icon: 'bi-diagram-3' },
-      { label: 'Shops', route: '/shops', icon: 'bi-shop' }
+      { label: 'Shops', route: '/shops', icon: 'bi-shop' },
+      { label: 'Company Settings', route: '/company-settings', icon: 'bi-gear' }
     ]
   },
   // purchasing
@@ -51,6 +52,14 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
       { label: 'Purchases', route: '/purchases', icon: 'bi-receipt' },
       { label: 'Purchase Returns', route: '/purchase-returns', icon: 'bi-arrow-return-left' },
       { label: 'Supplier Payments', route: '/supplier-payments', icon: 'bi-cash-stack' }
+    ]
+  },
+  {
+    label: 'Inventory',
+    icon: 'bi-boxes',
+    links: [
+      { label: 'Stock On Hand', route: '/stock', icon: 'bi-clipboard-data' },
+      { label: 'Stock Adjustments', route: '/stock-adjustments', icon: 'bi-clipboard-check' }
     ]
   }
 ];
