@@ -82,10 +82,14 @@ export class Login implements AfterViewInit {
     });
 
     this.auth.login(dto).subscribe({
-      next: () => {
+      next: (res: any) => {
+        if (res && res.user) {
+          const displayName = res.user.fullName || res.user.userName;
+          localStorage.setItem('user_fullname', displayName);
+        }
         this.loading.set(false);
         this.notify.success('Logged in successfully.');
-        this.router.navigate(['/categories']);
+        this.router.navigate(['/dashboard']);
       },
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);

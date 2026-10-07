@@ -1,0 +1,116 @@
+<div class="container-fluid form-page">
+  <app-page-header [segments]="breadcrumbSegments"></app-page-header>
+
+  <div class="row g-4 form-layout">
+    <div class="col-lg-4">
+      <div class="info-panel">
+        <div class="info-icon"><i class="bi bi-calculator"></i></div>
+        <h5 class="info-title">Close the day</h5>
+        <p class="info-text">
+          Review the figures for the selected date, add a remark if needed, then confirm.
+          The opening balance carries over from the previous closing.
+        </p>
+        <ul class="info-tips">
+          <li><i class="bi bi-check-circle-fill tip-icon"></i> A closing is final. It can't be edited once saved.</li>
+          <li><i class="bi bi-check-circle-fill tip-icon"></i> Figures are re-checked when you confirm. If a sale or expense was recorded meanwhile, you'll be asked to review again.</li>
+          <li><i class="bi bi-check-circle-fill tip-icon"></i> Corrections require reopening the latest closing first.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+      <div class="form-card">
+        <div class="date-row">
+          <div>
+            <div class="date-heading">{{ displayDate() | date: 'fullDate' }}</div>
+            <div class="form-subtitle">{{ isToday() ? "Today's closing" : 'Closing for an earlier date' }}</div>
+          </div>
+          <div>
+            <label class="field-label" for="closing-date">Closing date</label>
+            <input id="closing-date" type="date" class="form-control date-input"
+              [value]="date()" [max]="maxDate" (change)="onDateChange($event)" [disabled]="saving()" />
+          </div>
+        </div>
+
+        @if (errorMessage()) {
+          <div class="alert alert-danger py-2">
+            {{ errorMessage() }}
+            @if (!preview() && !loading()) { <button type="button" class="btn btn-sm btn-link p-0 ms-2" (click)="loadPreview()">Retry</button> }
+          </div>
+        }
+
+        @if (loading()) {
+          <div class="summary-grid">
+            @for (i of [1,2,3,4]; track i) { <div class="skeleton-stat"></div> }
+          </div>
+        } @else if (preview(); as p) {
+          @if (p.blockedReason) {
+            <div class="notice notice-block"><i class="bi bi-lock-fill"></i><span>{{ p.blockedReason }}</span></div>
+          }
+          @if (gapDays() > 0) {
+            <div class="notice notice-warn">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+              <span>
+                {{ gapDays() }} day{{ gapDays() === 1 ? '' : 's' }} after the last closing
+                ({{ p.previousClosingDate | date: 'mediumDate' }}) {{ gapDays() === 1 ? 'was' : 'were' }} never closed. Their sales and expenses are not part of any closing.
+                <button type="button" class="btn btn-sm btn-link p-0 ms-1 align-baseline" (click)="goToOldestUnclosed()">Close the oldest one first</button>
+              </span>
+            </div>
+          }
+          @if (!p.previousClosingDate && !p.alreadyClosed) {
+            <div class="notice notice-info"><i class="bi bi-info-circle-fill"></i><span>No earlier closing found. The opening balance starts at 0.</span></div>
+          }
+
+          <div class="summary-grid">
+            <div class="stat-card">
+              <div class="stat-label"><i class="bi bi-box-arrow-in-right"></i> Opening Balance</div>
+              <div class="stat-value">{{ p.openingBalance | number: '1.2-2' }}</div>
+              <div class="stat-sub">{{ p.previousClosingDate ? 'From ' + (p.previousClosingDate | date: 'mediumDate') : 'No previous closing' }}</div>
+            </div>
+            <div class="stat-card stat-in">
+              <div class="stat-label"><i class="bi bi-graph-up-arrow"></i> Total Sales</div>
+              <div class="stat-value">{{ p.totalSales | number: '1.2-2' }}</div>
+              <div class="stat-sub">Sales dated this day</div>
+            </div>
+            <div class="stat-card stat-out">
+              <div class="stat-label"><i class="bi bi-graph-down-arrow"></i> Total Expenses</div>
+              <div class="stat-value">{{ p.totalExpenses | number: '1.2-2' }}</div>
+              <div class="stat-sub">Expenses dated this day</div>
+            </div>
+            <div class="stat-card stat-closing">
+              <div class="stat-label"><i class="bi bi-calculator"></i> Closing Balance</div>
+              <div class="stat-value">{{ p.closingBalance | number: '1.2-2' }}</div>
+              <div class="stat-sub">Opening + cash in − cash out</div>
+            </div>
+          </div>
+
+          <div class="movement">
+            <div class="movement-row">
+              <span>Cash in <small>(sales {{ p.totalSales | number: '1.2-2' }} + other {{ p.otherCashIn | number: '1.2-2' }})</small></span>
+              <strong class="text-success">{{ p.totalCashIn | number: '1.2-2' }}</strong>
+            </div>
+            <div class="movement-row">
+              <span>Cash out <small>(expenses {{ p.totalExpenses | number: '1.2-2' }} + other {{ p.otherCashOut | number: '1.2-2' }})</small></span>
+              <strong class="text-danger">{{ p.totalCashOut | number: '1.2-2' }}</strong>
+            </div>
+          </div>
+
+          <div class="mt-3">
+            <label class="field-label" for="remarks">Remarks</label>
+            <textarea id="remarks" rows="3" class="form-control" [formControl]="remarks"
+              [maxlength]="remarksMaxLength" [readonly]="!p.canClose"
+              placeholder="Optional, e.g. 'Drawer counted, all matches'"></textarea>
+            <div class="field-hint">{{ remarks.value.length }} / {{ remarksMaxLength }}</div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-cancel" (click)="cancel()" [disabled]="saving()">Back</button>
+            <button type="button" class="btn btn-save" [disabled]="!canConfirm()" (click)="confirm()">
+              @if (saving()) { <span class="spinner"></span> Saving... } @else { <i class="bi bi-lock"></i> Confirm Closing }
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

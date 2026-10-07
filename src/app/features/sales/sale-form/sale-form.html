@@ -1,0 +1,179 @@
+<div class="container-fluid pos-page">
+  <app-page-header [segments]="breadcrumbSegments"></app-page-header>
+
+  @if (loading()) {
+    <div class="skeleton-form">
+      <div class="skeleton-line skeleton-input"></div>
+      <div class="skeleton-line skeleton-input"></div>
+    </div>
+  } @else {
+    
+    @if (errorMessage()) {
+      <div class="alert alert-danger py-2 mb-3">{{ errorMessage() }}</div>
+    }
+
+    <div class="row g-3">
+      <!-- Left Column: Search & Cart -->
+      <div class="col-lg-8">
+        <div class="pos-card search-card mb-3">
+          <div class="search-header">
+            <i class="bi bi-search search-icon"></i>
+            <app-searchable-select
+              class="pos-search flex-grow-1"
+              [formControl]="productSearchControl"
+              [options]="productOptions()"
+              placeholder="Search by product name, code or scan barcode (Press Enter)"
+            ></app-searchable-select>
+          </div>
+        </div>
+
+        <div class="pos-card cart-card">
+          <div class="cart-header">
+            <h6 class="mb-0 text-uppercase fw-bold text-muted" style="font-size: 0.75rem; letter-spacing: 0.05em;">Shopping Cart</h6>
+            <span class="badge count-badge">{{ items.length }} items</span>
+          </div>
+
+          <form [formGroup]="form" id="saleForm" (ngSubmit)="submit()" novalidate>
+            <div formArrayName="items" class="items-table-wrapper">
+              <table class="items-table">
+                <thead>
+                  <tr>
+                    <th class="col-product">Product</th>
+                    <th class="col-qty text-center">Qty</th>
+                    <th class="col-price text-end">Price</th>
+                    <th class="col-disc text-center">Disc.</th>
+                    <th class="col-tax text-end">Tax</th>
+                    <th class="col-total text-end">Total</th>
+                    <th class="col-remove"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @if (items.length === 0) {
+                    <tr>
+                      <td colspan="7" class="text-center py-5 text-muted">
+                        <i class="bi bi-cart2 fs-2 d-block mb-2 text-black-50"></i>
+                        Cart is empty. Scan or search a product to begin.
+                      </td>
+                    </tr>
+                  }
+                  
+                  @for (row of items.controls; track $index) {
+                    <tr [formGroupName]="$index">
+                      <td class="col-product fw-medium">
+                        {{ row.get('productName')?.value }}
+                      </td>
+                      <td class="col-qty">
+                        <input type="number" step="0.001" min="0" class="form-control form-control-sm text-center fw-bold" formControlName="quantity" />
+                      </td>
+                      <td class="col-price">
+                        <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end" formControlName="salePrice" />
+                      </td>
+                      <td class="col-disc">
+                        <div class="d-flex gap-1">
+                          <select class="form-select form-select-sm px-1" formControlName="discountType" style="width: 50px;">
+                            @for (dt of discountTypes; track dt.value) { <option [ngValue]="dt.value">{{ dt.label }}</option> }
+                          </select>
+                          <input type="number" step="0.01" min="0" class="form-control form-control-sm text-danger text-end" formControlName="discountValue" style="width: 70px;" />
+                        </div>
+                      </td>
+                      <td class="col-tax">
+                        <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end text-primary" formControlName="tax" />
+                      </td>
+                      <td class="col-total text-end pe-3">
+                        <span class="row-total">{{ rowTotal($index) | number: '1.2-2' }}</span>
+                      </td>
+                      <td class="col-remove text-end">
+                        <button type="button" class="remove-row-btn" (click)="removeRow($index)" title="Remove item">
+                          <i class="bi bi-x-lg"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Right Column: Checkout Panel -->
+      <div class="col-lg-4">
+        <div class="pos-card checkout-card" [formGroup]="form">
+          
+          <div class="checkout-section pb-2">
+            <input type="text" class="form-control form-control-sm bg-light" formControlName="customerName" placeholder="Customer Name (Optional)" />
+          </div>
+
+          <div class="checkout-section">
+            <div class="summary-row">
+              <span class="text-muted fw-medium">Sub Total</span>
+              <span class="fw-bold fs-6">{{ subTotal | number: '1.2-2' }}</span>
+            </div>
+            
+            <div class="row g-2 mt-2">
+              <div class="col-7">
+                <label class="field-label text-muted mb-1" style="font-size: 0.7rem;">Overall Discount</label>
+                <div class="d-flex gap-1">
+                  <select class="form-select form-select-sm px-1" formControlName="discountType" style="width: 60px;">
+                    @for (dt of discountTypes; track dt.value) { <option [ngValue]="dt.value">{{ dt.label }}</option> }
+                  </select>
+                  <input type="number" step="0.01" min="0" class="form-control form-control-sm text-danger fw-medium" formControlName="discountValue" />
+                </div>
+              </div>
+              <div class="col-5">
+                <label class="field-label text-muted mb-1" style="font-size: 0.7rem;">Overall Tax</label>
+                <input type="number" step="0.01" min="0" class="form-control form-control-sm text-primary fw-medium" formControlName="tax" />
+              </div>
+            </div>
+          </div>
+
+          <div class="grand-total-box">
+            <span class="text-uppercase" style="font-size: 0.8rem; letter-spacing: 0.05em; opacity: 0.8;">Grand Total</span>
+            <div class="grand-total-amount">{{ grandTotal | number: '1.2-2' }}</div>
+          </div>
+
+          <div class="checkout-section border-top-0 pt-0">
+            <div class="mb-3">
+              <label class="field-label">Payment Method</label>
+              <select class="form-select form-select-lg" formControlName="paymentMethodId">
+                <option [ngValue]="null" disabled>Select method...</option>
+                @for (m of allPaymentMethods(); track m.id) { <option [ngValue]="m.id">{{ m.name }}</option> }
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="field-label">Paid Amount</label>
+              <input type="number" step="0.01" min="0" class="form-control form-control-lg paid-input" formControlName="paidAmount" />
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="fw-medium text-muted">Change</span>
+              <span class="fs-4 fw-bold text-success">{{ changeAmount | number: '1.2-2' }}</span>
+            </div>
+            @if (dueAmount > 0) {
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="fw-medium text-muted">Due Balance</span>
+                <span class="fs-5 fw-bold text-danger">{{ dueAmount | number: '1.2-2' }}</span>
+              </div>
+            }
+          </div>
+
+          <div class="checkout-section bg-light">
+            <label class="field-label mb-1">Sale Date & Remarks</label>
+            <input type="date" class="form-control form-control-sm mb-2" formControlName="saleDate" />
+            <textarea class="form-control form-control-sm" formControlName="remarks" rows="1" placeholder="Optional notes..."></textarea>
+          </div>
+
+          <div class="checkout-actions d-flex gap-2">
+            <button type="button" class="btn btn-light flex-grow-0 px-3" (click)="cancel()" [disabled]="saving()">
+              <i class="bi bi-trash"></i>
+            </button>
+            <button type="submit" form="saleForm" class="btn btn-checkout flex-grow-1" [disabled]="saving() || items.length === 0">
+              @if (saving()) { <span class="spinner"></span> Processing... } @else { Complete Sale <i class="bi bi-arrow-right ms-2"></i> }
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

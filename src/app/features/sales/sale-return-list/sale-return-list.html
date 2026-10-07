@@ -1,0 +1,76 @@
+<div class="container-fluid list-page">
+  <app-page-header [segments]="['Sales', 'Sale Returns']"></app-page-header>
+
+  <div class="toolbar d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <h5 class="mb-0">Sale Returns</h5>
+      @if (!loading()) { <span class="badge count-badge">{{ returns().length }}</span> }
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap align-items-center filters-group">
+      <input type="date" class="form-control form-control-sm filter-date" [(ngModel)]="fromDate" (change)="load()" title="From Date" />
+      <span class="text-muted" style="font-size: 0.8rem;">to</span>
+      <input type="date" class="form-control form-control-sm filter-date me-2" [(ngModel)]="toDate" (change)="load()" title="To Date" />
+
+      <div class="search-box">
+        <i class="bi bi-search search-icon"></i>
+        <input type="text" class="form-control form-control-sm" placeholder="Search Return No..." [(ngModel)]="searchReturnNo" (keyup.enter)="load()" />
+        @if (searchReturnNo || fromDate || toDate) { <button class="clear-btn" type="button" (click)="clearFilters()">×</button> }
+      </div>
+      
+      <a routerLink="/sale-returns/new" class="btn btn-sm btn-new ms-2">
+        <i class="bi bi-plus-lg"></i> New Return
+      </a>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="skeleton-list">
+      @for (i of [1,2,3,4]; track i) { <div class="skeleton-row"></div> }
+    </div>
+  } @else if (returns().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon"><i class="bi bi-arrow-return-left"></i></div>
+      <h6>No sale returns found</h6>
+      <p class="text-muted">Adjust your search filters or create a new return.</p>
+    </div>
+  } @else {
+    <div class="table-card">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Return No</th>
+              <th>Orig. Invoice</th>
+              <th>Date</th>
+              <th>Customer</th>
+              <th class="text-end">Refund Total</th>
+              <th class="col-actions"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (ret of returns(); track ret.id) {
+              <tr>
+                <td><code class="ref-chip">{{ ret.returnNo }}</code></td>
+                <td><span class="badge bg-light text-dark border">{{ ret.invoiceNo || 'Manual' }}</span></td>
+                <td class="text-muted">{{ ret.returnDate | date: 'mediumDate' }}</td>
+                <td>{{ ret.customerName || 'Walk-in' }}</td>
+                <td class="text-end fw-medium text-danger">{{ ret.grandTotal | number: '1.2-2' }}</td>
+                <td class="col-actions">
+                  <div class="row-actions">
+                    <a [routerLink]="['/sale-returns', ret.id, 'edit']" class="icon-btn edit-btn" title="Edit">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <button type="button" class="icon-btn delete-btn" title="Delete" (click)="remove(ret)">
+                      <i class="bi bi-trash3"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>

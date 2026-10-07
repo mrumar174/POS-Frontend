@@ -8,12 +8,18 @@ export const routes: Routes = [
   // Auth
   // =========================
 
+  // {
+  //   path: '',
+  //   redirectTo: 'login',
+  //   pathMatch: 'full'
+  // },
   {
-    path: '',
-    redirectTo: 'login',
-    pathMatch: 'full'
+    path: 'dashboard',
+    canActivate: [authGuard],
+    // Add .component to the file path here:
+    loadComponent: () =>
+      import('./features/dashboard/dashboard/dashboard').then((m) => m.DashboardComponent)
   },
-
   {
     path: 'login',loadComponent: () => import('./features/auth/login/login').then((m) => m.Login)
   },
@@ -277,6 +283,12 @@ export const routes: Routes = [
       import('./features/products/product-form/product-form')
         .then((m) => m.ProductForm)
   },
+
+  { 
+    path: 'products/barcode-print', 
+    canActivate: [authGuard], 
+    loadComponent: () => import('./features/products/barcode-print/barcode-print').then((m) => m.BarcodePrint) 
+  },
   // Supliers
   { path: 'suppliers', canActivate: [authGuard], loadComponent: () => import('./features/suppliers/supplier-list/supplier-list').then((m) => m.SupplierList) },
   { path: 'suppliers/new', canActivate: [authGuard], loadComponent: () => import('./features/suppliers/supplier-form/supplier-form').then((m) => m.SupplierForm) },
@@ -323,6 +335,45 @@ export const routes: Routes = [
     canActivate: [authGuard], 
     loadComponent: () => import('./features/settings/company-settings/company-settings').then((m) => m.CompanySettingsComponent) 
   },
+  // Sales
+  { 
+    path: 'sales', 
+    canActivate: [authGuard], 
+    loadComponent: () => import('./features/sales/sale-list/sale-list').then((m) => m.SaleList) 
+  },
+  { 
+    path: 'sales/new', 
+    canActivate: [authGuard], 
+    loadComponent: () => import('./features/sales/sale-form/sale-form').then((m) => m.SaleForm) 
+  },
+  { 
+    path: 'sales/:id/edit', 
+    canActivate: [authGuard], 
+    loadComponent: () => import('./features/sales/sale-form/sale-form').then((m) => m.SaleForm) 
+  },
+  { path: 'sale-returns', 
+    canActivate: [authGuard], 
+    loadComponent: () => import('./features/sales/sale-return-list/sale-return-list').then((m) => m.SaleReturnList) 
+  },
+  { path: 'sale-returns/new', 
+    canActivate: [authGuard], 
+    loadComponent: () => import('./features/sales/sale-return-form/sale-return-form').then((m) => m.SaleReturnForm) 
+  },
+  { path: 'sale-returns/:id/edit', 
+    canActivate: [authGuard], 
+    loadComponent: () => import('./features/sales/sale-return-form/sale-return-form').then((m) => m.SaleReturnForm) 
+  },
+  // Finance: Expense Categories
+  { path: 'expense-categories', canActivate: [authGuard], loadComponent: () => import('./features/expenses/expense-category-list/expense-category-list').then((m) => m.ExpenseCategoryList) },
+  { path: 'expense-categories/new', canActivate: [authGuard], loadComponent: () => import('./features/expenses/expense-category-form/expense-category-form').then((m) => m.ExpenseCategoryForm) },
+  { path: 'expense-categories/:id/edit', canActivate: [authGuard], loadComponent: () => import('./features/expenses/expense-category-form/expense-category-form').then((m) => m.ExpenseCategoryForm) },
+  // Finance: Expenses
+  { path: 'expenses', canActivate: [authGuard], loadComponent: () => import('./features/expenses/expense-list/expense-list').then((m) => m.ExpenseList) },
+  { path: 'expenses/new', canActivate: [authGuard], loadComponent: () => import('./features/expenses/expense-form/expense-form').then((m) => m.ExpenseForm) },
+  { path: 'expenses/:id/edit', canActivate: [authGuard], loadComponent: () => import('./features/expenses/expense-form/expense-form').then((m) => m.ExpenseForm) },
+    // Finance: Daily Cash Closing
+  { path: 'cash-closing', canActivate: [authGuard], loadComponent: () => import('./features/cash-closing/cash-closing-list/cash-closing-list').then((m) => m.CashClosingList) },
+  { path: 'cash-closing/new', canActivate: [authGuard], loadComponent: () => import('./features/cash-closing/cash-closing-form/cash-closing-form').then((m) => m.CashClosingForm) },
   {
     path: '**',
     redirectTo: 'login'

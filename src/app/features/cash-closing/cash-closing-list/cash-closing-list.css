@@ -1,0 +1,44 @@
+.list-page { padding-bottom: 2rem; }
+.count-badge { background-color: #eef2ff; color: #4f46e5; font-weight: 600; padding: 0.3rem 0.6rem; border-radius: 999px; font-size: 0.8rem; }
+.btn-new { background-color: #1c1a17; color: #fff; border-radius: 8px; font-weight: 500; display: inline-flex; align-items: center; gap: 0.4rem; }
+.btn-new:hover { background-color: #33302a; color: #fff; }
+
+.filter-panel { background: #fafaf8; border: 1px solid #ece9e1; border-radius: 10px; padding: 0.9rem 1rem; }
+.filter-label { font-size: 0.72rem; font-weight: 600; color: #8a8477; text-transform: uppercase; letter-spacing: 0.02em; margin-bottom: 0.25rem; display: block; }
+.filter-panel .form-control { border-color: #e2e0d8; border-radius: 8px; }
+
+.table-card { background: #fff; border: 1px solid #ece9e1; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.03); }
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table thead th { text-align: left; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #9a958a; background: #faf9f6; padding: 0.85rem 1.1rem; border-bottom: 1px solid #ece9e1; white-space: nowrap; }
+.data-table thead th.text-end { text-align: right; }
+.data-table tbody tr:not(:last-child) td { border-bottom: 1px solid #f2f0ea; }
+.data-table td { padding: 0.85rem 1.1rem; vertical-align: middle; }
+.data-table tbody tr.clickable { cursor: pointer; }
+.data-table tbody tr:hover { background: #fafaf8; }
+.data-table tfoot td { padding: 0.9rem 1.1rem; background: #faf9f6; border-top: 1px solid #ece9e1; }
+.total-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #9a958a; }
+.total-value { font-weight: 800; color: #1c1a17; font-family: 'SFMono-Regular', Consolas, monospace; }
+
+.col-actions { width: 70px; text-align: right; }
+.row-actions { display: flex; justify-content: flex-end; }
+.icon-btn { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 1px solid #ece9e1; background: #fff; cursor: pointer; color: #4a453d; font-size: 0.9rem; }
+.view-btn:hover { background-color: #eef2ff; color: #4338ca; border-color: #c7d2fe; }
+
+.skeleton-list { display: flex; flex-direction: column; gap: 0.6rem; }
+.skeleton-row { height: 66px; border-radius: 12px; background: linear-gradient(90deg, #f2f0ea 25%, #e9e6dd 37%, #f2f0ea 63%); background-size: 400% 100%; animation: shimmer 1.4s ease infinite; }
+@keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+.empty-state { text-align: center; padding: 4rem 1rem; }
+.empty-icon { font-size: 2.5rem; margin-bottom: 0.5rem; opacity: 0.5; color: #8a8477; }
+
+/* Detail modal (no Bootstrap JS needed) */
+.modal-overlay { position: fixed; inset: 0; background: rgba(28,26,23,0.45); display: flex; align-items: center; justify-content: center; padding: 1rem; z-index: 1050; }
+.modal-card { background: #fff; border-radius: 14px; width: 100%; max-width: 460px; max-height: calc(100vh - 2rem); overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
+.modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 1.1rem 1.25rem; border-bottom: 1px solid #f0eee7; }
+.modal-sub { font-size: 0.82rem; color: #9a958a; margin-top: 0.15rem; }
+.modal-body-custom { padding: 0.9rem 1.25rem 1.3rem; }
+.bk-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; font-size: 0.9rem; border-bottom: 1px dashed #ece9e1; }
+.bk-row.sub { padding-left: 1rem; font-size: 0.84rem; color: #6b665c; }
+.bk-row.total { font-weight: 700; border-bottom: 1px solid #d5d2c8; }
+.bk-row.final { border: none; background: #1c1a17; color: #fff; border-radius: 10px; padding: 0.8rem 1rem; margin-top: 0.8rem; font-weight: 800; }
+.bk-value { font-family: 'SFMono-Regular', Consolas, monospace; }
+.remarks-box { margin-top: 1rem; background: #fafaf8; border: 1px solid #ece9e1; border-radius: 10px; padding: 0.75rem 0.9rem; font-size: 0.86rem; color: #4a453d; white-space: pre-wrap; }

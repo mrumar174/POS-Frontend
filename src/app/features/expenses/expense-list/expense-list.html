@@ -1,0 +1,119 @@
+<div class="container-fluid list-page">
+  <app-page-header [segments]="['Finance', 'Expenses']"></app-page-header>
+
+  <div class="toolbar d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <h5 class="mb-0">Expenses</h5>
+      @if (!loading()) { <span class="badge count-badge">{{ totalCount() }}</span> }
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap">
+      <div class="search-box">
+        <i class="bi bi-search search-icon"></i>
+        <input type="text" class="form-control" placeholder="Search expense no or description..." [value]="search()" (input)="onSearch($event)" />
+        @if (search()) { <button class="clear-btn" type="button" (click)="clearSearch()">×</button> }
+      </div>
+
+      <button type="button" class="btn btn-sm filter-toggle-btn" [class.active]="showFilters()" (click)="toggleFilters()">
+        <i class="bi bi-sliders"></i> Filters
+        @if (activeFilterCount() > 0) { <span class="filter-count">{{ activeFilterCount() }}</span> }
+      </button>
+
+      <a routerLink="/expenses/new" class="btn btn-sm btn-new"><i class="bi bi-plus-lg"></i> New Expense</a>
+    </div>
+  </div>
+
+  @if (showFilters()) {
+    <div class="filter-panel mb-3">
+      <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+          <label class="filter-label">Category</label>
+          <select class="form-select form-select-sm" (change)="onCategoryChange($event)">
+            <option value="" [selected]="categoryId() === null">All categories</option>
+            @for (c of categories(); track c.id) { <option [value]="c.id" [selected]="categoryId() === c.id">{{ c.name }}</option> }
+          </select>
+        </div>
+        <div class="col-md-3 col-6">
+          <label class="filter-label">From</label>
+          <input type="date" class="form-control form-control-sm" [value]="fromDate()" [max]="toDate() || null" (change)="onFromChange($event)" />
+        </div>
+        <div class="col-md-3 col-6">
+          <label class="filter-label">To</label>
+          <input type="date" class="form-control form-control-sm" [value]="toDate()" [min]="fromDate() || null" (change)="onToChange($event)" />
+        </div>
+        <div class="col-md-2">
+          <button type="button" class="btn btn-sm btn-outline-secondary w-100" [disabled]="!hasFilters()" (click)="clearFilters()">Clear all</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (errorMessage()) { <div class="alert alert-danger py-2">{{ errorMessage() }}</div> }
+
+  @if (loading()) {
+    <div class="skeleton-list">@for (i of [1,2,3,4]; track i) { <div class="skeleton-row"></div> }</div>
+  } @else if (expenses().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon"><i class="bi bi-wallet2"></i></div>
+      <h6>No expenses found</h6>
+      <p class="text-muted">{{ hasFilters() ? 'Try adjusting your filters.' : 'Record your first expense to see it here.' }}</p>
+    </div>
+  } @else {
+    <div class="table-card">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Expense No</th>
+              <th>Date</th>
+              <th>Category</th>
+              <th>Description</th>
+              <th>Payment</th>
+              <th class="text-end">Amount</th>
+              <th class="col-actions"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (e of expenses(); track e.id) {
+              <tr>
+                <td><code class="ref-chip">{{ e.expenseNo }}</code></td>
+                <td class="text-muted">{{ e.expenseDate | date: 'mediumDate' }}</td>
+                <td><span class="cat-pill">{{ e.expenseCategoryName }}</span></td>
+                <td class="text-muted desc-cell" [title]="e.description ?? ''">{{ e.description || '—' }}</td>
+                <td class="text-muted">{{ e.paymentMethodName }}</td>
+                <td class="text-end fw-medium">{{ e.amount | number: '1.2-2' }}</td>
+                <td class="col-actions">
+                  <div class="row-actions">
+                    <a [routerLink]="['/expenses', e.id, 'edit']" class="icon-btn edit-btn" title="Edit"><i class="bi bi-pencil"></i></a>
+                    <button type="button" class="icon-btn delete-btn" title="Delete" (click)="remove(e)"><i class="bi bi-trash3"></i></button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="5" class="text-end total-label">Total{{ hasFilters() ? ' (filtered)' : '' }}</td>
+              <td class="text-end total-value">{{ totalAmount() | number: '1.2-2' }}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Infinite scroll: when this element nears the viewport, the next page loads -->
+    <div #sentinel class="scroll-sentinel"></div>
+
+    <div class="load-more-status">
+      @if (loadingMore()) {
+        <span class="mini-spinner"></span> Loading more...
+      } @else if (loadMoreFailed()) {
+        <span class="text-danger">Couldn't load more expenses.</span>
+        <button type="button" class="btn btn-sm btn-link p-0 ms-1" (click)="retryLoadMore()">Retry</button>
+      } @else if (!hasMore()) {
+        Showing all {{ totalCount() }} expense{{ totalCount() === 1 ? '' : 's' }}.
+      }
+    </div>
+  }
+</div>

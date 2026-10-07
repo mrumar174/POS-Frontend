@@ -1,0 +1,79 @@
+<div class="container-fluid list-page">
+  <app-page-header [segments]="['Sales', 'Sales History']"></app-page-header>
+
+  <div class="toolbar d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <h5 class="mb-0">Sales History</h5>
+      @if (!loading()) { <span class="badge count-badge">{{ filteredSales().length }}</span> }
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap">
+      <div class="search-box">
+        <i class="bi bi-search search-icon"></i>
+        <input type="text" class="form-control" placeholder="Search invoice no..." [value]="globalSearch()" (input)="onGlobalSearch($event)" />
+        @if (globalSearch()) { <button class="clear-btn" type="button" (click)="clearGlobalSearch()">×</button> }
+      </div>
+      <a routerLink="/sales/new" class="btn btn-sm btn-new">
+        <i class="bi bi-cart-plus"></i> Point of Sale
+      </a>
+    </div>
+  </div>
+
+  @if (errorMessage()) { <div class="alert alert-danger py-2">{{ errorMessage() }}</div> }
+
+  @if (loading()) {
+    <div class="skeleton-list">
+      @for (i of [1,2,3,4]; track i) { <div class="skeleton-row"></div> }
+    </div>
+  } @else if (filteredSales().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon"><i class="bi bi-receipt"></i></div>
+      <h6>No sales found</h6>
+      <p class="text-muted">Start selling products to see history here.</p>
+    </div>
+  } @else {
+    <div class="table-card">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Invoice</th>
+              <th>Date</th>
+              <th class="text-end">Grand Total</th>
+              <th class="text-end">Paid</th>
+              <th class="text-end">Due</th>
+              <th class="text-center">Status</th>
+              <th class="col-actions"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (sale of filteredSales(); track sale.id) {
+              <tr>
+                <td><code class="ref-chip">{{ sale.invoiceNo }}</code></td>
+                <td class="text-muted">{{ sale.saleDate | date: 'mediumDate' }}</td>
+                <td class="text-end fw-medium">{{ sale.grandTotal | number: '1.2-2' }}</td>
+                <td class="text-end text-muted">{{ sale.paidAmount | number: '1.2-2' }}</td>
+                <td class="text-end text-danger">{{ sale.dueAmount | number: '1.2-2' }}</td>
+                <td class="text-center">
+                  <span class="status-pill" [class]="'status-' + paymentStatus(sale)">
+                    {{ paymentStatus(sale) === 'paid' ? 'Paid' : paymentStatus(sale) === 'partial' ? 'Partial' : 'Unpaid' }}
+                  </span>
+                </td>
+                <td class="col-actions">
+                  <div class="row-actions">
+                    <a [routerLink]="['/sales', sale.id, 'edit']" class="icon-btn edit-btn" title="Edit">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <button type="button" class="icon-btn delete-btn" title="Delete" (click)="remove(sale)">
+                      <i class="bi bi-trash3"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>

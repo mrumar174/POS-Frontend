@@ -1,0 +1,142 @@
+<div class="container-fluid print-page no-print-section">
+  <app-page-header [segments]="['Catalog', 'Print Barcodes']"></app-page-header>
+
+  <div class="row g-3">
+    <!-- Left Column: Product Selection -->
+    <div class="col-lg-7">
+      <div class="settings-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="mb-0 fw-bold text-uppercase text-muted" style="font-size: 0.8rem; letter-spacing: 0.05em;">Select Products</h6>
+          <div class="search-box">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" class="form-control form-control-sm" placeholder="Search product..." [value]="globalSearch()" (input)="onGlobalSearch($event)" />
+            @if (globalSearch()) { <button class="clear-btn" type="button" (click)="clearGlobalSearch()">×</button> }
+          </div>
+        </div>
+
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 40px;"></th>
+                <th>Product</th>
+                <th>Barcode</th>
+                <th style="width: 100px;">Copies</th>
+              </tr>
+            </thead>
+            <tbody>
+              @if (loading()) {
+                <tr><td colspan="4" class="text-center py-4 text-muted">Loading products...</td></tr>
+              } @else {
+                @for (p of filteredProducts(); track p.id) {
+                  <tr>
+                    <td>
+                      <input type="checkbox" class="form-check-input" [(ngModel)]="p.selected" />
+                    </td>
+                    <td>
+                      <div class="fw-medium text-dark">{{ p.name }}</div>
+                      <div class="text-muted" style="font-size: 0.75rem;">{{ p.productCode }}</div>
+                    </td>
+                    <td>
+                      @if (p.barcodes && p.barcodes.length > 0) {
+                        <span class="badge bg-light text-dark border"><i class="bi bi-upc-scan me-1"></i> Ready</span>
+                      } @else {
+                        <button type="button" class="btn btn-sm btn-outline-primary" style="font-size: 0.75rem;" (click)="generateBarcode(p)" [disabled]="generatingId() === p.id">
+                          @if (generatingId() === p.id) { <span class="spinner"></span> } @else { Generate }
+                        </button>
+                      }
+                    </td>
+                    <td>
+                      <input type="number" min="1" class="form-control form-control-sm text-center" [(ngModel)]="p.copies" [disabled]="!p.selected" />
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mt-3 text-end">
+          <button type="button" class="btn btn-dark" (click)="addToQueue()">
+            <i class="bi bi-plus-lg me-1"></i> Add to Print Queue
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Print Queue & Settings -->
+    <div class="col-lg-5">
+      <div class="settings-card">
+        <h6 class="mb-3 fw-bold text-uppercase text-muted" style="font-size: 0.8rem; letter-spacing: 0.05em;">Print Settings</h6>
+        
+        <div class="row g-2 mb-3">
+          <div class="col-sm-6">
+            <label class="form-label" style="font-size: 0.8rem; font-weight: 600;">Label Size Preset</label>
+            <select class="form-select form-select-sm" [(ngModel)]="selectedPreset">
+              @for (preset of presets; track preset.id) {
+                <option [ngValue]="preset">{{ preset.label }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-sm-6 d-flex align-items-end pb-1">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="showBorder" [(ngModel)]="showBorder">
+              <label class="form-check-label" for="showBorder" style="font-size: 0.85rem;">
+                Show cutting borders
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <hr class="my-3 border-light" />
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="mb-0 fw-bold text-uppercase text-muted" style="font-size: 0.8rem; letter-spacing: 0.05em;">Queue Preview ({{ printQueue().length }})</h6>
+          <div>
+            @if (printQueue().length > 0) {
+              <button class="btn btn-sm btn-light text-danger me-2" (click)="clearQueue()">Clear</button>
+            }
+            <button class="btn btn-sm btn-primary px-3" [disabled]="printQueue().length === 0" (click)="print()">
+              <i class="bi bi-printer me-1"></i> Print
+            </button>
+          </div>
+        </div>
+
+        <div class="queue-preview-container">
+          @if (printQueue().length === 0) {
+            <div class="text-center py-5 text-muted">
+              <i class="bi bi-inbox fs-1 mb-2 d-block opacity-50"></i>
+              Queue is empty. Select products and add them to the queue.
+            </div>
+          } @else {
+            <div class="preview-grid" [class]="selectedPreset().css" [class.show-borders]="showBorder()">
+              @for (item of printQueue(); track item.uid; let i = $index) {
+                <div class="preview-label-wrapper" title="Click to remove" (click)="removeFromQueue(i)">
+                  <app-barcode-render 
+                    [value]="item.barcodeValue" 
+                    [productName]="item.productName" 
+                    [price]="item.price">
+                  </app-barcode-render>
+                  <div class="remove-overlay"><i class="bi bi-trash"></i></div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ACTUAL PRINT DOM: Only visible during @media print -->
+<div class="print-only-section" [class]="selectedPreset().css" [class.show-borders]="showBorder()">
+  @for (item of printQueue(); track item.uid) {
+    <div class="physical-label">
+      <app-barcode-render 
+        [value]="item.barcodeValue" 
+        [productName]="item.productName" 
+        [price]="item.price">
+      </app-barcode-render>
+    </div>
+  }
+</div>
