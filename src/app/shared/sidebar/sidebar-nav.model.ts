@@ -11,6 +11,13 @@ export interface SidebarGroup {
 }
 
 export const SIDEBAR_GROUPS: SidebarGroup[] = [
+  {
+    label: 'Overview',
+    icon: 'bi-speedometer2',
+    links: [
+      { label: 'Dashboard', route: '/dashboard', icon: 'bi-speedometer2' }
+    ]
+  },
   // Catalog
   {
     label: 'Catalog',
@@ -19,7 +26,8 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
       { label: 'Categories', route: '/categories', icon: 'bi-tags' },
       { label: 'Brands', route: '/brands', icon: 'bi-award' },
       { label: 'Units', route: '/units', icon: 'bi-rulers' },
-      { label: 'Products', route: '/products', icon: 'bi-box-seam' }
+      { label: 'Products', route: '/products', icon: 'bi-box-seam' },
+      { label: 'Print Barcodes', route: '/products/barcode-print', icon: 'bi-upc-scan' },
     ]
   },
   // Identity & Access
@@ -61,5 +69,25 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
       { label: 'Stock On Hand', route: '/stock', icon: 'bi-clipboard-data' },
       { label: 'Stock Adjustments', route: '/stock-adjustments', icon: 'bi-clipboard-check' }
     ]
-  }
+  },
+  // Sales
+  {
+    label: 'Sales',
+    icon: 'bi-cart',
+    links: [
+      { label: 'New Sale (POS)', route: '/sales/new', icon: 'bi-cart-plus' },
+      { label: 'Sales History', route: '/sales', icon: 'bi-receipt' },
+      { label: 'Sale Returns', route: '/sale-returns', icon: 'bi-arrow-return-left' }
+    ]
+  },
+    // Finance
+  {
+    label: 'Finance',
+    icon: 'bi-wallet2',
+    links: [
+      { label: 'Expense Categories', route: '/expense-categories', icon: 'bi-tags' },
+      { label: 'Expenses', route: '/expenses', icon: 'bi-wallet2' },
+      { label: 'Daily Cash Closing', route: '/cash-closing', icon: 'bi-calculator' }
+    ]
+  },
 ];

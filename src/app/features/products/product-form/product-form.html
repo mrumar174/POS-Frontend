@@ -224,9 +224,21 @@
             <div class="no-barcodes">No barcodes added yet.</div>
             }
           </div>
-          <button type="button" class="add-barcode-btn" (click)="addBarcode()">
-            <i class="bi bi-plus-lg"></i> Add barcode
-          </button>
+          
+          <div class="d-flex align-items-center gap-2 mt-2">
+            <button type="button" class="add-barcode-btn m-0" (click)="addBarcode()">
+              <i class="bi bi-plus-lg"></i> Add barcode
+            </button>
+            
+            @if (isEditMode()) {
+              <button type="button" class="btn btn-sm btn-outline-primary" 
+                      (click)="generateBarcode()" 
+                      [disabled]="hasExistingBarcodes"
+                      [title]="hasExistingBarcodes ? 'This product already has a barcode.' : 'Auto-generate a new barcode based on the Product Code.'">
+                <i class="bi bi-magic me-1"></i> Auto-Generate
+              </button>
+            }
+          </div>
 
           <div class="form-actions">
             <button type="button" class="btn btn-cancel" (click)="cancel()" [disabled]="saving()">

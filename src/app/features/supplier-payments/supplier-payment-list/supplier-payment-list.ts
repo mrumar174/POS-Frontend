@@ -88,7 +88,7 @@ export class SupplierPaymentList implements OnInit, AfterViewInit, OnDestroy {
     const to = this.toDate() ? new Date(this.toDate()) : undefined;
 
     this.client
-      .search3(
+      .search4( // <-- CHANGED from search3 to search4
         this.supplierFilter() ?? undefined, // supplierId
         undefined,                          // purchaseId (not used in list view)
         this.globalSearch() || undefined,   // paymentNo

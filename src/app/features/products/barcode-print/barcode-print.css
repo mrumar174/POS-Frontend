@@ -1,0 +1,70 @@
+.print-page { padding-bottom: 2rem; }
+.settings-card { background: #fff; border: 1px solid #ece9e1; border-radius: 12px; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.02); height: 100%; }
+
+.search-box { position: relative; width: 200px; }
+.search-box input { padding-left: 2rem; padding-right: 1.5rem; border-color: #e2e0d8; }
+.search-icon { position: absolute; left: 0.6rem; top: 50%; transform: translateY(-50%); font-size: 0.8rem; color: #a5a095; }
+.clear-btn { position: absolute; right: 0.4rem; top: 50%; transform: translateY(-50%); border: none; background: none; font-size: 1rem; color: #999; cursor: pointer; }
+
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table thead th { position: sticky; top: 0; background: #fff; z-index: 1; font-size: 0.7rem; text-transform: uppercase; color: #9a958a; padding: 0.5rem; border-bottom: 1px solid #ece9e1; box-shadow: 0 1px 0 #ece9e1; }
+.data-table td { padding: 0.5rem; vertical-align: middle; border-bottom: 1px solid #f7f6f3; font-size: 0.85rem; }
+.data-table tbody tr:hover { background: #fafaf8; }
+
+.spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(79, 70, 229, 0.3); border-top-color: #4f46e5; border-radius: 50%; animation: spin 0.6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.queue-preview-container { background: #faf9f6; border-radius: 8px; padding: 1rem; min-height: 250px; border: 1px dashed #d5d2c8; max-height: 400px; overflow-y: auto; }
+
+/* Preview Grid Mechanics */
+.preview-grid { display: grid; justify-content: center; }
+.preview-label-wrapper { position: relative; background: #fff; cursor: pointer; overflow: hidden; transition: transform 0.15s; }
+.preview-label-wrapper:hover { transform: scale(1.02); }
+.remove-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(220, 53, 69, 0.8); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; opacity: 0; transition: opacity 0.15s; }
+.preview-label-wrapper:hover .remove-overlay { opacity: 1; }
+
+/* Grid Presets (Screen Preview) */
+.preset-small { grid-template-columns: repeat(auto-fill, 40mm); gap: 2mm; }
+.preset-medium { grid-template-columns: repeat(auto-fill, 50mm); gap: 2mm; }
+.preset-large { grid-template-columns: repeat(auto-fill, 60mm); gap: 2mm; }
+
+.preset-small .preview-label-wrapper, .preset-small .physical-label { width: 40mm; height: 25mm; }
+.preset-medium .preview-label-wrapper, .preset-medium .physical-label { width: 50mm; height: 30mm; }
+.preset-large .preview-label-wrapper, .preset-large .physical-label { width: 60mm; height: 40mm; }
+
+.show-borders .preview-label-wrapper, .show-borders .physical-label { border: 1px dashed #ccc; }
+
+/* By default, hide physical print section on screen */
+.print-only-section { display: none; }
+
+/* =========================================
+   CRITICAL PRINT STYLES
+   ========================================= */
+@media print {
+  @page { margin: 0; size: auto; }
+  
+  body, html { margin: 0; padding: 0; background: #fff; }
+  
+  /* Hide the entire Angular layout shell */
+  app-root > *:not(router-outlet), 
+  .sidebar, .navbar, .page-header, .no-print-section { 
+    display: none !important; 
+  }
+  
+  /* Show only the grid wrapper */
+  .print-only-section { 
+    display: grid !important; 
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    /* Maintain the preset gaps for continuous roll printers or grid sheets */
+  }
+
+  .physical-label {
+    background: #fff;
+    overflow: hidden;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    box-sizing: border-box;
+  }
+}

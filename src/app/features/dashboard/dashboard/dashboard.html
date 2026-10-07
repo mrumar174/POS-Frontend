@@ -1,0 +1,234 @@
+<div class="container-fluid dashboard-page">
+
+  <!-- Greeting Bar & Quick Actions -->
+  <div class="greeting-bar d-flex justify-content-between align-items-end flex-wrap gap-3 mb-4">
+    <div>
+      <div class="date-text text-muted mb-1"><i class="bi bi-calendar3 me-1"></i> {{ currentDate | date:'EEEE, MMMM d, y' }}</div>
+      <h3 class="greeting-text mb-0">{{ getGreeting() }}, <span class="fw-bold">{{ userName }}</span></h3>
+    </div>
+    
+    <div class="quick-actions d-flex gap-2">
+      <a routerLink="/sales/new" class="btn btn-action btn-primary"><i class="bi bi-cart-plus me-1"></i> New Sale</a>
+      <a routerLink="/purchases/new" class="btn btn-action btn-light"><i class="bi bi-truck me-1"></i> Purchase</a>
+      <a routerLink="/products/new" class="btn btn-action btn-light"><i class="bi bi-box-seam me-1"></i> Product</a>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="row g-3 mb-4">
+      <!-- Changed from col-lg-2 to col-lg -->
+      @for (i of [1,2,3,4,5]; track i) { 
+        <div class="col-sm-6 col-lg">
+          <div class="dash-card skeleton-card"></div>
+        </div>
+      }
+    </div>
+    <!-- ... rest of skeleton ... -->
+  } @else if (error()) {
+    <!-- ... error state ... -->
+  } @else if (data()) {
+    @let d = data()!;
+    @let kpi = d.kpis!;
+
+    <!-- KPI Row -->
+    <div class="row g-3 mb-4">
+      
+      <!-- Card 1 -->
+      <div class="col-sm-6 col-lg">
+        <div class="dash-card kpi-card">
+          <div class="kpi-icon text-primary bg-primary-subtle"><i class="bi bi-cash-stack"></i></div>
+          <div class="kpi-value">{{ kpi.todaySales | number:'1.2-2' }}</div>
+          <div class="kpi-label">Today's Sales</div>
+          <div class="kpi-trend" [class.text-success]="(kpi.todaySalesChangePercent ?? 0) >= 0" [class.text-danger]="(kpi.todaySalesChangePercent ?? 0) < 0">
+            <i class="bi" [class.bi-arrow-up-right]="(kpi.todaySalesChangePercent ?? 0) >= 0" [class.bi-arrow-down-right]="(kpi.todaySalesChangePercent ?? 0) < 0"></i>
+            {{ kpi.todaySalesChangePercent | number:'1.0-1' }}% vs yest
+          </div>
+        </div>
+      </div>
+      
+      <!-- Card 2 -->
+      <div class="col-sm-6 col-lg">
+        <div class="dash-card kpi-card">
+          <div class="kpi-icon text-success bg-success-subtle"><i class="bi bi-graph-up"></i></div>
+          <div class="kpi-value">{{ kpi.thisMonthSales | number:'1.2-2' }}</div>
+          <div class="kpi-label">This Month Sales</div>
+          <div class="kpi-trend" [class.text-success]="(kpi.monthSalesChangePercent ?? 0) >= 0" [class.text-danger]="(kpi.monthSalesChangePercent ?? 0) < 0">
+            <i class="bi" [class.bi-arrow-up-right]="(kpi.monthSalesChangePercent ?? 0) >= 0" [class.bi-arrow-down-right]="(kpi.monthSalesChangePercent ?? 0) < 0"></i>
+            {{ kpi.monthSalesChangePercent | number:'1.0-1' }}% vs last
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="col-sm-6 col-lg">
+        <div class="dash-card kpi-card">
+          <div class="kpi-icon text-info bg-info-subtle"><i class="bi bi-piggy-bank"></i></div>
+          <div class="kpi-value">{{ kpi.thisMonthProfit | number:'1.2-2' }}</div>
+          <div class="kpi-label">Month Profit (Est)</div>
+        </div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="col-sm-6 col-lg">
+        <div class="dash-card kpi-card clickable" routerLink="/stock">
+          <div class="kpi-icon text-warning bg-warning-subtle"><i class="bi bi-exclamation-circle"></i></div>
+          <div class="kpi-value text-warning">{{ kpi.lowStockCount }}</div>
+          <div class="kpi-label">Low Stock Items</div>
+          <div class="kpi-trend text-danger"><i class="bi bi-x-circle"></i> {{ kpi.outOfStockCount }} out of stock</div>
+        </div>
+      </div>
+
+      <!-- Card 5 -->
+      <div class="col-sm-6 col-lg">
+        <div class="dash-card kpi-card clickable" routerLink="/supplier-payments">
+          <div class="kpi-icon text-danger bg-danger-subtle"><i class="bi bi-wallet2"></i></div>
+          <div class="kpi-value text-danger">{{ kpi.totalSupplierDue | number:'1.0-0' }}</div>
+          <div class="kpi-label">Supplier Payables</div>
+          <div class="kpi-trend text-muted"><i class="bi bi-building"></i> Across {{ kpi.suppliersWithDueCount }} suppliers</div>
+        </div>
+      </div>
+
+      <!-- Gracefully optional Expenses Card (Card 6) -->
+      @if (kpi.todayExpenses !== null && kpi.todayExpenses !== undefined) {
+        <div class="col-sm-6 col-lg">
+          <div class="dash-card kpi-card">
+            <div class="kpi-icon text-secondary bg-secondary-subtle"><i class="bi bi-receipt-cutoff"></i></div>
+            <div class="kpi-value">{{ kpi.todayExpenses | number:'1.2-2' }}</div>
+            <div class="kpi-label">Today's Expenses</div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="row g-3 mb-4">
+      <div class="col-lg-8">
+        <div class="dash-card chart-card">
+          <h6 class="card-title">Sales Trend (Last 30 Days)</h6>
+          <div class="chart-container">
+            @if(d.salesTrend?.length) {
+              <canvas baseChart [data]="trendChartData" [options]="trendChartOptions" type="line"></canvas>
+            } @else { <div class="empty-chart">No data available</div> }
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="dash-card chart-card">
+          <h6 class="card-title">Sales by Category (Month)</h6>
+          <div class="chart-container">
+            @if(d.salesByCategory?.length) {
+              <canvas baseChart [data]="categoryChartData" [options]="doughnutOptions" type="doughnut"></canvas>
+            } @else { <div class="empty-chart">No data available</div> }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="row g-3 mb-4">
+      <div class="col-lg-6">
+        <div class="dash-card chart-card">
+          <h6 class="card-title">Top Products by Revenue (Month)</h6>
+          <div class="chart-container">
+            @if(d.topProducts?.length) {
+              <canvas baseChart [data]="productsChartData" [options]="productsChartOptions" type="bar"></canvas>
+            } @else { <div class="empty-chart">No data available</div> }
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="dash-card chart-card">
+          <h6 class="card-title">Today's Payment Methods</h6>
+          <div class="chart-container">
+            @if(d.todayPaymentMethodBreakdown?.length) {
+              <canvas baseChart [data]="paymentChartData" [options]="doughnutOptions" type="doughnut"></canvas>
+            } @else { <div class="empty-chart">No transactions today</div> }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity Lists Row -->
+    <div class="row g-3">
+      <!-- Recent Sales -->
+      <div class="col-lg-4">
+        <div class="dash-card list-card">
+          <div class="list-header d-flex justify-content-between align-items-center">
+            <h6 class="card-title mb-0">Recent Sales</h6>
+            <a routerLink="/sales" class="view-all-link">View All</a>
+          </div>
+          <div class="list-body">
+            @if (d.recentSales && d.recentSales.length > 0) {
+              @for (s of d.recentSales; track s.saleId) {
+                <div class="activity-row" [routerLink]="['/sales', s.saleId, 'edit']">
+                  <div class="act-icon bg-light"><i class="bi bi-receipt text-secondary"></i></div>
+                  <div class="act-content">
+                    <div class="act-title">{{ s.invoiceNo }} <span class="badge bg-light text-dark ms-1 border">{{ s.paymentMethodName }}</span></div>
+                    <div class="act-sub">{{ s.customerName || 'Walk-in Customer' }} • {{ s.saleDate | date:'shortTime' }}</div>
+                  </div>
+                  <div class="act-val fw-bold">{{ s.grandTotal | number:'1.0-2' }}</div>
+                </div>
+              }
+            } @else {
+              <div class="empty-list-state"><i class="bi bi-cart-x mb-2 d-block fs-3"></i>No sales yet today.</div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Low Stock Alerts -->
+      <div class="col-lg-4">
+        <div class="dash-card list-card">
+          <div class="list-header d-flex justify-content-between align-items-center">
+            <h6 class="card-title mb-0">Low Stock Alerts</h6>
+            <a routerLink="/stock" class="view-all-link">View Inventory</a>
+          </div>
+          <div class="list-body">
+            @if (d.lowStockAlerts && d.lowStockAlerts.length > 0) {
+              @for (item of d.lowStockAlerts; track item.productId) {
+                <div class="activity-row">
+                  <div class="act-icon" [class.bg-danger-subtle]="(item.quantityOnHand ?? 0) <= 0" [class.bg-warning-subtle]="(item.quantityOnHand ?? 0) > 0">
+                    <i class="bi bi-box-seam" [class.text-danger]="(item.quantityOnHand ?? 0) <= 0" [class.text-warning]="(item.quantityOnHand ?? 0) > 0"></i>
+                  </div>
+                  <div class="act-content">
+                    <div class="act-title text-truncate" style="max-width: 180px;">{{ item.productName }}</div>
+                    <div class="act-sub text-danger">Min required: {{ item.minimumStock }}</div>
+                  </div>
+                  <div class="act-val fw-bold text-danger">{{ item.quantityOnHand }} left</div>
+                </div>
+              }
+            } @else {
+              <div class="empty-list-state text-success"><i class="bi bi-check-circle mb-2 d-block fs-3"></i>All stock levels healthy.</div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Supplier Dues -->
+      <div class="col-lg-4">
+        <div class="dash-card list-card">
+          <div class="list-header d-flex justify-content-between align-items-center">
+            <h6 class="card-title mb-0">Top Supplier Dues</h6>
+            <a routerLink="/supplier-payments" class="view-all-link">Pay Bills</a>
+          </div>
+          <div class="list-body">
+            @if (d.topSupplierDues && d.topSupplierDues.length > 0) {
+              @for (sup of d.topSupplierDues; track sup.supplierId) {
+                <div class="activity-row" routerLink="/supplier-payments/new">
+                  <div class="act-icon bg-light"><i class="bi bi-building text-secondary"></i></div>
+                  <div class="act-content">
+                    <div class="act-title text-truncate" style="max-width: 180px;">{{ sup.supplierName }}</div>
+                    <div class="act-sub">Outstanding balance</div>
+                  </div>
+                  <div class="act-val fw-bold text-danger">{{ sup.totalDue | number:'1.0-0' }}</div>
+                </div>
+              }
+            } @else {
+              <div class="empty-list-state text-success"><i class="bi bi-check-circle mb-2 d-block fs-3"></i>No outstanding dues.</div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

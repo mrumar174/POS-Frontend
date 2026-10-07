@@ -1,0 +1,61 @@
+<div class="container-fluid list-page">
+  <app-page-header [segments]="['Finance', 'Expense Categories']"></app-page-header>
+
+  <div class="toolbar d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <h5 class="mb-0">Expense Categories</h5>
+      @if (!loading()) { <span class="badge count-badge">{{ filtered().length }}</span> }
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap">
+      <div class="search-box">
+        <i class="bi bi-search search-icon"></i>
+        <input type="text" class="form-control" placeholder="Search categories..." [value]="globalSearch()" (input)="onGlobalSearch($event)" />
+        @if (globalSearch()) { <button class="clear-btn" type="button" (click)="clearGlobalSearch()">×</button> }
+      </div>
+      <a routerLink="/expense-categories/new" class="btn btn-sm btn-new">
+        <i class="bi bi-plus-lg"></i> New Category
+      </a>
+    </div>
+  </div>
+
+  @if (errorMessage()) { <div class="alert alert-danger py-2">{{ errorMessage() }}</div> }
+
+  @if (loading()) {
+    <div class="card-grid">
+      @for (i of [1,2,3,4,5,6]; track i) { <div class="skeleton-card"></div> }
+    </div>
+  } @else if (filtered().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon"><i class="bi bi-wallet2"></i></div>
+      <h6>No expense categories found</h6>
+      <p class="text-muted">Try adjusting your search, or create a category like Rent or Electricity.</p>
+    </div>
+  } @else {
+    <div class="card-grid">
+      @for (c of filtered(); track c.id) {
+        <div class="item-card">
+          <div class="item-head">
+            <div class="avatar" [style.background]="avatarColor(c.name)">{{ initial(c.name) }}</div>
+            <div class="item-title">
+              <div class="item-name">{{ c.name }}</div>
+            </div>
+            <div class="row-actions">
+              <a [routerLink]="['/expense-categories', c.id, 'edit']" class="icon-btn edit-btn" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <button type="button" class="icon-btn delete-btn" title="Delete" (click)="remove(c)">
+                <i class="bi bi-trash3"></i>
+              </button>
+            </div>
+          </div>
+          <p class="item-desc">{{ c.description || 'No description' }}</p>
+        </div>
+      }
+    </div>
+
+    <div class="list-footer">
+      Showing {{ filtered().length }} categor{{ filtered().length === 1 ? 'y' : 'ies' }}.
+    </div>
+  }
+</div>

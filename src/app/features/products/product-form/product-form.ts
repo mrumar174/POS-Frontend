@@ -240,4 +240,35 @@ export class ProductForm implements OnInit, AfterViewInit {
     
     return err.message || defaultMessage;
   }
+  get hasExistingBarcodes(): boolean {
+    return this.barcodes.controls.some(c => c.value && c.value.trim() !== '');
+  }
+  
+  generateBarcode(): void {
+    const idToGenerate = this.productId; 
+    if (!idToGenerate) return;
+
+    this.client.generateBarcode(idToGenerate).subscribe({
+      next: (product) => {
+        if (product.barcodes && product.barcodes.length > 0) {
+          
+          // Remove any blank rows before adding the newly generated one
+          for (let i = this.barcodes.length - 1; i >= 0; i--) {
+            if (!this.barcodes.at(i).value || this.barcodes.at(i).value.trim() === '') {
+              this.barcodes.removeAt(i);
+            }
+          }
+
+          const generated = product.barcodes[product.barcodes.length - 1];
+          this.barcodes.push(this.fb.control(generated));
+          this.form.markAsDirty();
+          this.notify.success('Barcode generated successfully.');
+        }
+      },
+      error: (err: any) => {
+        const msg = err.response ? JSON.parse(err.response).message : 'Failed to generate barcode.';
+        this.notify.danger(msg);
+      }
+    });
+  }
 }

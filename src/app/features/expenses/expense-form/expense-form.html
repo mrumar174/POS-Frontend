@@ -1,0 +1,98 @@
+<div class="container-fluid form-page">
+  <app-page-header [segments]="breadcrumbSegments"></app-page-header>
+
+  <div class="row g-4 form-layout">
+    <div class="col-lg-4">
+      <div class="info-panel">
+        <div class="info-icon"><i class="bi" [class.bi-pencil]="isEditMode()" [class.bi-wallet2]="!isEditMode()"></i></div>
+        <h5 class="info-title">{{ isEditMode() ? 'Editing an Expense' : 'Record an Expense' }}</h5>
+        <p class="info-text">
+          @if (isEditMode()) {
+            Updating this expense changes the amount reflected in your reports. The expense number can't be changed.
+          } @else {
+            Log money spent on running the shop: rent, bills, salaries, repairs. An expense number is generated automatically when you save.
+          }
+        </p>
+
+        @if (isEditMode() && existingExpenseNo()) {
+          <div class="selected-summary"><i class="bi bi-hash"></i><span>Expense No: <code class="ref-chip">{{ existingExpenseNo() }}</code></span></div>
+        }
+
+        <ul class="info-tips">
+          <li><i class="bi bi-check-circle-fill tip-icon"></i> Pick the payment method the money actually left from.</li>
+          <li><i class="bi bi-check-circle-fill tip-icon"></i> Need a new category? <a routerLink="/expense-categories/new">Create one</a>.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+      <div class="form-card">
+        @if (loading()) {
+          <div class="skeleton-form">
+            @for (i of [1,2,3]; track i) { <div class="skeleton-line skeleton-label"></div><div class="skeleton-line skeleton-input"></div> }
+          </div>
+        } @else {
+          <div class="form-header">
+            <h5 class="mb-0">{{ isEditMode() ? 'Edit Expense' : 'New Expense' }}</h5>
+            <p class="form-subtitle mb-0">Fill in the details below.</p>
+          </div>
+
+          @if (errorMessage()) { <div class="alert alert-danger py-2">{{ errorMessage() }}</div> }
+
+          <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="field-label" for="category">Category <span class="required-mark">*</span></label>
+                <select id="category" class="form-select form-control" formControlName="expenseCategoryId"
+                  [class.is-invalid]="c.expenseCategoryId.invalid && c.expenseCategoryId.touched">
+                  <option [ngValue]="null" disabled>Select category...</option>
+                  @for (cat of categories(); track cat.id) { <option [ngValue]="cat.id">{{ cat.name }}</option> }
+                </select>
+                @if (c.expenseCategoryId.invalid && c.expenseCategoryId.touched) { <div class="field-error">Category is required.</div> }
+              </div>
+
+              <div class="col-md-6">
+                <label class="field-label" for="date">Date <span class="required-mark">*</span></label>
+                <input id="date" type="date" class="form-control" formControlName="expenseDate"
+                  [class.is-invalid]="c.expenseDate.invalid && c.expenseDate.touched" />
+                @if (c.expenseDate.invalid && c.expenseDate.touched) { <div class="field-error">Date is required.</div> }
+              </div>
+
+              <div class="col-md-6">
+                <label class="field-label" for="amount">Amount <span class="required-mark">*</span></label>
+                <input id="amount" type="number" step="0.01" min="0" class="form-control amount-input" formControlName="amount"
+                  placeholder="0.00" [class.is-invalid]="c.amount.invalid && c.amount.touched" />
+                @if (c.amount.invalid && c.amount.touched) { <div class="field-error">Enter an amount greater than zero.</div> }
+              </div>
+
+              <div class="col-md-6">
+                <label class="field-label" for="method">Payment Method <span class="required-mark">*</span></label>
+                <select id="method" class="form-select form-control" formControlName="paymentMethodId"
+                  [class.is-invalid]="c.paymentMethodId.invalid && c.paymentMethodId.touched">
+                  <option [ngValue]="null" disabled>Select method...</option>
+                  @for (m of paymentMethods(); track m.id) { <option [ngValue]="m.id">{{ m.name }}</option> }
+                </select>
+                @if (c.paymentMethodId.invalid && c.paymentMethodId.touched) { <div class="field-error">Payment method is required.</div> }
+              </div>
+
+              <div class="col-12">
+                <label class="field-label" for="description">Description</label>
+                <textarea id="description" rows="3" class="form-control" formControlName="description"
+                  placeholder="Optional notes, e.g. 'October electricity bill'" [maxlength]="descriptionMaxLength"
+                  [class.is-invalid]="c.description.invalid && c.description.touched"></textarea>
+                <div class="field-hint">{{ (c.description.value ?? '').length }} / {{ descriptionMaxLength }}</div>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="btn btn-cancel" (click)="cancel()" [disabled]="saving()">Cancel</button>
+              <button type="submit" class="btn btn-save" [disabled]="saving()">
+                @if (saving()) { <span class="spinner"></span> Saving... } @else { {{ isEditMode() ? 'Save Changes' : 'Record Expense' }} }
+              </button>
+            </div>
+          </form>
+        }
+      </div>
+    </div>
+  </div>
+</div>

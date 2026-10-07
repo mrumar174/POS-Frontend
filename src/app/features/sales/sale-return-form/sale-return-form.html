@@ -1,0 +1,132 @@
+<div class="container-fluid form-page">
+  <app-page-header [segments]="breadcrumbSegments"></app-page-header>
+
+  @if (loading()) {
+    <div class="skeleton-form">
+      <div class="skeleton-line skeleton-input"></div>
+      <div class="skeleton-line skeleton-input"></div>
+    </div>
+  } @else {
+    <div class="form-card">
+      <div class="form-header">
+        <h5 class="mb-0">{{ isEditMode() ? 'Edit Sale Return' : 'New Sale Return' }}</h5>
+        <p class="form-subtitle mb-0">
+          {{ isEditMode() ? 'Return No: ' + existingReturnNo() : 'Return number auto-generated.' }}
+        </p>
+      </div>
+
+      @if (errorMessage()) {
+        <div class="alert alert-danger py-2">{{ errorMessage() }}</div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="section-label">Return Information</div>
+        <div class="row g-3">
+          <div class="col-md-5">
+            <label class="field-label">Original Sale Invoice</label>
+            <app-searchable-select
+              formControlName="saleId"
+              [options]="saleOptions()"
+              placeholder="Leave blank for manual return"
+            ></app-searchable-select>
+          </div>
+          <div class="col-md-3">
+            <label class="field-label">Return Date <span class="required-mark">*</span></label>
+            <input type="date" class="form-control" formControlName="returnDate" />
+          </div>
+        </div>
+
+        <div class="section-label section-label-spaced">
+          Returned Items
+        </div>
+
+        <div formArrayName="items" class="items-table-wrapper">
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th class="col-product">Product</th>
+                <th class="col-qty">Ret Qty</th>
+                <th class="col-price">Unit Price</th>
+                <th class="col-disc">Disc.</th>
+                <th class="col-tax">Tax</th>
+                <th class="col-total">Total</th>
+                <th class="col-remove"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of items.controls; track $index) {
+                <tr [formGroupName]="$index">
+                  <td class="col-product">
+                    <app-searchable-select
+                      formControlName="productId"
+                      [options]="productOptions()"
+                      placeholder="Select product"
+                    ></app-searchable-select>
+                  </td>
+                  <td class="col-qty">
+                    <input type="number" step="0.001" min="0" class="form-control form-control-sm border-danger text-danger fw-bold" formControlName="quantity" />
+                  </td>
+                  <td class="col-price">
+                    <input type="number" step="0.01" min="0" class="form-control form-control-sm" formControlName="salePrice" />
+                  </td>
+                  <td class="col-disc">
+                    <input type="number" step="0.01" min="0" class="form-control form-control-sm" formControlName="discount" />
+                  </td>
+                  <td class="col-tax">
+                    <input type="number" step="0.01" min="0" class="form-control form-control-sm" formControlName="tax" />
+                  </td>
+                  <td class="col-total text-danger">
+                    <span class="row-total">−{{ rowTotal($index) | number: '1.2-2' }}</span>
+                  </td>
+                  <td class="col-remove">
+                    <button type="button" class="remove-row-btn" (click)="removeRow($index)" [disabled]="items.length === 1">
+                      <i class="bi bi-trash3"></i>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <button type="button" class="add-row-btn" (click)="addRow()">
+          <i class="bi bi-plus-lg"></i> Add manual row
+        </button>
+
+        <div class="totals-panel">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="field-label">Header Discount Reversal</label>
+              <input type="number" step="0.01" min="0" class="form-control" formControlName="discount" />
+            </div>
+            <div class="col-md-4">
+              <label class="field-label">Header Tax Reversal</label>
+              <input type="number" step="0.01" min="0" class="form-control" formControlName="tax" />
+            </div>
+          </div>
+
+          <div class="summary-rows">
+            <div class="summary-row">
+              <span>Sub Total</span>
+              <span>{{ subTotal | number: '1.2-2' }}</span>
+            </div>
+            <div class="summary-row summary-row-total text-danger">
+              <span>Refund Total</span>
+              <span>−{{ grandTotal | number: '1.2-2' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-label section-label-spaced">Remarks</div>
+        <textarea class="form-control" formControlName="remarks" rows="2" placeholder="Reason for return..."></textarea>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-cancel" (click)="cancel()" [disabled]="saving()">Cancel</button>
+          <button type="submit" class="btn btn-save bg-danger" [disabled]="saving()">
+            @if (saving()) { <span class="spinner"></span> Saving... } @else { {{ isEditMode() ? 'Update Return' : 'Confirm Return' }} }
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+</div>
