@@ -1,0 +1,31 @@
+<app-report-shell [r]="this">
+  @if (data(); as d) {
+    <div class="kpi-grid">
+      <app-kpi label="Tax collected on sales" [value]="d.taxCollectedOnSales" />
+      <app-kpi label="Tax paid on purchases" [value]="d.taxPaidOnPurchases" />
+      <app-kpi label="Net tax liability" [value]="d.netTaxLiability" tone="dark" />
+    </div>
+
+    <app-report-bars title="Tax per day" [labels]="chartLabels()" [series]="chartSeries()" />
+
+    <div class="rpt-card">
+      <div class="rpt-card-head"><h6>Daily breakdown</h6><span class="count-badge">{{ d.dailyBreakdown?.length ?? 0 }} days</span></div>
+      <div class="rpt-table-wrap">
+        <table class="rpt-table">
+          <thead><tr><th>Date</th><th class="num">Collected</th><th class="num">Paid</th><th class="num">Net</th></tr></thead>
+          <tbody>
+            @for (p of d.dailyBreakdown ?? []; track $index) {
+              <tr>
+                <td>{{ p.date | date: 'EEE, dd MMM yyyy' }}</td>
+                <td class="num">{{ p.taxCollected | number: '1.2-2' }}</td>
+                <td class="num">{{ p.taxPaid | number: '1.2-2' }}</td>
+                <td class="num">{{ (p.taxCollected || 0) - (p.taxPaid || 0) | number: '1.2-2' }}</td>
+              </tr>
+            }
+          </tbody>
+          <tfoot><tr><td>Total</td><td class="num">{{ totals().collected | number: '1.2-2' }}</td><td class="num">{{ totals().paid | number: '1.2-2' }}</td><td class="num">{{ totals().collected - totals().paid | number: '1.2-2' }}</td></tr></tfoot>
+        </table>
+      </div>
+    </div>
+  }
+</app-report-shell>

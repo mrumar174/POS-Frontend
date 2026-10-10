@@ -1,0 +1,40 @@
+<app-report-shell [r]="this">
+  <div filters [formGroup]="form" style="display: contents">
+    <div class="rpt-field">
+      <label class="field-label" for="fDays">Min. days overdue</label>
+      <input id="fDays" type="number" min="0" class="form-control form-control-sm" formControlName="minDaysOverdue" placeholder="Any" />
+    </div>
+  </div>
+
+  @if (data(); as rows) {
+    <div class="kpi-grid">
+      <app-kpi label="Total due" [value]="totals().due" tone="bad" />
+      <app-kpi label="Suppliers with dues" [value]="rows.length" format="int" />
+      <app-kpi label="Unpaid invoices" [value]="totals().invoices" format="int" />
+      <app-kpi label="Oldest due (days)" [value]="totals().maxDays" format="int" />
+    </div>
+
+    <div class="rpt-card">
+      <div class="rpt-card-head"><h6>Outstanding supplier balances</h6><span class="count-badge">{{ rows.length }} rows</span></div>
+      <div class="rpt-table-wrap">
+        <table class="rpt-table">
+          <thead><tr><th class="idx">#</th><th>Supplier</th><th>Contact</th><th class="num">Unpaid invoices</th><th class="num">Total due</th><th>Oldest invoice</th><th class="num">Days overdue</th></tr></thead>
+          <tbody>
+            @for (r of rows; track r.supplierId) {
+              <tr>
+                <td class="idx">{{ $index + 1 }}</td>
+                <td class="fw-name">{{ r.supplierName }}</td>
+                <td>{{ r.contactNo }}</td>
+                <td class="num">{{ r.unpaidInvoiceCount | number: '1.0-0' }}</td>
+                <td class="num neg">{{ r.totalDue | number: '1.2-2' }}</td>
+                <td>{{ r.oldestUnpaidInvoiceDate | date: 'dd MMM yyyy' }}</td>
+                <td class="num"><span class="chip" [class]="'chip ' + agingClass(r.daysOverdue)">{{ r.daysOverdue | number: '1.0-0' }} d</span></td>
+              </tr>
+            }
+          </tbody>
+          <tfoot><tr><td></td><td>Total</td><td></td><td class="num">{{ totals().invoices | number: '1.0-0' }}</td><td class="num">{{ totals().due | number: '1.2-2' }}</td><td></td><td></td></tr></tfoot>
+        </table>
+      </div>
+    </div>
+  }
+</app-report-shell>

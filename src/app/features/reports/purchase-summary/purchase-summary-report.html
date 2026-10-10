@@ -1,0 +1,34 @@
+<app-report-shell [r]="this">
+  @if (data(); as d) {
+    <div class="kpi-grid">
+      <app-kpi label="Net purchases" [value]="d.totalNetPurchases" tone="dark" />
+      <app-kpi label="Invoices" [value]="d.totalPurchaseInvoices" format="int" />
+      <app-kpi label="Gross purchases" [value]="d.totalGrossPurchases" />
+      <app-kpi label="Discount" [value]="d.totalDiscount" />
+      <app-kpi label="Tax" [value]="d.totalTax" />
+      <app-kpi label="Paid" [value]="d.totalPaid" tone="good" />
+      <app-kpi label="Outstanding due" [value]="d.totalOutstandingDue" [tone]="(d.totalOutstandingDue || 0) > 0 ? 'bad' : ''" />
+    </div>
+
+    <app-report-bars title="Net purchases per day" [labels]="chartLabels()" [series]="chartSeries()" />
+
+    <div class="rpt-card">
+      <div class="rpt-card-head"><h6>Daily breakdown</h6><span class="count-badge">{{ d.dailyBreakdown?.length ?? 0 }} days</span></div>
+      <div class="rpt-table-wrap">
+        <table class="rpt-table">
+          <thead><tr><th>Date</th><th class="num">Invoices</th><th class="num">Net purchases</th></tr></thead>
+          <tbody>
+            @for (p of d.dailyBreakdown ?? []; track $index) {
+              <tr>
+                <td>{{ p.date | date: 'EEE, dd MMM yyyy' }}</td>
+                <td class="num">{{ p.invoiceCount | number: '1.0-0' }}</td>
+                <td class="num">{{ p.netPurchases | number: '1.2-2' }}</td>
+              </tr>
+            }
+          </tbody>
+          <tfoot><tr><td>Total</td><td class="num">{{ totals().invoices | number: '1.0-0' }}</td><td class="num">{{ totals().net | number: '1.2-2' }}</td></tr></tfoot>
+        </table>
+      </div>
+    </div>
+  }
+</app-report-shell>

@@ -30,16 +30,49 @@
             </button>
 
             @if (!collapsed() && isGroupExpanded(group.label)) {
-              <ul class="nav flex-column ps-4 gap-1 mt-1">
-                @for (link of group.links; track link.route) {
-                  <li class="nav-item">
-                    <a class="nav-link d-flex align-items-center gap-2 sub-link" [routerLink]="link.route" routerLinkActive="active">
-                      <i class="bi {{ link.icon }} nav-icon-sm"></i>
-                      <span>{{ link.label }}</span>
-                    </a>
-                  </li>
-                }
-              </ul>
+              <!-- If group has nested children (like Reports) -->
+              @if (group.children) {
+                <ul class="nav flex-column ps-3 gap-1 mt-1">
+                  @for (subGroup of group.children; track subGroup.label) {
+                    <li class="nav-item">
+                      <button
+                        type="button"
+                        class="nav-link d-flex align-items-center gap-2 w-100 border-0 bg-transparent text-start group-toggle sub-group-toggle"
+                        (click)="toggleSubGroup(subGroup.label)"
+                      >
+                        <i class="bi {{ subGroup.icon }} nav-icon-sm"></i>
+                        <span class="flex-grow-1">{{ subGroup.label }}</span>
+                        <i class="bi bi-chevron-down chevron" [class.rotated]="isSubGroupExpanded(subGroup.label)"></i>
+                      </button>
+
+                      @if (isSubGroupExpanded(subGroup.label)) {
+                        <ul class="nav flex-column ps-4 gap-1 mt-1">
+                          @for (link of subGroup.links; track link.route) {
+                            <li class="nav-item">
+                              <a class="nav-link d-flex align-items-center gap-2 sub-link" [routerLink]="link.route" routerLinkActive="active">
+                                <i class="bi {{ link.icon }} nav-icon-sm"></i>
+                                <span>{{ link.label }}</span>
+                              </a>
+                            </li>
+                          }
+                        </ul>
+                      }
+                    </li>
+                  }
+                </ul>
+              } @else if (group.links) {
+                <!-- Standard group with direct links -->
+                <ul class="nav flex-column ps-4 gap-1 mt-1">
+                  @for (link of group.links; track link.route) {
+                    <li class="nav-item">
+                      <a class="nav-link d-flex align-items-center gap-2 sub-link" [routerLink]="link.route" routerLinkActive="active">
+                        <i class="bi {{ link.icon }} nav-icon-sm"></i>
+                        <span>{{ link.label }}</span>
+                      </a>
+                    </li>
+                  }
+                </ul>
+              }
             }
           </li>
         }

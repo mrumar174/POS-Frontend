@@ -70,3 +70,41 @@
   background-color: #eeebe3;
   border-radius: 0.375rem;
 }
+.sidebar {
+  width: 260px;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  background-color: #fff; /* adjust to match your theme */
+  border-right: 1px solid #dee2e6;
+  transition: width 0.3s ease;
+}
+
+.sidebar.collapsed {
+  width: 70px;
+}
+
+/* Fixes the scrolling issue */
+.sidebar nav {
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex-grow: 1;
+}
+
+/* Custom scrollbar styling for better UX */
+.sidebar nav::-webkit-scrollbar {
+  width: 5px;
+}
+
+.sidebar nav::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.chevron {
+  transition: transform 0.2s ease;
+}
+
+.chevron.rotated {
+  transform: rotate(180deg);
+}

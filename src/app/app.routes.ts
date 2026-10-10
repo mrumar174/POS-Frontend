@@ -374,6 +374,26 @@ export const routes: Routes = [
     // Finance: Daily Cash Closing
   { path: 'cash-closing', canActivate: [authGuard], loadComponent: () => import('./features/cash-closing/cash-closing-list/cash-closing-list').then((m) => m.CashClosingList) },
   { path: 'cash-closing/new', canActivate: [authGuard], loadComponent: () => import('./features/cash-closing/cash-closing-form/cash-closing-form').then((m) => m.CashClosingForm) },
+  // Reports
+  { path: 'reports', canActivate: [authGuard], loadComponent: () => import('./features/reports/reports-home/reports-home').then((m) => m.ReportsHome) },
+  // Reports: Sales
+  { path: 'reports/sales-summary', canActivate: [authGuard], loadComponent: () => import('./features/reports/sales-summary/sales-summary-report').then((m) => m.SalesSummaryReport) },
+  { path: 'reports/sales-by-product', canActivate: [authGuard], loadComponent: () => import('./features/reports/sales-by-product/sales-by-product-report').then((m) => m.SalesByProductReport) },
+  { path: 'reports/sales-by-category', canActivate: [authGuard], loadComponent: () => import('./features/reports/sales-by-category/sales-by-category-report').then((m) => m.SalesByCategoryReport) },
+  { path: 'reports/profit', canActivate: [authGuard], loadComponent: () => import('./features/reports/profit/profit-report').then((m) => m.ProfitReport) },
+  { path: 'reports/cashier-performance', canActivate: [authGuard], loadComponent: () => import('./features/reports/cashier-performance/cashier-performance-report').then((m) => m.CashierPerformanceReport) },
+  // Reports: Purchasing
+  { path: 'reports/purchase-summary', canActivate: [authGuard], loadComponent: () => import('./features/reports/purchase-summary/purchase-summary-report').then((m) => m.PurchaseSummaryReport) },
+  { path: 'reports/purchases-by-supplier', canActivate: [authGuard], loadComponent: () => import('./features/reports/purchases-by-supplier/purchases-by-supplier-report').then((m) => m.PurchasesBySupplierReport) },
+  { path: 'reports/supplier-dues', canActivate: [authGuard], loadComponent: () => import('./features/reports/supplier-dues/supplier-dues-report').then((m) => m.SupplierDuesReport) },
+  // Reports: Inventory
+  { path: 'reports/stock-valuation', canActivate: [authGuard], loadComponent: () => import('./features/reports/stock-valuation/stock-valuation-report').then((m) => m.StockValuationReport) },
+  { path: 'reports/stock-movement', canActivate: [authGuard], loadComponent: () => import('./features/reports/stock-movement/stock-movement-report').then((m) => m.StockMovementReport) },
+  { path: 'reports/low-stock', canActivate: [authGuard], loadComponent: () => import('./features/reports/low-stock/low-stock-report').then((m) => m.LowStockReport) },
+  // Reports: Finance
+  { path: 'reports/tax', canActivate: [authGuard], loadComponent: () => import('./features/reports/tax/tax-report').then((m) => m.TaxReport) },
+  { path: 'reports/expenses', canActivate: [authGuard], loadComponent: () => import('./features/reports/expenses/expenses-report').then((m) => m.ExpensesReport) },
+
   {
     path: '**',
     redirectTo: 'login'

@@ -306,6 +306,87 @@ export interface IClient {
      */
     purchasesDELETE(id: number): Observable<void>;
     /**
+     * @param fromDate (optional) 
+     * @param toDate (optional) 
+     * @return OK
+     */
+    purchaseSummary(fromDate: Date | undefined, toDate: Date | undefined): Observable<PurchaseSummaryReportDto>;
+    /**
+     * @param fromDate (optional) 
+     * @param toDate (optional) 
+     * @param sortBy (optional) 
+     * @return OK
+     */
+    purchasesBySupplier2(fromDate: Date | undefined, toDate: Date | undefined, sortBy: string | undefined): Observable<SupplierPurchaseReportRowDto[]>;
+    /**
+     * @param categoryId (optional) 
+     * @return OK
+     */
+    stockValuation(categoryId: number | undefined): Observable<StockValuationSummaryDto>;
+    /**
+     * @param productId (optional) 
+     * @param fromDate (optional) 
+     * @param toDate (optional) 
+     * @return OK
+     */
+    stockMovement(productId: number | undefined, fromDate: Date | undefined, toDate: Date | undefined): Observable<StockMovementRowDto[]>;
+    /**
+     * @param categoryId (optional) 
+     * @return OK
+     */
+    lowStock(categoryId: number | undefined): Observable<LowStockReportRowDto[]>;
+    /**
+     * @param minDaysOverdue (optional) 
+     * @return OK
+     */
+    supplierDues(minDaysOverdue: number | undefined): Observable<SupplierDueReportRowDto[]>;
+    /**
+     * @param fromDate (optional) 
+     * @param toDate (optional) 
+     * @return OK
+     */
+    tax(fromDate: Date | undefined, toDate: Date | undefined): Observable<TaxReportDto>;
+    /**
+     * @param fromDate (optional) 
+     * @param toDate (optional) 
+     * @return OK
+     */
+    salesSummary(fromDate: Date | undefined, toDate: Date | undefined): Observable<SalesSummaryReportDto>;
+    /**
+     * @param fromDate (optional) 
+     * @param toDate (optional) 
+     * @param categoryId (optional) 
+     * @param sortBy (optional) 
+     * @param top (optional) 
+     * @return OK
+     */
+    salesByProduct(fromDate: Date | undefined, toDate: Date | undefined, categoryId: number | undefined, sortBy: string | undefined, top: number | undefined): Observable<ProductSalesReportRowDto[]>;
+    /**
+     * @param fromDate (optional) 
+     * @param toDate (optional) 
+     * @return OK
+     */
+    salesByCategory(fromDate: Date | undefined, toDate: Date | undefined): Observable<CategorySalesReportRowDto[]>;
+    /**
+     * @param fromDate (optional) 
+     * @param toDate (optional) 
+     * @param categoryId (optional) 
+     * @return OK
+     */
+    profit(fromDate: Date | undefined, toDate: Date | undefined, categoryId: number | undefined): Observable<ProfitSummaryReportDto>;
+    /**
+     * @param fromDate (optional) 
+     * @param toDate (optional) 
+     * @return OK
+     */
+    cashierPerformance(fromDate: Date | undefined, toDate: Date | undefined): Observable<CashierPerformanceRowDto[]>;
+    /**
+     * @param fromDate (optional) 
+     * @param toDate (optional) 
+     * @return OK
+     */
+    expenses(fromDate: Date | undefined, toDate: Date | undefined): Observable<ExpenseSummaryReportDto>;
+    /**
      * @return OK
      */
     rolesAll(): Observable<RoleDto[]>;
@@ -446,6 +527,10 @@ export interface IClient {
      * @return No Content
      */
     adjustmentsDELETE(id: number): Observable<void>;
+    /**
+     * @return OK
+     */
+    dictionary(): Observable<{ [key: string]: number; }>;
     /**
      * @param supplierId (optional) 
      * @param purchaseId (optional) 
@@ -4430,6 +4515,863 @@ export class Client implements IClient {
     }
 
     /**
+     * @param fromDate (optional) 
+     * @param toDate (optional) 
+     * @return OK
+     */
+    purchaseSummary(fromDate: Date | undefined, toDate: Date | undefined): Observable<PurchaseSummaryReportDto> {
+        let url_ = this.baseUrl + "/api/Reports/purchase-summary?";
+        if (fromDate === null)
+            throw new globalThis.Error("The parameter 'fromDate' cannot be null.");
+        else if (fromDate !== undefined)
+            url_ += "fromDate=" + encodeURIComponent(fromDate ? "" + fromDate.toISOString() : "") + "&";
+        if (toDate === null)
+            throw new globalThis.Error("The parameter 'toDate' cannot be null.");
+        else if (toDate !== undefined)
+            url_ += "toDate=" + encodeURIComponent(toDate ? "" + toDate.toISOString() : "") + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processPurchaseSummary(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processPurchaseSummary(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PurchaseSummaryReportDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PurchaseSummaryReportDto>;
+        }));
+    }
+
+    protected processPurchaseSummary(response: HttpResponseBase): Observable<PurchaseSummaryReportDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = PurchaseSummaryReportDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<PurchaseSummaryReportDto>(null as any);
+    }
+
+    /**
+     * @param fromDate (optional) 
+     * @param toDate (optional) 
+     * @param sortBy (optional) 
+     * @return OK
+     */
+    purchasesBySupplier2(fromDate: Date | undefined, toDate: Date | undefined, sortBy: string | undefined): Observable<SupplierPurchaseReportRowDto[]> {
+        let url_ = this.baseUrl + "/api/Reports/purchases-by-supplier?";
+        if (fromDate === null)
+            throw new globalThis.Error("The parameter 'fromDate' cannot be null.");
+        else if (fromDate !== undefined)
+            url_ += "fromDate=" + encodeURIComponent(fromDate ? "" + fromDate.toISOString() : "") + "&";
+        if (toDate === null)
+            throw new globalThis.Error("The parameter 'toDate' cannot be null.");
+        else if (toDate !== undefined)
+            url_ += "toDate=" + encodeURIComponent(toDate ? "" + toDate.toISOString() : "") + "&";
+        if (sortBy === null)
+            throw new globalThis.Error("The parameter 'sortBy' cannot be null.");
+        else if (sortBy !== undefined)
+            url_ += "sortBy=" + encodeURIComponent("" + sortBy) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processPurchasesBySupplier2(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processPurchasesBySupplier2(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SupplierPurchaseReportRowDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SupplierPurchaseReportRowDto[]>;
+        }));
+    }
+
+    protected processPurchasesBySupplier2(response: HttpResponseBase): Observable<SupplierPurchaseReportRowDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(SupplierPurchaseReportRowDto.fromJS(item));
+            }
+            else {
+                result200 = null as any;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<SupplierPurchaseReportRowDto[]>(null as any);
+    }
+
+    /**
+     * @param categoryId (optional) 
+     * @return OK
+     */
+    stockValuation(categoryId: number | undefined): Observable<StockValuationSummaryDto> {
+        let url_ = this.baseUrl + "/api/Reports/stock-valuation?";
+        if (categoryId === null)
+            throw new globalThis.Error("The parameter 'categoryId' cannot be null.");
+        else if (categoryId !== undefined)
+            url_ += "categoryId=" + encodeURIComponent("" + categoryId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processStockValuation(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processStockValuation(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<StockValuationSummaryDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<StockValuationSummaryDto>;
+        }));
+    }
+
+    protected processStockValuation(response: HttpResponseBase): Observable<StockValuationSummaryDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = StockValuationSummaryDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<StockValuationSummaryDto>(null as any);
+    }
+
+    /**
+     * @param productId (optional) 
+     * @param fromDate (optional) 
+     * @param toDate (optional) 
+     * @return OK
+     */
+    stockMovement(productId: number | undefined, fromDate: Date | undefined, toDate: Date | undefined): Observable<StockMovementRowDto[]> {
+        let url_ = this.baseUrl + "/api/Reports/stock-movement?";
+        if (productId === null)
+            throw new globalThis.Error("The parameter 'productId' cannot be null.");
+        else if (productId !== undefined)
+            url_ += "productId=" + encodeURIComponent("" + productId) + "&";
+        if (fromDate === null)
+            throw new globalThis.Error("The parameter 'fromDate' cannot be null.");
+        else if (fromDate !== undefined)
+            url_ += "fromDate=" + encodeURIComponent(fromDate ? "" + fromDate.toISOString() : "") + "&";
+        if (toDate === null)
+            throw new globalThis.Error("The parameter 'toDate' cannot be null.");
+        else if (toDate !== undefined)
+            url_ += "toDate=" + encodeURIComponent(toDate ? "" + toDate.toISOString() : "") + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processStockMovement(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processStockMovement(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<StockMovementRowDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<StockMovementRowDto[]>;
+        }));
+    }
+
+    protected processStockMovement(response: HttpResponseBase): Observable<StockMovementRowDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(StockMovementRowDto.fromJS(item));
+            }
+            else {
+                result200 = null as any;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<StockMovementRowDto[]>(null as any);
+    }
+
+    /**
+     * @param categoryId (optional) 
+     * @return OK
+     */
+    lowStock(categoryId: number | undefined): Observable<LowStockReportRowDto[]> {
+        let url_ = this.baseUrl + "/api/Reports/low-stock?";
+        if (categoryId === null)
+            throw new globalThis.Error("The parameter 'categoryId' cannot be null.");
+        else if (categoryId !== undefined)
+            url_ += "categoryId=" + encodeURIComponent("" + categoryId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processLowStock(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processLowStock(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<LowStockReportRowDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<LowStockReportRowDto[]>;
+        }));
+    }
+
+    protected processLowStock(response: HttpResponseBase): Observable<LowStockReportRowDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(LowStockReportRowDto.fromJS(item));
+            }
+            else {
+                result200 = null as any;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<LowStockReportRowDto[]>(null as any);
+    }
+
+    /**
+     * @param minDaysOverdue (optional) 
+     * @return OK
+     */
+    supplierDues(minDaysOverdue: number | undefined): Observable<SupplierDueReportRowDto[]> {
+        let url_ = this.baseUrl + "/api/Reports/supplier-dues?";
+        if (minDaysOverdue === null)
+            throw new globalThis.Error("The parameter 'minDaysOverdue' cannot be null.");
+        else if (minDaysOverdue !== undefined)
+            url_ += "minDaysOverdue=" + encodeURIComponent("" + minDaysOverdue) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSupplierDues(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSupplierDues(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SupplierDueReportRowDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SupplierDueReportRowDto[]>;
+        }));
+    }
+
+    protected processSupplierDues(response: HttpResponseBase): Observable<SupplierDueReportRowDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(SupplierDueReportRowDto.fromJS(item));
+            }
+            else {
+                result200 = null as any;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<SupplierDueReportRowDto[]>(null as any);
+    }
+
+    /**
+     * @param fromDate (optional) 
+     * @param toDate (optional) 
+     * @return OK
+     */
+    tax(fromDate: Date | undefined, toDate: Date | undefined): Observable<TaxReportDto> {
+        let url_ = this.baseUrl + "/api/Reports/tax?";
+        if (fromDate === null)
+            throw new globalThis.Error("The parameter 'fromDate' cannot be null.");
+        else if (fromDate !== undefined)
+            url_ += "fromDate=" + encodeURIComponent(fromDate ? "" + fromDate.toISOString() : "") + "&";
+        if (toDate === null)
+            throw new globalThis.Error("The parameter 'toDate' cannot be null.");
+        else if (toDate !== undefined)
+            url_ += "toDate=" + encodeURIComponent(toDate ? "" + toDate.toISOString() : "") + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processTax(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processTax(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<TaxReportDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<TaxReportDto>;
+        }));
+    }
+
+    protected processTax(response: HttpResponseBase): Observable<TaxReportDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = TaxReportDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<TaxReportDto>(null as any);
+    }
+
+    /**
+     * @param fromDate (optional) 
+     * @param toDate (optional) 
+     * @return OK
+     */
+    salesSummary(fromDate: Date | undefined, toDate: Date | undefined): Observable<SalesSummaryReportDto> {
+        let url_ = this.baseUrl + "/api/Reports/sales-summary?";
+        if (fromDate === null)
+            throw new globalThis.Error("The parameter 'fromDate' cannot be null.");
+        else if (fromDate !== undefined)
+            url_ += "fromDate=" + encodeURIComponent(fromDate ? "" + fromDate.toISOString() : "") + "&";
+        if (toDate === null)
+            throw new globalThis.Error("The parameter 'toDate' cannot be null.");
+        else if (toDate !== undefined)
+            url_ += "toDate=" + encodeURIComponent(toDate ? "" + toDate.toISOString() : "") + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSalesSummary(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSalesSummary(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SalesSummaryReportDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SalesSummaryReportDto>;
+        }));
+    }
+
+    protected processSalesSummary(response: HttpResponseBase): Observable<SalesSummaryReportDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = SalesSummaryReportDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<SalesSummaryReportDto>(null as any);
+    }
+
+    /**
+     * @param fromDate (optional) 
+     * @param toDate (optional) 
+     * @param categoryId (optional) 
+     * @param sortBy (optional) 
+     * @param top (optional) 
+     * @return OK
+     */
+    salesByProduct(fromDate: Date | undefined, toDate: Date | undefined, categoryId: number | undefined, sortBy: string | undefined, top: number | undefined): Observable<ProductSalesReportRowDto[]> {
+        let url_ = this.baseUrl + "/api/Reports/sales-by-product?";
+        if (fromDate === null)
+            throw new globalThis.Error("The parameter 'fromDate' cannot be null.");
+        else if (fromDate !== undefined)
+            url_ += "fromDate=" + encodeURIComponent(fromDate ? "" + fromDate.toISOString() : "") + "&";
+        if (toDate === null)
+            throw new globalThis.Error("The parameter 'toDate' cannot be null.");
+        else if (toDate !== undefined)
+            url_ += "toDate=" + encodeURIComponent(toDate ? "" + toDate.toISOString() : "") + "&";
+        if (categoryId === null)
+            throw new globalThis.Error("The parameter 'categoryId' cannot be null.");
+        else if (categoryId !== undefined)
+            url_ += "categoryId=" + encodeURIComponent("" + categoryId) + "&";
+        if (sortBy === null)
+            throw new globalThis.Error("The parameter 'sortBy' cannot be null.");
+        else if (sortBy !== undefined)
+            url_ += "sortBy=" + encodeURIComponent("" + sortBy) + "&";
+        if (top === null)
+            throw new globalThis.Error("The parameter 'top' cannot be null.");
+        else if (top !== undefined)
+            url_ += "top=" + encodeURIComponent("" + top) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSalesByProduct(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSalesByProduct(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ProductSalesReportRowDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ProductSalesReportRowDto[]>;
+        }));
+    }
+
+    protected processSalesByProduct(response: HttpResponseBase): Observable<ProductSalesReportRowDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(ProductSalesReportRowDto.fromJS(item));
+            }
+            else {
+                result200 = null as any;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<ProductSalesReportRowDto[]>(null as any);
+    }
+
+    /**
+     * @param fromDate (optional) 
+     * @param toDate (optional) 
+     * @return OK
+     */
+    salesByCategory(fromDate: Date | undefined, toDate: Date | undefined): Observable<CategorySalesReportRowDto[]> {
+        let url_ = this.baseUrl + "/api/Reports/sales-by-category?";
+        if (fromDate === null)
+            throw new globalThis.Error("The parameter 'fromDate' cannot be null.");
+        else if (fromDate !== undefined)
+            url_ += "fromDate=" + encodeURIComponent(fromDate ? "" + fromDate.toISOString() : "") + "&";
+        if (toDate === null)
+            throw new globalThis.Error("The parameter 'toDate' cannot be null.");
+        else if (toDate !== undefined)
+            url_ += "toDate=" + encodeURIComponent(toDate ? "" + toDate.toISOString() : "") + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSalesByCategory(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSalesByCategory(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CategorySalesReportRowDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CategorySalesReportRowDto[]>;
+        }));
+    }
+
+    protected processSalesByCategory(response: HttpResponseBase): Observable<CategorySalesReportRowDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(CategorySalesReportRowDto.fromJS(item));
+            }
+            else {
+                result200 = null as any;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<CategorySalesReportRowDto[]>(null as any);
+    }
+
+    /**
+     * @param fromDate (optional) 
+     * @param toDate (optional) 
+     * @param categoryId (optional) 
+     * @return OK
+     */
+    profit(fromDate: Date | undefined, toDate: Date | undefined, categoryId: number | undefined): Observable<ProfitSummaryReportDto> {
+        let url_ = this.baseUrl + "/api/Reports/profit?";
+        if (fromDate === null)
+            throw new globalThis.Error("The parameter 'fromDate' cannot be null.");
+        else if (fromDate !== undefined)
+            url_ += "fromDate=" + encodeURIComponent(fromDate ? "" + fromDate.toISOString() : "") + "&";
+        if (toDate === null)
+            throw new globalThis.Error("The parameter 'toDate' cannot be null.");
+        else if (toDate !== undefined)
+            url_ += "toDate=" + encodeURIComponent(toDate ? "" + toDate.toISOString() : "") + "&";
+        if (categoryId === null)
+            throw new globalThis.Error("The parameter 'categoryId' cannot be null.");
+        else if (categoryId !== undefined)
+            url_ += "categoryId=" + encodeURIComponent("" + categoryId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processProfit(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processProfit(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ProfitSummaryReportDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ProfitSummaryReportDto>;
+        }));
+    }
+
+    protected processProfit(response: HttpResponseBase): Observable<ProfitSummaryReportDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ProfitSummaryReportDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<ProfitSummaryReportDto>(null as any);
+    }
+
+    /**
+     * @param fromDate (optional) 
+     * @param toDate (optional) 
+     * @return OK
+     */
+    cashierPerformance(fromDate: Date | undefined, toDate: Date | undefined): Observable<CashierPerformanceRowDto[]> {
+        let url_ = this.baseUrl + "/api/Reports/cashier-performance?";
+        if (fromDate === null)
+            throw new globalThis.Error("The parameter 'fromDate' cannot be null.");
+        else if (fromDate !== undefined)
+            url_ += "fromDate=" + encodeURIComponent(fromDate ? "" + fromDate.toISOString() : "") + "&";
+        if (toDate === null)
+            throw new globalThis.Error("The parameter 'toDate' cannot be null.");
+        else if (toDate !== undefined)
+            url_ += "toDate=" + encodeURIComponent(toDate ? "" + toDate.toISOString() : "") + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCashierPerformance(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCashierPerformance(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CashierPerformanceRowDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CashierPerformanceRowDto[]>;
+        }));
+    }
+
+    protected processCashierPerformance(response: HttpResponseBase): Observable<CashierPerformanceRowDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(CashierPerformanceRowDto.fromJS(item));
+            }
+            else {
+                result200 = null as any;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<CashierPerformanceRowDto[]>(null as any);
+    }
+
+    /**
+     * @param fromDate (optional) 
+     * @param toDate (optional) 
+     * @return OK
+     */
+    expenses(fromDate: Date | undefined, toDate: Date | undefined): Observable<ExpenseSummaryReportDto> {
+        let url_ = this.baseUrl + "/api/Reports/expenses?";
+        if (fromDate === null)
+            throw new globalThis.Error("The parameter 'fromDate' cannot be null.");
+        else if (fromDate !== undefined)
+            url_ += "fromDate=" + encodeURIComponent(fromDate ? "" + fromDate.toISOString() : "") + "&";
+        if (toDate === null)
+            throw new globalThis.Error("The parameter 'toDate' cannot be null.");
+        else if (toDate !== undefined)
+            url_ += "toDate=" + encodeURIComponent(toDate ? "" + toDate.toISOString() : "") + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processExpenses(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processExpenses(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ExpenseSummaryReportDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ExpenseSummaryReportDto>;
+        }));
+    }
+
+    protected processExpenses(response: HttpResponseBase): Observable<ExpenseSummaryReportDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ExpenseSummaryReportDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<ExpenseSummaryReportDto>(null as any);
+    }
+
+    /**
      * @return OK
      */
     rolesAll(): Observable<RoleDto[]> {
@@ -6252,6 +7194,66 @@ export class Client implements IClient {
             }));
         }
         return _observableOf<void>(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    dictionary(): Observable<{ [key: string]: number; }> {
+        let url_ = this.baseUrl + "/api/Stock/dictionary";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDictionary(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDictionary(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<{ [key: string]: number; }>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<{ [key: string]: number; }>;
+        }));
+    }
+
+    protected processDictionary(response: HttpResponseBase): Observable<{ [key: string]: number; }> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (resultData200) {
+                result200 = {} as any;
+                for (let key in resultData200) {
+                    if (resultData200.hasOwnProperty(key))
+                        (result200 as any)![key] = resultData200[key] !== undefined ? resultData200[key] : null as any;
+                }
+            }
+            else {
+                result200 = null as any;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<{ [key: string]: number; }>(null as any);
     }
 
     /**
@@ -8110,6 +9112,58 @@ export interface IBrandDto {
     description?: string | undefined;
 }
 
+export class CashierPerformanceRowDto implements ICashierPerformanceRowDto {
+    userId?: number;
+    userFullName?: string | undefined;
+    invoiceCount?: number;
+    totalSales?: number;
+    averageInvoiceValue?: number;
+
+    constructor(data?: ICashierPerformanceRowDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.userId = _data["userId"];
+            this.userFullName = _data["userFullName"];
+            this.invoiceCount = _data["invoiceCount"];
+            this.totalSales = _data["totalSales"];
+            this.averageInvoiceValue = _data["averageInvoiceValue"];
+        }
+    }
+
+    static fromJS(data: any): CashierPerformanceRowDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new CashierPerformanceRowDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["userId"] = this.userId;
+        data["userFullName"] = this.userFullName;
+        data["invoiceCount"] = this.invoiceCount;
+        data["totalSales"] = this.totalSales;
+        data["averageInvoiceValue"] = this.averageInvoiceValue;
+        return data;
+    }
+}
+
+export interface ICashierPerformanceRowDto {
+    userId?: number;
+    userFullName?: string | undefined;
+    invoiceCount?: number;
+    totalSales?: number;
+    averageInvoiceValue?: number;
+}
+
 export class CategoryDto implements ICategoryDto {
     id?: number;
     name?: string | undefined;
@@ -8152,6 +9206,58 @@ export interface ICategoryDto {
     id?: number;
     name?: string | undefined;
     description?: string | undefined;
+}
+
+export class CategorySalesReportRowDto implements ICategorySalesReportRowDto {
+    categoryId?: number;
+    categoryName?: string | undefined;
+    quantitySold?: number;
+    totalRevenue?: number;
+    percentOfTotalSales?: number;
+
+    constructor(data?: ICategorySalesReportRowDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.categoryId = _data["categoryId"];
+            this.categoryName = _data["categoryName"];
+            this.quantitySold = _data["quantitySold"];
+            this.totalRevenue = _data["totalRevenue"];
+            this.percentOfTotalSales = _data["percentOfTotalSales"];
+        }
+    }
+
+    static fromJS(data: any): CategorySalesReportRowDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new CategorySalesReportRowDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["categoryId"] = this.categoryId;
+        data["categoryName"] = this.categoryName;
+        data["quantitySold"] = this.quantitySold;
+        data["totalRevenue"] = this.totalRevenue;
+        data["percentOfTotalSales"] = this.percentOfTotalSales;
+        return data;
+    }
+}
+
+export interface ICategorySalesReportRowDto {
+    categoryId?: number;
+    categoryName?: string | undefined;
+    quantitySold?: number;
+    totalRevenue?: number;
+    percentOfTotalSales?: number;
 }
 
 export class ChangePasswordDto implements IChangePasswordDto {
@@ -9838,6 +10944,178 @@ export interface IDailyCashClosingPreviewDto {
     blockedReason?: string | undefined;
 }
 
+export class DailyExpensePointDto implements IDailyExpensePointDto {
+    date?: Date;
+    amount?: number;
+
+    constructor(data?: IDailyExpensePointDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.date = _data["date"] ? new Date(_data["date"].toString()) : undefined as any;
+            this.amount = _data["amount"];
+        }
+    }
+
+    static fromJS(data: any): DailyExpensePointDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new DailyExpensePointDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["date"] = this.date ? this.date.toISOString() : undefined as any;
+        data["amount"] = this.amount;
+        return data;
+    }
+}
+
+export interface IDailyExpensePointDto {
+    date?: Date;
+    amount?: number;
+}
+
+export class DailyPurchasePointDto implements IDailyPurchasePointDto {
+    date?: Date;
+    invoiceCount?: number;
+    netPurchases?: number;
+
+    constructor(data?: IDailyPurchasePointDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.date = _data["date"] ? new Date(_data["date"].toString()) : undefined as any;
+            this.invoiceCount = _data["invoiceCount"];
+            this.netPurchases = _data["netPurchases"];
+        }
+    }
+
+    static fromJS(data: any): DailyPurchasePointDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new DailyPurchasePointDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["date"] = this.date ? this.date.toISOString() : undefined as any;
+        data["invoiceCount"] = this.invoiceCount;
+        data["netPurchases"] = this.netPurchases;
+        return data;
+    }
+}
+
+export interface IDailyPurchasePointDto {
+    date?: Date;
+    invoiceCount?: number;
+    netPurchases?: number;
+}
+
+export class DailySalesPointDto implements IDailySalesPointDto {
+    date?: Date;
+    invoiceCount?: number;
+    netSales?: number;
+
+    constructor(data?: IDailySalesPointDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.date = _data["date"] ? new Date(_data["date"].toString()) : undefined as any;
+            this.invoiceCount = _data["invoiceCount"];
+            this.netSales = _data["netSales"];
+        }
+    }
+
+    static fromJS(data: any): DailySalesPointDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new DailySalesPointDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["date"] = this.date ? this.date.toISOString() : undefined as any;
+        data["invoiceCount"] = this.invoiceCount;
+        data["netSales"] = this.netSales;
+        return data;
+    }
+}
+
+export interface IDailySalesPointDto {
+    date?: Date;
+    invoiceCount?: number;
+    netSales?: number;
+}
+
+export class DailyTaxPointDto implements IDailyTaxPointDto {
+    date?: Date;
+    taxCollected?: number;
+    taxPaid?: number;
+
+    constructor(data?: IDailyTaxPointDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.date = _data["date"] ? new Date(_data["date"].toString()) : undefined as any;
+            this.taxCollected = _data["taxCollected"];
+            this.taxPaid = _data["taxPaid"];
+        }
+    }
+
+    static fromJS(data: any): DailyTaxPointDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new DailyTaxPointDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["date"] = this.date ? this.date.toISOString() : undefined as any;
+        data["taxCollected"] = this.taxCollected;
+        data["taxPaid"] = this.taxPaid;
+        return data;
+    }
+}
+
+export interface IDailyTaxPointDto {
+    date?: Date;
+    taxCollected?: number;
+    taxPaid?: number;
+}
+
 export class DashboardCategoryShareDto implements IDashboardCategoryShareDto {
     categoryName?: string | undefined;
     revenue?: number;
@@ -10513,6 +11791,118 @@ export interface IExpensePageDto {
     pageSize?: number;
 }
 
+export class ExpenseReportRowDto implements IExpenseReportRowDto {
+    expenseCategoryId?: number;
+    expenseCategoryName?: string | undefined;
+    expenseCount?: number;
+    totalAmount?: number;
+    percentOfTotal?: number;
+
+    constructor(data?: IExpenseReportRowDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.expenseCategoryId = _data["expenseCategoryId"];
+            this.expenseCategoryName = _data["expenseCategoryName"];
+            this.expenseCount = _data["expenseCount"];
+            this.totalAmount = _data["totalAmount"];
+            this.percentOfTotal = _data["percentOfTotal"];
+        }
+    }
+
+    static fromJS(data: any): ExpenseReportRowDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new ExpenseReportRowDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["expenseCategoryId"] = this.expenseCategoryId;
+        data["expenseCategoryName"] = this.expenseCategoryName;
+        data["expenseCount"] = this.expenseCount;
+        data["totalAmount"] = this.totalAmount;
+        data["percentOfTotal"] = this.percentOfTotal;
+        return data;
+    }
+}
+
+export interface IExpenseReportRowDto {
+    expenseCategoryId?: number;
+    expenseCategoryName?: string | undefined;
+    expenseCount?: number;
+    totalAmount?: number;
+    percentOfTotal?: number;
+}
+
+export class ExpenseSummaryReportDto implements IExpenseSummaryReportDto {
+    totalExpenses?: number;
+    byCategory?: ExpenseReportRowDto[] | undefined;
+    dailyBreakdown?: DailyExpensePointDto[] | undefined;
+
+    constructor(data?: IExpenseSummaryReportDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.totalExpenses = _data["totalExpenses"];
+            if (Array.isArray(_data["byCategory"])) {
+                this.byCategory = [] as any;
+                for (let item of _data["byCategory"])
+                    this.byCategory!.push(ExpenseReportRowDto.fromJS(item));
+            }
+            if (Array.isArray(_data["dailyBreakdown"])) {
+                this.dailyBreakdown = [] as any;
+                for (let item of _data["dailyBreakdown"])
+                    this.dailyBreakdown!.push(DailyExpensePointDto.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): ExpenseSummaryReportDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new ExpenseSummaryReportDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["totalExpenses"] = this.totalExpenses;
+        if (Array.isArray(this.byCategory)) {
+            data["byCategory"] = [];
+            for (let item of this.byCategory)
+                data["byCategory"].push(item ? item.toJSON() : undefined as any);
+        }
+        if (Array.isArray(this.dailyBreakdown)) {
+            data["dailyBreakdown"] = [];
+            for (let item of this.dailyBreakdown)
+                data["dailyBreakdown"].push(item ? item.toJSON() : undefined as any);
+        }
+        return data;
+    }
+}
+
+export interface IExpenseSummaryReportDto {
+    totalExpenses?: number;
+    byCategory?: ExpenseReportRowDto[] | undefined;
+    dailyBreakdown?: DailyExpensePointDto[] | undefined;
+}
+
 export class LoginDto implements ILoginDto {
     tenantId?: number;
     userName?: string | undefined;
@@ -10559,6 +11949,74 @@ export interface ILoginDto {
     userName?: string | undefined;
     password?: string | undefined;
     shopId?: number | undefined;
+}
+
+export class LowStockReportRowDto implements ILowStockReportRowDto {
+    productId?: number;
+    productName?: string | undefined;
+    productCode?: string | undefined;
+    categoryName?: string | undefined;
+    quantityOnHand?: number;
+    minimumStock?: number;
+    suggestedReorderQuantity?: number;
+    lastPurchaseDate?: Date | undefined;
+    preferredSupplierName?: string | undefined;
+
+    constructor(data?: ILowStockReportRowDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.productId = _data["productId"];
+            this.productName = _data["productName"];
+            this.productCode = _data["productCode"];
+            this.categoryName = _data["categoryName"];
+            this.quantityOnHand = _data["quantityOnHand"];
+            this.minimumStock = _data["minimumStock"];
+            this.suggestedReorderQuantity = _data["suggestedReorderQuantity"];
+            this.lastPurchaseDate = _data["lastPurchaseDate"] ? new Date(_data["lastPurchaseDate"].toString()) : undefined as any;
+            this.preferredSupplierName = _data["preferredSupplierName"];
+        }
+    }
+
+    static fromJS(data: any): LowStockReportRowDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new LowStockReportRowDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["productId"] = this.productId;
+        data["productName"] = this.productName;
+        data["productCode"] = this.productCode;
+        data["categoryName"] = this.categoryName;
+        data["quantityOnHand"] = this.quantityOnHand;
+        data["minimumStock"] = this.minimumStock;
+        data["suggestedReorderQuantity"] = this.suggestedReorderQuantity;
+        data["lastPurchaseDate"] = this.lastPurchaseDate ? this.lastPurchaseDate.toISOString() : undefined as any;
+        data["preferredSupplierName"] = this.preferredSupplierName;
+        return data;
+    }
+}
+
+export interface ILowStockReportRowDto {
+    productId?: number;
+    productName?: string | undefined;
+    productCode?: string | undefined;
+    categoryName?: string | undefined;
+    quantityOnHand?: number;
+    minimumStock?: number;
+    suggestedReorderQuantity?: number;
+    lastPurchaseDate?: Date | undefined;
+    preferredSupplierName?: string | undefined;
 }
 
 export class PaymentMethodDto implements IPaymentMethodDto {
@@ -10931,6 +12389,190 @@ export interface IProductDtoPagedResultDto {
     page?: number;
     pageSize?: number;
     hasMore?: boolean;
+}
+
+export class ProductSalesReportRowDto implements IProductSalesReportRowDto {
+    productId?: number;
+    productName?: string | undefined;
+    productCode?: string | undefined;
+    categoryName?: string | undefined;
+    quantitySold?: number;
+    totalRevenue?: number;
+    totalDiscount?: number;
+    averageSellingPrice?: number;
+
+    constructor(data?: IProductSalesReportRowDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.productId = _data["productId"];
+            this.productName = _data["productName"];
+            this.productCode = _data["productCode"];
+            this.categoryName = _data["categoryName"];
+            this.quantitySold = _data["quantitySold"];
+            this.totalRevenue = _data["totalRevenue"];
+            this.totalDiscount = _data["totalDiscount"];
+            this.averageSellingPrice = _data["averageSellingPrice"];
+        }
+    }
+
+    static fromJS(data: any): ProductSalesReportRowDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new ProductSalesReportRowDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["productId"] = this.productId;
+        data["productName"] = this.productName;
+        data["productCode"] = this.productCode;
+        data["categoryName"] = this.categoryName;
+        data["quantitySold"] = this.quantitySold;
+        data["totalRevenue"] = this.totalRevenue;
+        data["totalDiscount"] = this.totalDiscount;
+        data["averageSellingPrice"] = this.averageSellingPrice;
+        return data;
+    }
+}
+
+export interface IProductSalesReportRowDto {
+    productId?: number;
+    productName?: string | undefined;
+    productCode?: string | undefined;
+    categoryName?: string | undefined;
+    quantitySold?: number;
+    totalRevenue?: number;
+    totalDiscount?: number;
+    averageSellingPrice?: number;
+}
+
+export class ProfitReportRowDto implements IProfitReportRowDto {
+    productId?: number;
+    productName?: string | undefined;
+    quantitySold?: number;
+    totalRevenue?: number;
+    totalCost?: number;
+    grossProfit?: number;
+    marginPercent?: number;
+
+    constructor(data?: IProfitReportRowDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.productId = _data["productId"];
+            this.productName = _data["productName"];
+            this.quantitySold = _data["quantitySold"];
+            this.totalRevenue = _data["totalRevenue"];
+            this.totalCost = _data["totalCost"];
+            this.grossProfit = _data["grossProfit"];
+            this.marginPercent = _data["marginPercent"];
+        }
+    }
+
+    static fromJS(data: any): ProfitReportRowDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new ProfitReportRowDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["productId"] = this.productId;
+        data["productName"] = this.productName;
+        data["quantitySold"] = this.quantitySold;
+        data["totalRevenue"] = this.totalRevenue;
+        data["totalCost"] = this.totalCost;
+        data["grossProfit"] = this.grossProfit;
+        data["marginPercent"] = this.marginPercent;
+        return data;
+    }
+}
+
+export interface IProfitReportRowDto {
+    productId?: number;
+    productName?: string | undefined;
+    quantitySold?: number;
+    totalRevenue?: number;
+    totalCost?: number;
+    grossProfit?: number;
+    marginPercent?: number;
+}
+
+export class ProfitSummaryReportDto implements IProfitSummaryReportDto {
+    totalRevenue?: number;
+    totalCost?: number;
+    totalGrossProfit?: number;
+    overallMarginPercent?: number;
+    items?: ProfitReportRowDto[] | undefined;
+
+    constructor(data?: IProfitSummaryReportDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.totalRevenue = _data["totalRevenue"];
+            this.totalCost = _data["totalCost"];
+            this.totalGrossProfit = _data["totalGrossProfit"];
+            this.overallMarginPercent = _data["overallMarginPercent"];
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(ProfitReportRowDto.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): ProfitSummaryReportDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new ProfitSummaryReportDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["totalRevenue"] = this.totalRevenue;
+        data["totalCost"] = this.totalCost;
+        data["totalGrossProfit"] = this.totalGrossProfit;
+        data["overallMarginPercent"] = this.overallMarginPercent;
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item ? item.toJSON() : undefined as any);
+        }
+        return data;
+    }
+}
+
+export interface IProfitSummaryReportDto {
+    totalRevenue?: number;
+    totalCost?: number;
+    totalGrossProfit?: number;
+    overallMarginPercent?: number;
+    items?: ProfitReportRowDto[] | undefined;
 }
 
 export class PurchaseDetailDto implements IPurchaseDetailDto {
@@ -11323,6 +12965,86 @@ export interface IPurchaseReturnDtoPagedResultDto {
     page?: number;
     pageSize?: number;
     hasMore?: boolean;
+}
+
+export class PurchaseSummaryReportDto implements IPurchaseSummaryReportDto {
+    fromDate?: Date;
+    toDate?: Date;
+    totalPurchaseInvoices?: number;
+    totalGrossPurchases?: number;
+    totalDiscount?: number;
+    totalTax?: number;
+    totalNetPurchases?: number;
+    totalPaid?: number;
+    totalOutstandingDue?: number;
+    dailyBreakdown?: DailyPurchasePointDto[] | undefined;
+
+    constructor(data?: IPurchaseSummaryReportDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.fromDate = _data["fromDate"] ? new Date(_data["fromDate"].toString()) : undefined as any;
+            this.toDate = _data["toDate"] ? new Date(_data["toDate"].toString()) : undefined as any;
+            this.totalPurchaseInvoices = _data["totalPurchaseInvoices"];
+            this.totalGrossPurchases = _data["totalGrossPurchases"];
+            this.totalDiscount = _data["totalDiscount"];
+            this.totalTax = _data["totalTax"];
+            this.totalNetPurchases = _data["totalNetPurchases"];
+            this.totalPaid = _data["totalPaid"];
+            this.totalOutstandingDue = _data["totalOutstandingDue"];
+            if (Array.isArray(_data["dailyBreakdown"])) {
+                this.dailyBreakdown = [] as any;
+                for (let item of _data["dailyBreakdown"])
+                    this.dailyBreakdown!.push(DailyPurchasePointDto.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): PurchaseSummaryReportDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new PurchaseSummaryReportDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["fromDate"] = this.fromDate ? this.fromDate.toISOString() : undefined as any;
+        data["toDate"] = this.toDate ? this.toDate.toISOString() : undefined as any;
+        data["totalPurchaseInvoices"] = this.totalPurchaseInvoices;
+        data["totalGrossPurchases"] = this.totalGrossPurchases;
+        data["totalDiscount"] = this.totalDiscount;
+        data["totalTax"] = this.totalTax;
+        data["totalNetPurchases"] = this.totalNetPurchases;
+        data["totalPaid"] = this.totalPaid;
+        data["totalOutstandingDue"] = this.totalOutstandingDue;
+        if (Array.isArray(this.dailyBreakdown)) {
+            data["dailyBreakdown"] = [];
+            for (let item of this.dailyBreakdown)
+                data["dailyBreakdown"].push(item ? item.toJSON() : undefined as any);
+        }
+        return data;
+    }
+}
+
+export interface IPurchaseSummaryReportDto {
+    fromDate?: Date;
+    toDate?: Date;
+    totalPurchaseInvoices?: number;
+    totalGrossPurchases?: number;
+    totalDiscount?: number;
+    totalTax?: number;
+    totalNetPurchases?: number;
+    totalPaid?: number;
+    totalOutstandingDue?: number;
+    dailyBreakdown?: DailyPurchasePointDto[] | undefined;
 }
 
 export class RoleDto implements IRoleDto {
@@ -11773,6 +13495,86 @@ export interface ISaleReturnDtoPagedResultDto {
     hasMore?: boolean;
 }
 
+export class SalesSummaryReportDto implements ISalesSummaryReportDto {
+    fromDate?: Date;
+    toDate?: Date;
+    totalInvoices?: number;
+    totalGrossSales?: number;
+    totalDiscount?: number;
+    totalTax?: number;
+    totalNetSales?: number;
+    totalCollected?: number;
+    averageInvoiceValue?: number;
+    dailyBreakdown?: DailySalesPointDto[] | undefined;
+
+    constructor(data?: ISalesSummaryReportDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.fromDate = _data["fromDate"] ? new Date(_data["fromDate"].toString()) : undefined as any;
+            this.toDate = _data["toDate"] ? new Date(_data["toDate"].toString()) : undefined as any;
+            this.totalInvoices = _data["totalInvoices"];
+            this.totalGrossSales = _data["totalGrossSales"];
+            this.totalDiscount = _data["totalDiscount"];
+            this.totalTax = _data["totalTax"];
+            this.totalNetSales = _data["totalNetSales"];
+            this.totalCollected = _data["totalCollected"];
+            this.averageInvoiceValue = _data["averageInvoiceValue"];
+            if (Array.isArray(_data["dailyBreakdown"])) {
+                this.dailyBreakdown = [] as any;
+                for (let item of _data["dailyBreakdown"])
+                    this.dailyBreakdown!.push(DailySalesPointDto.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): SalesSummaryReportDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new SalesSummaryReportDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["fromDate"] = this.fromDate ? this.fromDate.toISOString() : undefined as any;
+        data["toDate"] = this.toDate ? this.toDate.toISOString() : undefined as any;
+        data["totalInvoices"] = this.totalInvoices;
+        data["totalGrossSales"] = this.totalGrossSales;
+        data["totalDiscount"] = this.totalDiscount;
+        data["totalTax"] = this.totalTax;
+        data["totalNetSales"] = this.totalNetSales;
+        data["totalCollected"] = this.totalCollected;
+        data["averageInvoiceValue"] = this.averageInvoiceValue;
+        if (Array.isArray(this.dailyBreakdown)) {
+            data["dailyBreakdown"] = [];
+            for (let item of this.dailyBreakdown)
+                data["dailyBreakdown"].push(item ? item.toJSON() : undefined as any);
+        }
+        return data;
+    }
+}
+
+export interface ISalesSummaryReportDto {
+    fromDate?: Date;
+    toDate?: Date;
+    totalInvoices?: number;
+    totalGrossSales?: number;
+    totalDiscount?: number;
+    totalTax?: number;
+    totalNetSales?: number;
+    totalCollected?: number;
+    averageInvoiceValue?: number;
+    dailyBreakdown?: DailySalesPointDto[] | undefined;
+}
+
 export class SalesTrendPointDto implements ISalesTrendPointDto {
     date?: Date;
     sales?: number;
@@ -12009,6 +13811,66 @@ export interface IStockAdjustmentDto {
     items?: StockAdjustmentDetailDto[] | undefined;
 }
 
+export class StockMovementRowDto implements IStockMovementRowDto {
+    transactionDate?: Date;
+    transactionType?: string | undefined;
+    referenceNo?: string | undefined;
+    quantityIn?: number;
+    quantityOut?: number;
+    runningBalance?: number;
+    remarks?: string | undefined;
+
+    constructor(data?: IStockMovementRowDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.transactionDate = _data["transactionDate"] ? new Date(_data["transactionDate"].toString()) : undefined as any;
+            this.transactionType = _data["transactionType"];
+            this.referenceNo = _data["referenceNo"];
+            this.quantityIn = _data["quantityIn"];
+            this.quantityOut = _data["quantityOut"];
+            this.runningBalance = _data["runningBalance"];
+            this.remarks = _data["remarks"];
+        }
+    }
+
+    static fromJS(data: any): StockMovementRowDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new StockMovementRowDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["transactionDate"] = this.transactionDate ? this.transactionDate.toISOString() : undefined as any;
+        data["transactionType"] = this.transactionType;
+        data["referenceNo"] = this.referenceNo;
+        data["quantityIn"] = this.quantityIn;
+        data["quantityOut"] = this.quantityOut;
+        data["runningBalance"] = this.runningBalance;
+        data["remarks"] = this.remarks;
+        return data;
+    }
+}
+
+export interface IStockMovementRowDto {
+    transactionDate?: Date;
+    transactionType?: string | undefined;
+    referenceNo?: string | undefined;
+    quantityIn?: number;
+    quantityOut?: number;
+    runningBalance?: number;
+    remarks?: string | undefined;
+}
+
 export class StockSummaryDto implements IStockSummaryDto {
     productId?: number;
     productCode?: string | undefined;
@@ -12081,6 +13943,134 @@ export interface IStockSummaryDto {
     isLowStock?: boolean;
 }
 
+export class StockValuationReportRowDto implements IStockValuationReportRowDto {
+    productId?: number;
+    productName?: string | undefined;
+    productCode?: string | undefined;
+    categoryName?: string | undefined;
+    quantityOnHand?: number;
+    unitCost?: number;
+    unitSalePrice?: number;
+    valueAtCost?: number;
+    valueAtSalePrice?: number;
+    potentialProfit?: number;
+
+    constructor(data?: IStockValuationReportRowDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.productId = _data["productId"];
+            this.productName = _data["productName"];
+            this.productCode = _data["productCode"];
+            this.categoryName = _data["categoryName"];
+            this.quantityOnHand = _data["quantityOnHand"];
+            this.unitCost = _data["unitCost"];
+            this.unitSalePrice = _data["unitSalePrice"];
+            this.valueAtCost = _data["valueAtCost"];
+            this.valueAtSalePrice = _data["valueAtSalePrice"];
+            this.potentialProfit = _data["potentialProfit"];
+        }
+    }
+
+    static fromJS(data: any): StockValuationReportRowDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new StockValuationReportRowDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["productId"] = this.productId;
+        data["productName"] = this.productName;
+        data["productCode"] = this.productCode;
+        data["categoryName"] = this.categoryName;
+        data["quantityOnHand"] = this.quantityOnHand;
+        data["unitCost"] = this.unitCost;
+        data["unitSalePrice"] = this.unitSalePrice;
+        data["valueAtCost"] = this.valueAtCost;
+        data["valueAtSalePrice"] = this.valueAtSalePrice;
+        data["potentialProfit"] = this.potentialProfit;
+        return data;
+    }
+}
+
+export interface IStockValuationReportRowDto {
+    productId?: number;
+    productName?: string | undefined;
+    productCode?: string | undefined;
+    categoryName?: string | undefined;
+    quantityOnHand?: number;
+    unitCost?: number;
+    unitSalePrice?: number;
+    valueAtCost?: number;
+    valueAtSalePrice?: number;
+    potentialProfit?: number;
+}
+
+export class StockValuationSummaryDto implements IStockValuationSummaryDto {
+    totalValueAtCost?: number;
+    totalValueAtSalePrice?: number;
+    totalPotentialProfit?: number;
+    items?: StockValuationReportRowDto[] | undefined;
+
+    constructor(data?: IStockValuationSummaryDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.totalValueAtCost = _data["totalValueAtCost"];
+            this.totalValueAtSalePrice = _data["totalValueAtSalePrice"];
+            this.totalPotentialProfit = _data["totalPotentialProfit"];
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(StockValuationReportRowDto.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): StockValuationSummaryDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new StockValuationSummaryDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["totalValueAtCost"] = this.totalValueAtCost;
+        data["totalValueAtSalePrice"] = this.totalValueAtSalePrice;
+        data["totalPotentialProfit"] = this.totalPotentialProfit;
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item ? item.toJSON() : undefined as any);
+        }
+        return data;
+    }
+}
+
+export interface IStockValuationSummaryDto {
+    totalValueAtCost?: number;
+    totalValueAtSalePrice?: number;
+    totalPotentialProfit?: number;
+    items?: StockValuationReportRowDto[] | undefined;
+}
+
 export enum SubscriptionStatus {
     _1 = 1,
     _2 = 2,
@@ -12143,6 +14133,66 @@ export interface ISupplierDto {
     contactNo?: string | undefined;
     address?: string | undefined;
     email?: string | undefined;
+}
+
+export class SupplierDueReportRowDto implements ISupplierDueReportRowDto {
+    supplierId?: number;
+    supplierName?: string | undefined;
+    contactNo?: string | undefined;
+    unpaidInvoiceCount?: number;
+    totalDue?: number;
+    oldestUnpaidInvoiceDate?: Date | undefined;
+    daysOverdue?: number;
+
+    constructor(data?: ISupplierDueReportRowDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.supplierId = _data["supplierId"];
+            this.supplierName = _data["supplierName"];
+            this.contactNo = _data["contactNo"];
+            this.unpaidInvoiceCount = _data["unpaidInvoiceCount"];
+            this.totalDue = _data["totalDue"];
+            this.oldestUnpaidInvoiceDate = _data["oldestUnpaidInvoiceDate"] ? new Date(_data["oldestUnpaidInvoiceDate"].toString()) : undefined as any;
+            this.daysOverdue = _data["daysOverdue"];
+        }
+    }
+
+    static fromJS(data: any): SupplierDueReportRowDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new SupplierDueReportRowDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["supplierId"] = this.supplierId;
+        data["supplierName"] = this.supplierName;
+        data["contactNo"] = this.contactNo;
+        data["unpaidInvoiceCount"] = this.unpaidInvoiceCount;
+        data["totalDue"] = this.totalDue;
+        data["oldestUnpaidInvoiceDate"] = this.oldestUnpaidInvoiceDate ? this.oldestUnpaidInvoiceDate.toISOString() : undefined as any;
+        data["daysOverdue"] = this.daysOverdue;
+        return data;
+    }
+}
+
+export interface ISupplierDueReportRowDto {
+    supplierId?: number;
+    supplierName?: string | undefined;
+    contactNo?: string | undefined;
+    unpaidInvoiceCount?: number;
+    totalDue?: number;
+    oldestUnpaidInvoiceDate?: Date | undefined;
+    daysOverdue?: number;
 }
 
 export class SupplierPaymentDto implements ISupplierPaymentDto {
@@ -12279,6 +14329,126 @@ export interface ISupplierPaymentDtoPagedResultDto {
     page?: number;
     pageSize?: number;
     hasMore?: boolean;
+}
+
+export class SupplierPurchaseReportRowDto implements ISupplierPurchaseReportRowDto {
+    supplierId?: number;
+    supplierName?: string | undefined;
+    invoiceCount?: number;
+    totalPurchased?: number;
+    totalPaid?: number;
+    totalDue?: number;
+
+    constructor(data?: ISupplierPurchaseReportRowDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.supplierId = _data["supplierId"];
+            this.supplierName = _data["supplierName"];
+            this.invoiceCount = _data["invoiceCount"];
+            this.totalPurchased = _data["totalPurchased"];
+            this.totalPaid = _data["totalPaid"];
+            this.totalDue = _data["totalDue"];
+        }
+    }
+
+    static fromJS(data: any): SupplierPurchaseReportRowDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new SupplierPurchaseReportRowDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["supplierId"] = this.supplierId;
+        data["supplierName"] = this.supplierName;
+        data["invoiceCount"] = this.invoiceCount;
+        data["totalPurchased"] = this.totalPurchased;
+        data["totalPaid"] = this.totalPaid;
+        data["totalDue"] = this.totalDue;
+        return data;
+    }
+}
+
+export interface ISupplierPurchaseReportRowDto {
+    supplierId?: number;
+    supplierName?: string | undefined;
+    invoiceCount?: number;
+    totalPurchased?: number;
+    totalPaid?: number;
+    totalDue?: number;
+}
+
+export class TaxReportDto implements ITaxReportDto {
+    fromDate?: Date;
+    toDate?: Date;
+    taxCollectedOnSales?: number;
+    taxPaidOnPurchases?: number;
+    netTaxLiability?: number;
+    dailyBreakdown?: DailyTaxPointDto[] | undefined;
+
+    constructor(data?: ITaxReportDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.fromDate = _data["fromDate"] ? new Date(_data["fromDate"].toString()) : undefined as any;
+            this.toDate = _data["toDate"] ? new Date(_data["toDate"].toString()) : undefined as any;
+            this.taxCollectedOnSales = _data["taxCollectedOnSales"];
+            this.taxPaidOnPurchases = _data["taxPaidOnPurchases"];
+            this.netTaxLiability = _data["netTaxLiability"];
+            if (Array.isArray(_data["dailyBreakdown"])) {
+                this.dailyBreakdown = [] as any;
+                for (let item of _data["dailyBreakdown"])
+                    this.dailyBreakdown!.push(DailyTaxPointDto.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): TaxReportDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new TaxReportDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["fromDate"] = this.fromDate ? this.fromDate.toISOString() : undefined as any;
+        data["toDate"] = this.toDate ? this.toDate.toISOString() : undefined as any;
+        data["taxCollectedOnSales"] = this.taxCollectedOnSales;
+        data["taxPaidOnPurchases"] = this.taxPaidOnPurchases;
+        data["netTaxLiability"] = this.netTaxLiability;
+        if (Array.isArray(this.dailyBreakdown)) {
+            data["dailyBreakdown"] = [];
+            for (let item of this.dailyBreakdown)
+                data["dailyBreakdown"].push(item ? item.toJSON() : undefined as any);
+        }
+        return data;
+    }
+}
+
+export interface ITaxReportDto {
+    fromDate?: Date;
+    toDate?: Date;
+    taxCollectedOnSales?: number;
+    taxPaidOnPurchases?: number;
+    netTaxLiability?: number;
+    dailyBreakdown?: DailyTaxPointDto[] | undefined;
 }
 
 export class TenantDto implements ITenantDto {

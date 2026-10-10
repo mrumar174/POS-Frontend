@@ -4,10 +4,17 @@ export interface SidebarLink {
   icon: string;
 }
 
-export interface SidebarGroup {
+export interface SidebarSubGroup {
   label: string;
   icon: string;
   links: SidebarLink[];
+}
+
+export interface SidebarGroup {
+  label: string;
+  icon: string;
+  links?: SidebarLink[];
+  children?: SidebarSubGroup[]; // For nested report sub-categories
 }
 
 export const SIDEBAR_GROUPS: SidebarGroup[] = [
@@ -18,7 +25,6 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
       { label: 'Dashboard', route: '/dashboard', icon: 'bi-speedometer2' }
     ]
   },
-  // Catalog
   {
     label: 'Catalog',
     icon: 'bi-grid-3x3-gap',
@@ -30,7 +36,6 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
       { label: 'Print Barcodes', route: '/products/barcode-print', icon: 'bi-upc-scan' },
     ]
   },
-  // Identity & Access
   {
     label: 'Identity & Access',
     icon: 'bi-shield-lock',
@@ -40,7 +45,6 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
       { label: 'Permissions', route: '/permissions', icon: 'bi-key' }
     ]
   },
-  // Tenancy
   {
     label: 'Tenancy',
     icon: 'bi-building',
@@ -50,7 +54,6 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
       { label: 'Company Settings', route: '/company-settings', icon: 'bi-gear' }
     ]
   },
-  // purchasing
   {
     label: 'Purchasing',
     icon: 'bi-truck',
@@ -70,7 +73,6 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
       { label: 'Stock Adjustments', route: '/stock-adjustments', icon: 'bi-clipboard-check' }
     ]
   },
-  // Sales
   {
     label: 'Sales',
     icon: 'bi-cart',
@@ -80,7 +82,6 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
       { label: 'Sale Returns', route: '/sale-returns', icon: 'bi-arrow-return-left' }
     ]
   },
-    // Finance
   {
     label: 'Finance',
     icon: 'bi-wallet2',
@@ -90,4 +91,49 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
       { label: 'Daily Cash Closing', route: '/cash-closing', icon: 'bi-calculator' }
     ]
   },
+  // Single Unified Reports Tab with nested children
+  {
+    label: 'Reports',
+    icon: 'bi-graph-up-arrow',
+    children: [
+      {
+        label: 'Sales Reports',
+        icon: 'bi-graph-up-arrow',
+        links: [
+          { label: 'Reports Overview', route: '/reports', icon: 'bi-grid' },
+          { label: 'Sales Summary', route: '/reports/sales-summary', icon: 'bi-bar-chart-line' },
+          { label: 'Sales by Product', route: '/reports/sales-by-product', icon: 'bi-box-seam' },
+          { label: 'Sales by Category', route: '/reports/sales-by-category', icon: 'bi-tags' },
+          { label: 'Profit Report', route: '/reports/profit', icon: 'bi-graph-up' },
+          { label: 'Cashier Performance', route: '/reports/cashier-performance', icon: 'bi-person-check' }
+        ]
+      },
+      {
+        label: 'Purchase Reports',
+        icon: 'bi-truck',
+        links: [
+          { label: 'Purchase Summary', route: '/reports/purchase-summary', icon: 'bi-receipt' },
+          { label: 'Purchases by Supplier', route: '/reports/purchases-by-supplier', icon: 'bi-building' },
+          { label: 'Supplier Dues', route: '/reports/supplier-dues', icon: 'bi-hourglass-split' }
+        ]
+      },
+      {
+        label: 'Inventory Reports',
+        icon: 'bi-boxes',
+        links: [
+          { label: 'Stock Valuation', route: '/reports/stock-valuation', icon: 'bi-cash-coin' },
+          { label: 'Stock Movement', route: '/reports/stock-movement', icon: 'bi-arrow-left-right' },
+          { label: 'Low Stock', route: '/reports/low-stock', icon: 'bi-exclamation-triangle' }
+        ]
+      },
+      {
+        label: 'Finance Reports',
+        icon: 'bi-wallet2',
+        links: [
+          { label: 'Tax Report', route: '/reports/tax', icon: 'bi-percent' },
+          { label: 'Expenses Report', route: '/reports/expenses', icon: 'bi-cash-stack' }
+        ]
+      }
+    ]
+  }
 ];

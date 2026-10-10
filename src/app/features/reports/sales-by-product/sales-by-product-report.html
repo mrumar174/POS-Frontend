@@ -1,0 +1,56 @@
+<app-report-shell [r]="this">
+  <div filters [formGroup]="form" style="display: contents">
+    <div class="rpt-field">
+      <label class="field-label" for="fCat">Category</label>
+      <select id="fCat" class="form-select form-select-sm" formControlName="categoryId">
+        <option [ngValue]="null">All categories</option>
+        @for (c of categories(); track c.id) { <option [ngValue]="c.id">{{ c.name }}</option> }
+      </select>
+    </div>
+    <div class="rpt-field">
+      <label class="field-label" for="fSort">Sort by</label>
+      <select id="fSort" class="form-select form-select-sm" formControlName="sortBy">
+        @for (o of sortOptions; track o.label) { <option [ngValue]="o.value">{{ o.label }}</option> }
+      </select>
+    </div>
+    <div class="rpt-field">
+      <label class="field-label" for="fTop">Show</label>
+      <select id="fTop" class="form-select form-select-sm" formControlName="top">
+        @for (o of topOptions; track o.label) { <option [ngValue]="o.value">{{ o.label }}</option> }
+      </select>
+    </div>
+  </div>
+
+  @if (data(); as rows) {
+    <div class="kpi-grid">
+      <app-kpi label="Revenue" [value]="totals().revenue" tone="dark" />
+      <app-kpi label="Products sold" [value]="rows.length" format="int" />
+      <app-kpi label="Quantity sold" [value]="totals().qty" />
+      <app-kpi label="Discount given" [value]="totals().discount" />
+    </div>
+
+    <div class="rpt-card">
+      <div class="rpt-card-head"><h6>Products</h6><span class="count-badge">{{ rows.length }} rows</span></div>
+      <div class="rpt-table-wrap">
+        <table class="rpt-table">
+          <thead><tr><th class="idx">#</th><th>Product</th><th>Category</th><th class="num">Qty sold</th><th class="num">Revenue</th><th class="num">Discount</th><th class="num">Avg price</th><th>Share</th></tr></thead>
+          <tbody>
+            @for (r of rows; track r.productId) {
+              <tr>
+                <td class="idx">{{ $index + 1 }}</td>
+                <td><div class="fw-name">{{ r.productName }}</div><div class="muted">{{ r.productCode }}</div></td>
+                <td>{{ r.categoryName }}</td>
+                <td class="num">{{ r.quantitySold | number: '1.0-3' }}</td>
+                <td class="num">{{ r.totalRevenue | number: '1.2-2' }}</td>
+                <td class="num neg">{{ r.totalDiscount | number: '1.2-2' }}</td>
+                <td class="num">{{ r.averageSellingPrice | number: '1.2-2' }}</td>
+                <td><div class="share"><div class="share-track"><div class="share-fill" [style.width.%]="pct(r.totalRevenue, totals().revenue)"></div></div><span class="num muted">{{ pct(r.totalRevenue, totals().revenue) | number: '1.1-1' }}%</span></div></td>
+              </tr>
+            }
+          </tbody>
+          <tfoot><tr><td></td><td>Total</td><td></td><td class="num">{{ totals().qty | number: '1.0-3' }}</td><td class="num">{{ totals().revenue | number: '1.2-2' }}</td><td class="num">{{ totals().discount | number: '1.2-2' }}</td><td></td><td></td></tr></tfoot>
+        </table>
+      </div>
+    </div>
+  }
+</app-report-shell>
