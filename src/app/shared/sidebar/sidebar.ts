@@ -15,6 +15,7 @@ export class Sidebar {
   readonly groups: SidebarGroup[] = SIDEBAR_GROUPS;
   readonly collapsed = signal(false);
   readonly expandedGroup = signal<string | null>(null);
+  readonly expandedSubGroup = signal<string | null>(null);
 
   constructor(protected auth: AuthService, private router: Router) {
     this.setExpandedGroupFromUrl(this.router.url);
@@ -23,11 +24,43 @@ export class Sidebar {
       .subscribe((event) => this.setExpandedGroupFromUrl(event.urlAfterRedirects));
   }
 
+  private isMatch(currentUrl: string, linkRoute: string): boolean {
+    // Reports overview must be an exact match so it doesn't swallow all other /reports/* sub-routes
+    if (linkRoute === '/reports') {
+      return currentUrl === '/reports' || currentUrl === '/reports/';
+    }
+    return currentUrl === linkRoute || currentUrl.startsWith(linkRoute + '/');
+  }
+
   private setExpandedGroupFromUrl(url: string): void {
-    const match = this.groups.find((group) =>
-      group.links.some((link) => url === link.route || url.startsWith(link.route + '/'))
-    );
-    this.expandedGroup.set(match?.label ?? null);
+    let matchedGroup: SidebarGroup | null = null;
+    let matchedSubGroup: any = null;
+
+    for (const group of this.groups) {
+      if (group.children) {
+        for (const sub of group.children) {
+          // Sort links by length descending so specific routes are checked before generic ones
+          const sortedLinks = [...sub.links].sort((a, b) => b.route.length - a.route.length);
+          const found = sortedLinks.some((link) => this.isMatch(url, link.route));
+          if (found) {
+            matchedGroup = group;
+            matchedSubGroup = sub;
+            break;
+          }
+        }
+      } else if (group.links) {
+        const sortedLinks = [...group.links].sort((a, b) => b.route.length - a.route.length);
+        const found = sortedLinks.some((link) => this.isMatch(url, link.route));
+        if (found) {
+          matchedGroup = group;
+          break;
+        }
+      }
+      if (matchedGroup) break;
+    }
+
+    this.expandedGroup.set(matchedGroup?.label ?? null);
+    this.expandedSubGroup.set(matchedSubGroup?.label ?? null);
   }
 
   toggleSidebar(): void {
@@ -43,6 +76,14 @@ export class Sidebar {
 
   isGroupExpanded(label: string): boolean {
     return this.expandedGroup() === label;
+  }
+
+  toggleSubGroup(label: string): void {
+    this.expandedSubGroup.update((current) => (current === label ? null : label));
+  }
+
+  isSubGroupExpanded(label: string): boolean {
+    return this.expandedSubGroup() === label;
   }
 
   logout(): void {

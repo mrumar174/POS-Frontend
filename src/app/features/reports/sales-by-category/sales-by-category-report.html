@@ -1,0 +1,30 @@
+<app-report-shell [r]="this">
+  @if (data(); as rows) {
+    <div class="kpi-grid">
+      <app-kpi label="Revenue" [value]="totals().revenue" tone="dark" />
+      <app-kpi label="Categories" [value]="rows.length" format="int" />
+      <app-kpi label="Quantity sold" [value]="totals().qty" />
+    </div>
+
+    <div class="rpt-card">
+      <div class="rpt-card-head"><h6>Categories</h6><span class="count-badge">{{ rows.length }} rows</span></div>
+      <div class="rpt-table-wrap">
+        <table class="rpt-table">
+          <thead><tr><th class="idx">#</th><th>Category</th><th class="num">Qty sold</th><th class="num">Revenue</th><th>% of total sales</th></tr></thead>
+          <tbody>
+            @for (r of rows; track r.categoryId) {
+              <tr>
+                <td class="idx">{{ $index + 1 }}</td>
+                <td class="fw-name">{{ r.categoryName }}</td>
+                <td class="num">{{ r.quantitySold | number: '1.0-3' }}</td>
+                <td class="num">{{ r.totalRevenue | number: '1.2-2' }}</td>
+                <td><div class="share"><div class="share-track"><div class="share-fill" [style.width.%]="r.percentOfTotalSales || 0"></div></div><span class="num muted">{{ r.percentOfTotalSales | number: '1.1-1' }}%</span></div></td>
+              </tr>
+            }
+          </tbody>
+          <tfoot><tr><td></td><td>Total</td><td class="num">{{ totals().qty | number: '1.0-3' }}</td><td class="num">{{ totals().revenue | number: '1.2-2' }}</td><td></td></tr></tfoot>
+        </table>
+      </div>
+    </div>
+  }
+</app-report-shell>

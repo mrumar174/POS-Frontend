@@ -1,0 +1,72 @@
+<div class="container-fluid rpt-page">
+  <app-page-header [segments]="segments"></app-page-header>
+
+  <div class="rpt-toolbar">
+    <form [formGroup]="r.form" class="rpt-filters" (ngSubmit)="r.run()" novalidate>
+      @if (r.showDates) {
+        <div class="rpt-field">
+          <label class="field-label" for="rptFrom">From</label>
+          <input id="rptFrom" type="date" class="form-control form-control-sm" formControlName="fromDate" />
+        </div>
+        <div class="rpt-field">
+          <label class="field-label" for="rptTo">To</label>
+          <input id="rptTo" type="date" class="form-control form-control-sm" formControlName="toDate" />
+        </div>
+      }
+
+      <ng-content select="[filters]"></ng-content>
+
+      <button type="submit" class="btn btn-run" [disabled]="r.loading()">
+        @if (r.loading()) { <span class="spinner"></span> Running... }
+        @else { <i class="bi bi-play-fill"></i> Run report <kbd class="kbd kbd-light">Ctrl+Enter</kbd> }
+      </button>
+    </form>
+
+    <div class="rpt-actions">
+      <button type="button" class="btn btn-tool" (click)="r.exportExcel()" [disabled]="!r.data() || r.empty()" title="Export to Excel (Ctrl+E)">
+        <i class="bi bi-file-earmark-excel text-success"></i> Excel <kbd class="kbd">Ctrl+E</kbd>
+      </button>
+      <button type="button" class="btn btn-tool" (click)="r.print()" [disabled]="!r.data() || r.empty()" title="Print (Ctrl+P)">
+        <i class="bi bi-printer"></i> Print <kbd class="kbd">Ctrl+P</kbd>
+      </button>
+    </div>
+  </div>
+
+  @if (r.showDates) {
+    <div class="presets">
+      @for (p of presets; track p.key) {
+        <button type="button" class="chip-btn" (click)="applyPreset(p.key)">{{ p.label }}</button>
+      }
+    </div>
+  }
+
+  @if (r.error()) {
+    <div class="alert alert-danger py-2 mb-3">{{ r.error() }}</div>
+  }
+
+  @if (r.loading() && !r.data()) {
+    <div class="skeleton-form">
+      <div class="skeleton-line skeleton-kpi"></div>
+      <div class="skeleton-line skeleton-table"></div>
+    </div>
+  }
+
+  @if (!r.data() && !r.loading() && !r.error()) {
+    <div class="rpt-state"><i class="bi bi-funnel"></i><div>{{ r.idleHint }}</div></div>
+  }
+
+  @if (r.data() && r.empty() && !r.loading()) {
+    <div class="rpt-state"><i class="bi bi-inbox"></i><div>No data found for the selected filters.</div></div>
+  }
+
+  @if (r.data() && !r.empty()) {
+    <div class="rpt-meta">
+      @if (r.period()) { <span><i class="bi bi-calendar3"></i> {{ r.period() }}</span> }
+      @if (r.generatedAt(); as g) { <span><i class="bi bi-clock"></i> Generated {{ g | date: 'dd MMM yyyy, HH:mm' }}</span> }
+    </div>
+  }
+
+  <div id="report-print-area" class="rpt-area" [hidden]="!r.data() || r.empty()" [class.is-loading]="r.loading()">
+    <ng-content></ng-content>
+  </div>
+</div>

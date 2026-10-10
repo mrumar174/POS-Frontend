@@ -1,0 +1,43 @@
+<app-report-shell [r]="this">
+  <div filters [formGroup]="form" style="display: contents">
+    <div class="rpt-field">
+      <label class="field-label" for="fSort">Sort by</label>
+      <select id="fSort" class="form-select form-select-sm" formControlName="sortBy">
+        @for (o of sortOptions; track o.label) { <option [ngValue]="o.value">{{ o.label }}</option> }
+      </select>
+    </div>
+  </div>
+
+  @if (data(); as rows) {
+    <div class="kpi-grid">
+      <app-kpi label="Total purchased" [value]="totals().purchased" tone="dark" />
+      <app-kpi label="Suppliers" [value]="rows.length" format="int" />
+      <app-kpi label="Invoices" [value]="totals().invoices" format="int" />
+      <app-kpi label="Paid" [value]="totals().paid" tone="good" />
+      <app-kpi label="Due" [value]="totals().due" [tone]="totals().due > 0 ? 'bad' : ''" />
+    </div>
+
+    <div class="rpt-card">
+      <div class="rpt-card-head"><h6>Suppliers</h6><span class="count-badge">{{ rows.length }} rows</span></div>
+      <div class="rpt-table-wrap">
+        <table class="rpt-table">
+          <thead><tr><th class="idx">#</th><th>Supplier</th><th class="num">Invoices</th><th class="num">Purchased</th><th class="num">Paid</th><th class="num">Due</th><th>Share</th></tr></thead>
+          <tbody>
+            @for (r of rows; track r.supplierId) {
+              <tr>
+                <td class="idx">{{ $index + 1 }}</td>
+                <td class="fw-name">{{ r.supplierName }}</td>
+                <td class="num">{{ r.invoiceCount | number: '1.0-0' }}</td>
+                <td class="num">{{ r.totalPurchased | number: '1.2-2' }}</td>
+                <td class="num pos">{{ r.totalPaid | number: '1.2-2' }}</td>
+                <td class="num" [class.neg]="(r.totalDue || 0) > 0">{{ r.totalDue | number: '1.2-2' }}</td>
+                <td><div class="share"><div class="share-track"><div class="share-fill" [style.width.%]="pct(r.totalPurchased, totals().purchased)"></div></div><span class="num muted">{{ pct(r.totalPurchased, totals().purchased) | number: '1.1-1' }}%</span></div></td>
+              </tr>
+            }
+          </tbody>
+          <tfoot><tr><td></td><td>Total</td><td class="num">{{ totals().invoices | number: '1.0-0' }}</td><td class="num">{{ totals().purchased | number: '1.2-2' }}</td><td class="num">{{ totals().paid | number: '1.2-2' }}</td><td class="num">{{ totals().due | number: '1.2-2' }}</td><td></td></tr></tfoot>
+        </table>
+      </div>
+    </div>
+  }
+</app-report-shell>

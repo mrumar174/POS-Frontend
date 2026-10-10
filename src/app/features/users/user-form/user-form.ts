@@ -9,7 +9,7 @@ import { PageHeader } from '../../../shared/page-header/page-header';
 @Component({
   selector: 'app-user-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, PageHeader],
+  imports: [ReactiveFormsModule, PageHeader],
   templateUrl: './user-form.html',
   styleUrl: './user-form.css'
 })

@@ -1,0 +1,40 @@
+<app-report-shell [r]="this">
+  <div filters [formGroup]="form" style="display: contents">
+    <div class="rpt-field rpt-field-wide">
+      <label class="field-label">Product</label>
+      <app-searchable-select [formControl]="productCtrl" [options]="productOptions()" placeholder="Search product name or code"></app-searchable-select>
+    </div>
+  </div>
+
+  @if (data(); as rows) {
+    <div class="kpi-grid">
+      <app-kpi label="Closing balance" [value]="totals().closing" tone="dark" />
+      <app-kpi label="Total in" [value]="totals().inQty" tone="good" />
+      <app-kpi label="Total out" [value]="totals().outQty" tone="bad" />
+      <app-kpi label="Transactions" [value]="rows.length" format="int" />
+    </div>
+
+    <div class="rpt-card">
+      <div class="rpt-card-head"><h6>Stock ledger — {{ productName }}</h6><span class="count-badge">{{ rows.length }} rows</span></div>
+      <div class="rpt-table-wrap">
+        <table class="rpt-table">
+          <thead><tr><th>Date</th><th>Type</th><th>Reference</th><th class="num">In</th><th class="num">Out</th><th class="num">Balance</th><th>Remarks</th></tr></thead>
+          <tbody>
+            @for (r of rows; track $index) {
+              <tr>
+                <td>{{ r.transactionDate | date: 'dd MMM yyyy, HH:mm' }}</td>
+                <td><span class="chip" [class.chip-ok]="(r.quantityIn || 0) > 0" [class.chip-warn]="(r.quantityOut || 0) > 0">{{ r.transactionType }}</span></td>
+                <td>{{ r.referenceNo }}</td>
+                <td class="num pos">{{ (r.quantityIn || 0) > 0 ? (r.quantityIn | number: '1.0-3') : '' }}</td>
+                <td class="num neg">{{ (r.quantityOut || 0) > 0 ? (r.quantityOut | number: '1.0-3') : '' }}</td>
+                <td class="num fw-name">{{ r.runningBalance | number: '1.0-3' }}</td>
+                <td class="muted">{{ r.remarks }}</td>
+              </tr>
+            }
+          </tbody>
+          <tfoot><tr><td colspan="3">Total</td><td class="num">{{ totals().inQty | number: '1.0-3' }}</td><td class="num">{{ totals().outQty | number: '1.0-3' }}</td><td class="num">{{ totals().closing | number: '1.0-3' }}</td><td></td></tr></tfoot>
+        </table>
+      </div>
+    </div>
+  }
+</app-report-shell>

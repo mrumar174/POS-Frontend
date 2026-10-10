@@ -1,0 +1,43 @@
+<app-report-shell [r]="this">
+  <div filters [formGroup]="form" style="display: contents">
+    <div class="rpt-field">
+      <label class="field-label" for="fCat">Category</label>
+      <select id="fCat" class="form-select form-select-sm" formControlName="categoryId">
+        <option [ngValue]="null">All categories</option>
+        @for (c of categories(); track c.id) { <option [ngValue]="c.id">{{ c.name }}</option> }
+      </select>
+    </div>
+  </div>
+
+  @if (data(); as d) {
+    <div class="kpi-grid">
+      <app-kpi label="Gross profit" [value]="d.totalGrossProfit" tone="dark" />
+      <app-kpi label="Revenue" [value]="d.totalRevenue" />
+      <app-kpi label="Cost of goods" [value]="d.totalCost" />
+      <app-kpi label="Overall margin" [value]="d.overallMarginPercent" format="pct" [tone]="(d.overallMarginPercent || 0) < 0 ? 'bad' : 'good'" />
+    </div>
+
+    <div class="rpt-card">
+      <div class="rpt-card-head"><h6>Profit by product</h6><span class="count-badge">{{ d.items?.length ?? 0 }} rows</span></div>
+      <div class="rpt-table-wrap">
+        <table class="rpt-table">
+          <thead><tr><th class="idx">#</th><th>Product</th><th class="num">Qty sold</th><th class="num">Revenue</th><th class="num">Cost</th><th class="num">Gross profit</th><th class="num">Margin</th></tr></thead>
+          <tbody>
+            @for (r of d.items ?? []; track r.productId) {
+              <tr>
+                <td class="idx">{{ $index + 1 }}</td>
+                <td class="fw-name">{{ r.productName }}</td>
+                <td class="num">{{ r.quantitySold | number: '1.0-3' }}</td>
+                <td class="num">{{ r.totalRevenue | number: '1.2-2' }}</td>
+                <td class="num">{{ r.totalCost | number: '1.2-2' }}</td>
+                <td class="num" [class.pos]="(r.grossProfit || 0) > 0" [class.neg]="(r.grossProfit || 0) < 0">{{ r.grossProfit | number: '1.2-2' }}</td>
+                <td class="num"><span class="chip" [class]="'chip ' + marginClass(r.marginPercent)">{{ r.marginPercent | number: '1.1-1' }}%</span></td>
+              </tr>
+            }
+          </tbody>
+          <tfoot><tr><td></td><td>Total</td><td></td><td class="num">{{ d.totalRevenue | number: '1.2-2' }}</td><td class="num">{{ d.totalCost | number: '1.2-2' }}</td><td class="num">{{ d.totalGrossProfit | number: '1.2-2' }}</td><td class="num">{{ d.overallMarginPercent | number: '1.1-1' }}%</td></tr></tfoot>
+        </table>
+      </div>
+    </div>
+  }
+</app-report-shell>

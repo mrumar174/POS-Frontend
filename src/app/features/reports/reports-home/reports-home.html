@@ -1,0 +1,20 @@
+<div class="container-fluid pb-4">
+  <app-page-header [segments]="segments"></app-page-header>
+
+  @for (g of groups; track g.label) {
+    <div class="hub-group">
+      <h6 class="hub-title">{{ g.label }}</h6>
+      <div class="hub-grid">
+        @for (c of g.items; track c.route) {
+          <a class="hub-card" [routerLink]="c.route">
+            <div class="hub-icon"><i class="bi" [class]="'bi ' + c.icon"></i></div>
+            <div>
+              <div class="hub-name">{{ c.title }}</div>
+              <div class="hub-desc">{{ c.desc }}</div>
+            </div>
+          </a>
+        }
+      </div>
+    </div>
+  }
+</div>
