@@ -14,8 +14,8 @@
         <p class="info-text">
           @if (isEditMode()) {
             You're updating an existing user's details, roles, and shop
-            access. Password can only be changed from a separate
-            "Change Password" action, not here.
+            access. To change the password, use the "Change Password"
+            button; you'll need the user's current password.
           } @else {
             Create a login for a team member. Assign at least one shop so
             they can operate the till, and a role to control what they're
@@ -182,6 +182,104 @@
                 </div>
               </div>
             </div>
+
+            <!-- Change password (edit mode only). Uses a div with its own formGroup, not a nested <form>. -->
+            @if (isEditMode()) {
+              <div class="password-section mt-4" [formGroup]="passwordForm">
+                <div class="d-flex align-items-center justify-content-between">
+                  <div>
+                    <label class="field-label mb-0">Password</label>
+                    <p class="form-subtitle mb-0">Change this user's password.</p>
+                  </div>
+                  <button type="button" class="btn btn-cancel" (click)="togglePasswordSection()">
+                    <i class="bi bi-key"></i>
+                    {{ showPasswordSection() ? 'Hide' : 'Change Password' }}
+                  </button>
+                </div>
+
+                @if (showPasswordSection()) {
+                  <div class="row g-3 mt-1">
+                    <div class="col-12 col-md-6">
+                      <label class="field-label" for="currentPassword">
+                        Current Password <span class="required-mark">*</span>
+                      </label>
+                      <input
+                        id="currentPassword"
+                        [type]="showPasswordFields() ? 'text' : 'password'"
+                        class="form-control"
+                        [class.is-invalid]="currentPasswordControl.invalid && currentPasswordControl.touched"
+                        formControlName="currentPassword"
+                        autocomplete="current-password"
+                        placeholder="Current password"
+                        (keydown.enter)="$event.preventDefault(); submitPassword()"
+                      />
+                      @if (currentPasswordControl.invalid && currentPasswordControl.touched) {
+                        <div class="field-error">Current password is required.</div>
+                      }
+                    </div>
+                    <div class="col-md-6 d-none d-md-block"></div>
+
+                    <div class="col-md-6">
+                      <label class="field-label" for="newPassword">
+                        New Password <span class="required-mark">*</span>
+                      </label>
+                      <div class="password-wrapper">
+                        <input
+                          id="newPassword"
+                          [type]="showPasswordFields() ? 'text' : 'password'"
+                          class="form-control"
+                          [class.is-invalid]="newPasswordControl.invalid && newPasswordControl.touched"
+                          formControlName="newPassword"
+                          autocomplete="new-password"
+                          placeholder="At least 6 characters"
+                          (keydown.enter)="$event.preventDefault(); submitPassword()"
+                        />
+                        <button type="button" class="password-toggle" (click)="togglePasswordFieldsVisibility()" tabindex="-1">
+                          <i class="bi" [class.bi-eye]="!showPasswordFields()" [class.bi-eye-slash]="showPasswordFields()"></i>
+                        </button>
+                      </div>
+                      @if (newPasswordControl.invalid && newPasswordControl.touched) {
+                        <div class="field-error">
+                          @if (newPasswordControl.hasError('required')) { New password is required. }
+                          @if (newPasswordControl.hasError('minlength')) { At least 6 characters required. }
+                        </div>
+                      }
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="field-label" for="confirmPassword">
+                        Confirm Password <span class="required-mark">*</span>
+                      </label>
+                      <input
+                        id="confirmPassword"
+                        [type]="showPasswordFields() ? 'text' : 'password'"
+                        class="form-control"
+                        [class.is-invalid]="confirmPasswordControl.touched && (confirmPasswordControl.invalid || passwordForm.hasError('mismatch'))"
+                        formControlName="confirmPassword"
+                        autocomplete="new-password"
+                        placeholder="Re-enter new password"
+                        (keydown.enter)="$event.preventDefault(); submitPassword()"
+                      />
+                      @if (confirmPasswordControl.touched && confirmPasswordControl.hasError('required')) {
+                        <div class="field-error">Please confirm the new password.</div>
+                      } @else if (confirmPasswordControl.touched && passwordForm.hasError('mismatch')) {
+                        <div class="field-error">Passwords do not match.</div>
+                      }
+                    </div>
+
+                    <div class="col-12 text-end">
+                      <button type="button" class="btn btn-save" (click)="submitPassword()" [disabled]="savingPassword()">
+                        @if (savingPassword()) {
+                          <span class="spinner"></span> Updating...
+                        } @else {
+                          Update Password
+                        }
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
 
             <div class="form-actions">
               <button type="button" class="btn btn-cancel" (click)="cancel()" [disabled]="saving()">

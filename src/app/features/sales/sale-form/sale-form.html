@@ -13,10 +13,10 @@
     }
 
     <form [formGroup]="form" class="pos-form" (ngSubmit)="submit(true)" (keydown.enter)="onFormEnter($event)" novalidate>
-      <div class="row g-3 pos-row">
+      <div class="pos-grid">
 
         <!-- ================= LEFT: Search + Cart ================= -->
-        <div class="col-lg-8 pos-left">
+        <section class="pos-main">
 
           <div class="pos-card search-card">
             <div class="search-header">
@@ -34,19 +34,27 @@
 
           <div class="pos-card cart-card">
             <div class="cart-header">
-              <h6 class="cart-title mb-0">Shopping cart</h6>
-              <span class="badge count-badge">{{ items.length }} items &middot; {{ totalQty | number: '1.0-3' }} qty</span>
+              <div class="d-flex align-items-center gap-2">
+                <h6 class="cart-title mb-0">Cart</h6>
+                @if (isEditMode()) {
+                  <span class="chip chip-accent"><i class="bi bi-pencil"></i> Editing {{ existingInvoiceNo() }}</span>
+                }
+                @if (overStockCount() > 0) {
+                  <span class="chip chip-danger"><i class="bi bi-exclamation-triangle"></i> {{ overStockCount() }} over stock</span>
+                }
+              </div>
+              <span class="count-badge">{{ totals().itemCount }} items &middot; {{ totals().totalQty | number: '1.0-3' }} qty</span>
             </div>
 
             <div formArrayName="items" class="items-table-wrapper">
               <table class="items-table">
                 <thead>
                   <tr>
-                    <th class="col-product">Product</th>
+                    <th class="col-product text-start">Product</th>
                     <th class="col-stock text-center">Stock</th>
                     <th class="col-qty text-center">Qty</th>
                     <th class="col-price text-end">Price</th>
-                    <th class="col-disc text-center">Disc.</th>
+                    <th class="col-disc text-center">Discount</th>
                     <th class="col-tax text-end">Tax</th>
                     <th class="col-total text-end">Total</th>
                     <th class="col-remove"></th>
@@ -55,57 +63,65 @@
                 <tbody>
                   @if (items.length === 0) {
                     <tr>
-                      <td colspan="7" class="empty-cart">
+                      <td colspan="8" class="empty-cart">
                         <i class="bi bi-upc-scan fs-1 d-block mb-2"></i>
-                        Cart is empty. Press <kbd class="kbd">F2</kbd> then scan or search a product.
+                        <strong>Ready to sell</strong>
+                        Press <kbd class="kbd">F2</kbd>, then scan a barcode or search a product.
                       </td>
                     </tr>
                   }
 
-                  @for (row of items.controls; track row.get('productId')?.value) {
-                    <tr [formGroupName]="$index"
-                        [attr.data-row]="$index"
+                  @for (row of items.controls; track row.get('productId')?.value; let i = $index) {
+                    <tr [formGroupName]="i"
+                        [attr.data-row]="i"
+                        [class.row-over]="isOver(row)"
                         [class.flash]="row.get('productId')?.value === lastAddedId()">
-                      <td class="col-product fw-medium">
-                        {{ row.get('productName')?.value }}
+                      <td class="col-product">
+                        <div class="p-name">{{ row.get('productName')?.value }}</div>
+                        @if (productCode(row.get('productId')?.value)) {
+                          <div class="p-code">{{ productCode(row.get('productId')?.value) }}</div>
+                        }
                       </td>
-                      <td class="col-stock text-center align-middle">
-                        <span class="badge bg-light text-dark border" [class.text-danger]="row.get('availableStock')?.value <= 0">
-                          {{ row.get('availableStock')?.value | number: '1.0-3' }}
+                      <td class="col-stock text-center">
+                        <span class="avail-badge" [class]="stockClass(row)" [title]="isOver(row) ? 'Quantity exceeds available stock' : 'Available stock'">
+                          {{ stockLabel(row) }}
                         </span>
                       </td>
                       <td class="col-qty">
                         <div class="qty-stepper">
+                          <button type="button" tabindex="-1" class="qty-btn" (click)="changeQty(i, -1)" aria-label="Decrease quantity">&minus;</button>
                           <input type="number" step="any" min="0" data-enter="search"
                                  class="form-control form-control-sm text-center fw-bold"
-                                 formControlName="quantity" (focus)="selectAll($event)" />
+                                 [class.is-over]="isOver(row)"
+                                 formControlName="quantity" (focus)="selectAll($event)" aria-label="Quantity" />
+                          <button type="button" tabindex="-1" class="qty-btn" (click)="changeQty(i, 1)" aria-label="Increase quantity">+</button>
                         </div>
                       </td>
                       <td class="col-price">
                         <input type="number" step="0.01" min="0" data-enter="search"
                                class="form-control form-control-sm text-end"
-                               formControlName="salePrice" (focus)="selectAll($event)" />
+                               formControlName="salePrice" (focus)="selectAll($event)" aria-label="Price" />
                       </td>
                       <td class="col-disc">
                         <div class="d-flex gap-1">
-                          <select class="form-select form-select-sm px-1 disc-type" formControlName="discountType">
+                          <select class="form-select form-select-sm disc-type" formControlName="discountType" aria-label="Discount type">
                             @for (dt of discountTypes; track dt.value) { <option [ngValue]="dt.value">{{ dt.label }}</option> }
                           </select>
                           <input type="number" step="0.01" min="0" data-enter="search"
                                  class="form-control form-control-sm text-danger text-end disc-value"
-                                 formControlName="discountValue" (focus)="selectAll($event)" />
+                                 formControlName="discountValue" (focus)="selectAll($event)" aria-label="Discount value" />
                         </div>
                       </td>
                       <td class="col-tax">
                         <input type="number" step="0.01" min="0" data-enter="search"
                                class="form-control form-control-sm text-end text-primary"
-                               formControlName="tax" (focus)="selectAll($event)" />
+                               formControlName="tax" (focus)="selectAll($event)" aria-label="Tax" />
                       </td>
-                      <td class="col-total text-end pe-3">
-                        <span class="row-total">{{ rowTotal($index) | number: '1.2-2' }}</span>
+                      <td class="col-total text-end">
+                        <span class="row-total">{{ (totals().lines[i] ?? 0) | number: '1.2-2' }}</span>
                       </td>
                       <td class="col-remove text-end">
-                        <button type="button" tabindex="-1" class="remove-row-btn" (click)="removeRow($index)" title="Remove item (Ctrl+Delete)">
+                        <button type="button" tabindex="-1" class="remove-row-btn" (click)="removeRow(i)" title="Remove item (Ctrl+Delete)" aria-label="Remove item">
                           <i class="bi bi-x-lg"></i>
                         </button>
                       </td>
@@ -121,10 +137,10 @@
               }
             </div>
           </div>
-        </div>
+        </section>
 
         <!-- ================= RIGHT: Checkout ================= -->
-        <div class="col-lg-4 pos-right">
+        <aside class="pos-side">
           <div class="pos-card checkout-card">
 
             <!-- Scrollable fields (in tab order) -->
@@ -136,7 +152,7 @@
                     <label class="field-label" for="customerName">Customer <kbd class="kbd">F3</kbd></label>
                     <input #customerInput id="customerName" type="text" data-enter="search"
                            class="form-control form-control-sm"
-                           formControlName="customerName" placeholder="Optional" />
+                           formControlName="customerName" placeholder="Walk-in" />
                   </div>
                   <div class="col-5">
                     <label class="field-label" for="saleDate">Date</label>
@@ -153,14 +169,14 @@
               <div class="checkout-section">
                 <div class="summary-row">
                   <span class="text-muted fw-medium">Sub total</span>
-                  <span class="fw-bold">{{ subTotal | number: '1.2-2' }}</span>
+                  <span class="fw-bold">{{ totals().subTotal | number: '1.2-2' }}</span>
                 </div>
 
                 <div class="row g-2 mt-1">
                   <div class="col-7">
                     <label class="field-label" for="overallDiscount">Overall discount <kbd class="kbd">F4</kbd></label>
                     <div class="d-flex gap-1">
-                      <select class="form-select form-select-sm px-1 overall-type" formControlName="discountType" aria-label="Discount type">
+                      <select class="form-select form-select-sm overall-type" formControlName="discountType" aria-label="Discount type">
                         @for (dt of discountTypes; track dt.value) { <option [ngValue]="dt.value">{{ dt.label }}</option> }
                       </select>
                       <input #discountValueInput id="overallDiscount" type="number" step="0.01" min="0" data-enter="paid"
@@ -176,22 +192,26 @@
                   </div>
                 </div>
 
-                @if (totalDiscountAmount > 0 || totalTaxAmount > 0) {
+                @if (totals().totalDiscount > 0 || totals().totalTax > 0) {
                   <div class="mini-totals">
-                    @if (totalDiscountAmount > 0) { <span>Discount <b class="text-danger">&minus;{{ totalDiscountAmount | number: '1.2-2' }}</b></span> }
-                    @if (totalTaxAmount > 0) { <span>Tax <b class="text-primary">+{{ totalTaxAmount | number: '1.2-2' }}</b></span> }
+                    @if (totals().totalDiscount > 0) { <span>Total discount <b class="text-danger">&minus;{{ totals().totalDiscount | number: '1.2-2' }}</b></span> }
+                    @if (totals().totalTax > 0) { <span>Total tax <b class="text-primary">+{{ totals().totalTax | number: '1.2-2' }}</b></span> }
                   </div>
                 }
               </div>
 
               <div class="checkout-section pay-section">
-                <div class="mb-2">
-                  <label class="field-label" for="paymentMethod">Payment method <kbd class="kbd">F6</kbd></label>
-                  <select #paymentSelect id="paymentMethod" class="form-select" formControlName="paymentMethodId" data-enter="paid"
-                          [class.is-invalid]="form.get('paymentMethodId')?.invalid && form.get('paymentMethodId')?.touched">
-                    <option [ngValue]="null" disabled>Select method...</option>
-                    @for (m of allPaymentMethods(); track m.id) { <option [ngValue]="m.id">{{ m.name }}</option> }
-                  </select>
+                <div class="mb-3">
+                  <label class="field-label">Payment method <kbd class="kbd">F6</kbd></label>
+                  <div class="pay-methods" role="radiogroup" aria-label="Payment method"
+                       [class.is-invalid]="form.get('paymentMethodId')?.invalid && form.get('paymentMethodId')?.touched">
+                    @for (m of allPaymentMethods(); track m.id) {
+                      <button type="button" class="pay-pill" role="radio"
+                              [class.active]="form.get('paymentMethodId')?.value === m.id"
+                              [attr.aria-checked]="form.get('paymentMethodId')?.value === m.id"
+                              (click)="selectPayment(m.id!)">{{ m.name }}</button>
+                    }
+                  </div>
                 </div>
 
                 <div>
@@ -204,24 +224,34 @@
                   <input #paidInput id="paidAmount" type="number" step="0.01" min="0" data-enter="pay"
                          class="form-control form-control-lg paid-input"
                          formControlName="paidAmount" (focus)="selectAll($event)" />
+
+                  @if (quickCash().length > 0) {
+                    <div class="quick-cash">
+                      @for (amt of quickCash(); track amt) {
+                        <button type="button" tabindex="-1" class="quick-chip" (click)="setPaid(amt)">{{ amt | number: '1.0-2' }}</button>
+                      }
+                    </div>
+                  }
                 </div>
               </div>
             </div>
 
-            <!-- Pinned footer: always visible, no scrolling needed -->
+            <!-- Pinned footer: always visible -->
             <div class="checkout-footer">
               <div class="grand-total-box">
-                <div class="grand-total-label">Grand total</div>
-                <div class="grand-total-amount">{{ grandTotal | number: '1.2-2' }}</div>
-                <div class="change-due">
-                  <span class="change" [class.dim]="changeAmount === 0">Change <b>{{ changeAmount | number: '1.2-2' }}</b></span>
-                  <span class="due" [class.dim]="dueAmount === 0">Due <b>{{ dueAmount | number: '1.2-2' }}</b></span>
+                <div class="gt-row">
+                  <span class="grand-total-label">Grand total</span>
+                  <span class="gt-meta">{{ totals().itemCount }} items</span>
+                </div>
+                <div class="grand-total-amount">{{ totals().grandTotal | number: '1.2-2' }}</div>
+                <div class="settle">
+                  <div class="settle-cell change" [class.dim]="totals().change === 0"><span>Change</span><b>{{ totals().change | number: '1.2-2' }}</b></div>
+                  <div class="settle-cell due" [class.dim]="totals().due === 0"><span>Due</span><b>{{ totals().due | number: '1.2-2' }}</b></div>
                 </div>
               </div>
 
               <div class="checkout-actions">
-                <!-- DOM (tab) order: Save & Print, Save only, Void.
-                     CSS order shows them as: Void | Save | Save & Print -->
+                <!-- Save & Print = saves the sale, then prints the receipt automatically -->
                 <button type="submit" class="btn btn-checkout" [disabled]="saving() || items.length === 0"
                         title="Save and print receipt (F9)">
                   @if (saving()) {
@@ -230,18 +260,27 @@
                     <i class="bi bi-printer"></i> <span>Save &amp; Print</span> <kbd class="kbd kbd-light">F9</kbd>
                   }
                 </button>
-                <button type="button" class="btn btn-save-only" (click)="submit(false)"
-                        [disabled]="saving() || items.length === 0" title="Save without printing (Ctrl+S)">
-                  <i class="bi bi-check2"></i> Save <kbd class="kbd">Ctrl+S</kbd>
-                </button>
-                <button type="button" class="btn btn-void" (click)="cancel()" [disabled]="saving()" title="Void sale (F10)">
-                  <i class="bi bi-trash"></i> <kbd class="kbd">F10</kbd>
-                </button>
+
+                <div class="secondary-actions">
+                  <button type="button" class="btn btn-save-only" (click)="submit(false)"
+                          [disabled]="saving() || items.length === 0" title="Save without printing (Ctrl+S)">
+                    <i class="bi bi-check2"></i> Save <kbd class="kbd">Ctrl+S</kbd>
+                  </button>
+                  @if (lastSale()) {
+                    <button type="button" class="btn btn-ghost" (click)="reprint()"
+                            title="Print the last receipt again ({{ lastSale()?.invoiceNo }})">
+                      <i class="bi bi-receipt"></i> Reprint
+                    </button>
+                  }
+                  <button type="button" class="btn btn-void" (click)="cancel()" [disabled]="saving()" title="Void sale (F10)">
+                    <i class="bi bi-trash"></i> <kbd class="kbd">F10</kbd>
+                  </button>
+                </div>
               </div>
             </div>
 
           </div>
-        </div>
+        </aside>
 
       </div>
     </form>

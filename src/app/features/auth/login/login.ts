@@ -89,15 +89,46 @@ export class Login implements AfterViewInit {
         }
         this.loading.set(false);
         this.notify.success('Logged in successfully.');
+
+        // Reminder on every login during the last 5 days
+        const days = res?.subscriptionDaysRemaining;
+        if (typeof days === 'number' && days <= 5) {
+          const what = res.isTrial ? 'free trial' : 'subscription';
+          const when = days === 0 ? 'today' : days === 1 ? 'tomorrow' : `in ${days} days`;
+          this.notify.warning(`Your ${what} expires ${when}. Please renew to avoid losing access.`);
+        }
+
         this.router.navigate(['/dashboard']);
       },
-      error: (err: HttpErrorResponse) => {
+      error: (err: any) => {
         this.loading.set(false);
-        const message =
-          typeof err.error === 'string' ? err.error : err.error?.message ?? 'Login failed. Check your details and try again.';
+        const message = this.extractErrorMessage(err, 'Login failed. Check your details and try again.');
         this.errorMessage.set(message);
         this.notify.danger(message);
       }
     });
+  }
+    // Shows the exact message sent by the backend
+  private extractErrorMessage(err: any, defaultMessage: string): string {
+    if (err?.response) {
+      try {
+        const parsed = JSON.parse(err.response);
+        if (typeof parsed === 'string' && parsed.trim() !== '') return parsed;
+        if (parsed.message) return parsed.message;
+        if (parsed.detail) return parsed.detail;
+        if (parsed.title) return parsed.title;
+      } catch {
+        if (typeof err.response === 'string' && err.response.trim() !== '') return err.response;
+      }
+    }
+
+    if (err?.error) {
+      if (typeof err.error === 'string') return err.error;
+      if (err.error.message) return err.error.message;
+      if (err.error.detail) return err.error.detail;
+      if (err.error.title) return err.error.title;
+    }
+
+    return err?.message || defaultMessage;
   }
 }

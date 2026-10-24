@@ -1,7 +1,7 @@
 import { Component, OnInit, AfterViewInit, ElementRef, ViewChild, inject, signal } from '@angular/core';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Client, CreateUserDto, UpdateUserDto, RoleDto, ShopDto } from '../../../core/api/api-client';
+import { Client, CreateUserDto, UpdateUserDto, ChangePasswordDto, RoleDto, ShopDto } from '../../../core/api/api-client';
 import { NotificationService } from '../../../shared/notification/notification.service';
 import { AlertService } from '../../../shared/alert/alert.service';
 import { PageHeader } from '../../../shared/page-header/page-header';
@@ -29,6 +29,11 @@ export class UserForm implements OnInit, AfterViewInit {
   readonly isEditMode = signal(false);
   readonly showPassword = signal(false);
 
+  // Change password section (edit mode only)
+  readonly showPasswordSection = signal(false);
+  readonly savingPassword = signal(false);
+  readonly showPasswordFields = signal(false);
+
   readonly allRoles = signal<RoleDto[]>([]);
   readonly allShops = signal<ShopDto[]>([]);
   readonly selectedRoleIds = signal<Set<number>>(new Set());
@@ -43,6 +48,18 @@ export class UserForm implements OnInit, AfterViewInit {
     contactNo: [''],
     address: ['']
   });
+
+  passwordForm = this.fb.group(
+    {
+      currentPassword: ['', Validators.required],
+      newPassword: ['', [Validators.required, Validators.minLength(6)]],
+      confirmPassword: ['', Validators.required]
+    },
+    {
+      validators: (g: AbstractControl): ValidationErrors | null =>
+        g.get('newPassword')?.value === g.get('confirmPassword')?.value ? null : { mismatch: true }
+    }
+  );
 
   get breadcrumbSegments(): string[] {
     return ['Identity & Access', this.isEditMode() ? 'Edit User' : 'Create User'];
@@ -60,6 +77,18 @@ export class UserForm implements OnInit, AfterViewInit {
     return this.form.controls.password;
   }
 
+  get currentPasswordControl() {
+    return this.passwordForm.controls.currentPassword;
+  }
+
+  get newPasswordControl() {
+    return this.passwordForm.controls.newPassword;
+  }
+
+  get confirmPasswordControl() {
+    return this.passwordForm.controls.confirmPassword;
+  }
+
   ngOnInit(): void {
     this.loading.set(true);
 
@@ -67,7 +96,7 @@ export class UserForm implements OnInit, AfterViewInit {
       next: (data) => this.allRoles.set(data),
       error: (err: any) => this.notify.danger(this.extractErrorMessage(err, 'Could not load the role list.'))
     });
-    
+
     this.client.shopsAll().subscribe({
       next: (data) => this.allShops.set(data),
       error: (err: any) => this.notify.danger(this.extractErrorMessage(err, 'Could not load the shop list.'))
@@ -94,7 +123,7 @@ export class UserForm implements OnInit, AfterViewInit {
             const matchedIds = this.allRoles().filter((r) => names.has(r.name!)).map((r) => r.id!);
             this.selectedRoleIds.set(new Set(matchedIds));
           };
-          
+
           if (this.allRoles().length) trySelectRoles();
           else setTimeout(trySelectRoles, 300);
 
@@ -150,6 +179,59 @@ export class UserForm implements OnInit, AfterViewInit {
     return this.selectedShopIds().has(id);
   }
 
+  // ---------- Change password ----------
+
+  togglePasswordSection(): void {
+    this.showPasswordSection.update((v) => !v);
+    if (!this.showPasswordSection()) {
+      this.passwordForm.reset();
+      this.showPasswordFields.set(false);
+    }
+  }
+
+  togglePasswordFieldsVisibility(): void {
+    this.showPasswordFields.update((v) => !v);
+  }
+
+  submitPassword(): void {
+    if (this.passwordForm.invalid) {
+      this.passwordForm.markAllAsTouched();
+
+      if (this.currentPasswordControl.hasError('required')) {
+        this.notify.warning('Current password is required.');
+      } else if (this.newPasswordControl.hasError('required')) {
+        this.notify.warning('New password is required.');
+      } else if (this.newPasswordControl.hasError('minlength')) {
+        this.notify.warning('Password must be at least 6 characters.');
+      } else if (this.passwordForm.hasError('mismatch')) {
+        this.notify.warning('Passwords do not match.');
+      }
+      return;
+    }
+
+    this.savingPassword.set(true);
+
+    this.client.changePassword(new ChangePasswordDto({
+      userId: this.userId!,
+      currentPassword: this.currentPasswordControl.value!,
+      newPassword: this.newPasswordControl.value!
+    })).subscribe({
+      next: () => {
+        this.savingPassword.set(false);
+        this.notify.success('Password updated successfully.');
+        this.passwordForm.reset();
+        this.showPasswordFields.set(false);
+        this.showPasswordSection.set(false);
+      },
+      error: (err: any) => {
+        this.savingPassword.set(false);
+        this.notify.danger(this.extractErrorMessage(err, 'Could not update the password.'));
+      }
+    });
+  }
+
+  // ---------- Save user ----------
+
   submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -169,7 +251,7 @@ export class UserForm implements OnInit, AfterViewInit {
 
     this.errorMessage.set(null);
     this.saving.set(true);
-    
+
     const v = this.form.getRawValue();
     const roleIds = Array.from(this.selectedRoleIds());
     const shopIds = Array.from(this.selectedShopIds());
@@ -241,7 +323,7 @@ export class UserForm implements OnInit, AfterViewInit {
       if (err.error.detail) return err.error.detail;
       if (err.error.title) return err.error.title;
     }
-    
+
     return err.message || defaultMessage;
   }
 }

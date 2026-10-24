@@ -2,6 +2,7 @@ import { Component, OnInit, AfterViewInit, DestroyRef, ElementRef, HostListener,
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormBuilder, FormArray, FormGroup, Validators, FormControl } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { startWith } from 'rxjs';
 import { Client, CreateSaleDto, CreateSaleDetailDto, ProductDto, PaymentMethodDto, CompanySettingsDto } from '../../../core/api/api-client';
 import { NotificationService } from '../../../shared/notification/notification.service';
 import { SearchableSelect, SearchableOption } from '../../../shared/searchable-select/searchable-select';
@@ -16,7 +17,7 @@ import { DecimalPipe } from '@angular/common';
  *  F2            Focus product search / barcode
  *  F3            Customer name
  *  F4            Overall discount
- *  F6            Payment method
+ *  F6            Next payment method
  *  F7            Paid amount
  *  F8            Exact amount (paid = grand total)
  *  F9            Save & Print   (also Ctrl+Enter)
@@ -24,12 +25,26 @@ import { DecimalPipe } from '@angular/common';
  *  F10           Void / clear sale
  *  Ctrl+Delete   Remove the cart row you are currently in
  *  Enter         In a cart row -> back to search | in Paid -> Save & Print
- *
- * TAB ORDER
- * Search -> cart rows (Qty, Price, Disc type, Disc, Tax) -> Customer -> Date -> Remarks
- * -> Overall discount type -> Overall discount -> Overall tax -> Payment method
- * -> Paid amount -> Save & Print -> Save -> Void
  */
+
+interface Totals {
+  lines: number[];
+  itemCount: number;
+  totalQty: number;
+  subTotal: number;
+  headerDiscount: number;
+  totalDiscount: number;
+  totalTax: number;
+  grandTotal: number;
+  paid: number;
+  change: number;
+  due: number;
+}
+
+const num = (v: unknown): number => Number(v) || 0;
+const r2 = (n: number): number => Math.round(n * 100) / 100;
+const EPS = 0.005;
+
 @Component({
   selector: 'app-sale-form',
   standalone: true,
@@ -46,11 +61,10 @@ export class SaleForm implements OnInit, AfterViewInit {
   private alert = inject(AlertService);
   private destroyRef = inject(DestroyRef);
   private receipt = inject(ReceiptPrintService);
-  readonly productStocks = signal<{ [key: number]: number }>({});
+
   @ViewChild('searchHost', { read: ElementRef }) searchHost?: ElementRef<HTMLElement>;
   @ViewChild('customerInput') customerInput?: ElementRef<HTMLInputElement>;
   @ViewChild('discountValueInput') discountValueInput?: ElementRef<HTMLInputElement>;
-  @ViewChild('paymentSelect') paymentSelect?: ElementRef<HTMLSelectElement>;
   @ViewChild('paidInput') paidInput?: ElementRef<HTMLInputElement>;
 
   readonly loading = signal(false);
@@ -66,6 +80,15 @@ export class SaleForm implements OnInit, AfterViewInit {
   readonly allProducts = signal<ProductDto[]>([]);
   readonly allPaymentMethods = signal<PaymentMethodDto[]>([]);
   readonly lastAddedId = signal<number | null>(null);
+
+  /** productId -> stock on hand (from the backend). */
+  readonly productStocks = signal<{ [key: number]: number }>({});
+  readonly stocksLoaded = signal(false);
+  /** Edit mode: quantities already sold on this invoice (they are available to re-sell). */
+  private originalQty = new Map<number, number>();
+
+  /** Last completed sale, kept so the cashier can reprint it. */
+  readonly lastSale = signal<any | null>(null);
 
   readonly discountTypes = [
     { value: 1, label: '%' },
@@ -88,6 +111,10 @@ export class SaleForm implements OnInit, AfterViewInit {
     { key: 'Enter', label: 'Back to search' }
   ];
 
+  private readonly productById = computed(() =>
+    new Map<number, ProductDto>(this.allProducts().map((p) => [p.id!, p] as [number, ProductDto]))
+  );
+
   readonly productOptions = computed<SearchableOption[]>(() =>
     this.allProducts().map((p) => ({ id: p.id!, label: p.name!, sublabel: p.productCode }))
   );
@@ -109,148 +136,187 @@ export class SaleForm implements OnInit, AfterViewInit {
   get items(): FormArray<FormGroup> { return this.form.get('items') as FormArray<FormGroup>; }
   get breadcrumbSegments(): string[] { return ['Sales', this.isEditMode() ? 'Edit Sale' : 'Point of Sale']; }
 
-  // ---------- Calculations (unchanged logic) ----------
+  // ---------- Calculations (same maths as before, computed once per change) ----------
 
-  rowTotal(index: number): number {
-    const row = this.items.at(index);
-    const qty = Number(row.get('quantity')?.value) || 0;
-    const price = Number(row.get('salePrice')?.value) || 0;
-    const tax = Number(row.get('tax')?.value) || 0;
-    const discount = this.rowDiscountAmount(index);
-    const total = Math.max(0, (qty * price) - discount + tax);
+  /** Snapshot of the form; every total below derives from it, so nothing recomputes on each change-detection pass. */
+  private readonly snap = signal<any>(null);
 
-    row.get('total')?.setValue(total, { emitEvent: false });
-    return total;
-  }
+  readonly totals = computed<Totals>(() => this.computeTotals(this.snap()));
 
-  rowDiscountAmount(index: number): number {
-    const row = this.items.at(index);
-    const qty = Number(row.get('quantity')?.value) || 0;
-    const price = Number(row.get('salePrice')?.value) || 0;
-    const type = Number(row.get('discountType')?.value);
-    const value = Number(row.get('discountValue')?.value) || 0;
-    const base = qty * price;
+  /** Cart rows whose quantity is higher than available stock. */
+  readonly overStockCount = computed(() => {
+    const rows: any[] = this.snap()?.items ?? [];
+    return rows.filter((r) => this.isOverQty(r.productId, r.quantity)).length;
+  });
 
-    if (type === 1) return Math.round(base * (value / 100) * 100) / 100;
-    if (type === 2) return Math.round(value * qty * 100) / 100;
-    return value;
-  }
+  /** One-tap cash amounts above the grand total (rounded up to 100 / 500 / 1000 / 5000). */
+  readonly quickCash = computed(() => {
+    const g = this.totals().grandTotal;
+    if (g <= 0) return [];
+    const out: number[] = [];
+    for (const step of [100, 500, 1000, 5000]) {
+      const v = Math.ceil(g / step) * step;
+      if (v > g + EPS && !out.includes(v)) out.push(v);
+    }
+    return out;
+  });
 
-  get totalQty(): number {
-    return this.items.controls.reduce((sum, r) => sum + (Number(r.get('quantity')?.value) || 0), 0);
-  }
+  private computeTotals(v: any): Totals {
+    const rows: any[] = v?.items ?? [];
+    let totalQty = 0;
+    let rowDiscounts = 0;
+    let rowTaxes = 0;
 
-  get subTotal(): number {
-    return this.items.controls.reduce((sum, _, i) => sum + this.rowTotal(i), 0);
-  }
+    const lines = rows.map((r) => {
+      const qty = num(r.quantity);
+      const price = num(r.salePrice);
+      const tax = num(r.tax);
+      const dv = num(r.discountValue);
+      const type = Number(r.discountType);
+      const base = qty * price;
 
-  get headerDiscountAmount(): number {
-    const type = Number(this.form.get('discountType')?.value);
-    const value = Number(this.form.get('discountValue')?.value) || 0;
+      let discount = dv;
+      if (type === 1) discount = r2(base * (dv / 100));
+      else if (type === 2) discount = r2(dv * qty);
 
-    if (type === 1) return Math.round(this.subTotal * (value / 100) * 100) / 100;
-    if (type === 2) return Math.round(value * this.totalQty * 100) / 100;
-    return value;
-  }
+      totalQty += qty;
+      rowDiscounts += discount;
+      rowTaxes += tax;
+      return Math.max(0, base - discount + tax);
+    });
 
-  get totalDiscountAmount(): number {
-    const rowDiscounts = this.items.controls.reduce((sum, _, i) => sum + this.rowDiscountAmount(i), 0);
-    return rowDiscounts + this.headerDiscountAmount;
-  }
+    const subTotal = lines.reduce((a, b) => a + b, 0);
 
-  get totalTaxAmount(): number {
-    const headerTax = Number(this.form.get('tax')?.value) || 0;
-    const rowTaxes = this.items.controls.reduce((sum, r) => sum + (Number(r.get('tax')?.value) || 0), 0);
-    return headerTax + rowTaxes;
-  }
+    const hType = Number(v?.discountType);
+    const hValue = num(v?.discountValue);
+    const hTax = num(v?.tax);
+    let headerDiscount = hValue;
+    if (hType === 1) headerDiscount = r2(subTotal * (hValue / 100));
+    else if (hType === 2) headerDiscount = r2(hValue * totalQty);
 
-  get grandTotal(): number {
-    const tax = Number(this.form.get('tax')?.value) || 0;
-    return Math.max(0, this.subTotal - this.headerDiscountAmount + tax);
-  }
+    const grandTotal = Math.max(0, subTotal - headerDiscount + hTax);
+    const paid = num(v?.paidAmount);
 
-  get paidAmount(): number { return Number(this.form.get('paidAmount')?.value) || 0; }
-
-  get changeAmount(): number {
-    return this.paidAmount > this.grandTotal ? this.paidAmount - this.grandTotal : 0;
-  }
-
-  get dueAmount(): number {
-    return this.grandTotal > this.paidAmount ? this.grandTotal - this.paidAmount : 0;
+    return {
+      lines,
+      itemCount: rows.length,
+      totalQty: Math.round(totalQty * 1000) / 1000,
+      subTotal,
+      headerDiscount,
+      totalDiscount: rowDiscounts + headerDiscount,
+      totalTax: rowTaxes + hTax,
+      grandTotal,
+      paid,
+      change: paid > grandTotal + EPS ? r2(paid - grandTotal) : 0,
+      due: grandTotal > paid + EPS ? r2(grandTotal - paid) : 0
+    };
   }
 
   private today(): string {
     return new Date().toISOString().slice(0, 10);
   }
 
+  // ---------- Stock helpers (used by the cart) ----------
+
+  /** Available stock for a product, or null while stock is still loading. */
+  availableFor(productId: number): number | null {
+    if (!this.stocksLoaded()) return null;
+    return (this.productStocks()[productId] ?? 0) + (this.originalQty.get(productId) ?? 0);
+  }
+
+  private isOverQty(productId: number, qty: unknown): boolean {
+    const a = this.availableFor(productId);
+    return a !== null && num(qty) > a;
+  }
+
+  isOver(row: FormGroup): boolean {
+    return this.isOverQty(row.get('productId')?.value, row.get('quantity')?.value);
+  }
+
+  stockLabel(row: FormGroup): string {
+    const a = this.availableFor(row.get('productId')?.value);
+    return a === null ? '–' : String(Math.round(a * 1000) / 1000);
+  }
+
+  stockClass(row: FormGroup): string {
+    const a = this.availableFor(row.get('productId')?.value);
+    if (a === null) return 'muted';
+    if (this.isOver(row)) return 'over';
+    return a <= 5 ? 'low' : '';
+  }
+
+  productCode(productId: number): string {
+    return this.productById().get(productId)?.productCode ?? '';
+  }
+
   // ---------- Lifecycle ----------
 
-ngOnInit(): void {
-  this.client.productsAll().subscribe({ next: (d) => this.allProducts.set(d) });
-  
-  // Fetch stock dictionary from backend
-  this.client.dictionary().subscribe({ 
-    next: (stocks) => this.productStocks.set(stocks) 
-  });
+  ngOnInit(): void {
+    this.client.productsAll().subscribe({ next: (d) => this.allProducts.set(d) });
 
-  this.client.paymentMethodsAll().subscribe({ next: (d) => {
-    this.allPaymentMethods.set(d);
-    if (!this.isEditMode() && d.length > 0) {
-      this.form.get('paymentMethodId')?.setValue(this.defaultPaymentMethod(d).id!);
-    }
-  }});
-
-  this.client.companySettingsGET().subscribe({ next: (c) => this.company = c });
-
-  this.productSearchControl.valueChanges
-    .pipe(takeUntilDestroyed(this.destroyRef))
-    .subscribe(id => { if (id) this.onProductSelected(id); });
-
-  this.form.valueChanges
-    .pipe(takeUntilDestroyed(this.destroyRef))
-    .subscribe(() => {
-      if (this.isEditMode()) return;
-      if (!this.form.get('paidAmount')?.dirty) {
-        this.form.get('paidAmount')?.setValue(this.grandTotal, { emitEvent: false });
-      }
+    this.client.dictionary().subscribe({
+      next: (stocks) => { this.productStocks.set(stocks); this.stocksLoaded.set(true); }
     });
 
-  const idParam = this.route.snapshot.paramMap.get('id');
-  if (idParam) {
-    this.saleId = Number(idParam);
-    this.isEditMode.set(true);
-    this.loading.set(true);
+    this.client.paymentMethodsAll().subscribe({ next: (d) => {
+      this.allPaymentMethods.set(d);
+      if (!this.isEditMode() && d.length > 0 && this.form.get('paymentMethodId')?.value == null) {
+        this.form.get('paymentMethodId')?.setValue(this.defaultPaymentMethod(d).id!);
+      }
+    }});
 
-    this.client.salesGET(this.saleId).subscribe({
-      next: (sale) => {
-        this.existingInvoiceNo.set(sale.invoiceNo ?? null);
-        this.form.patchValue({
-          customerName: sale.customerName ?? '',
-          saleDate: sale.saleDate ? new Date(sale.saleDate).toISOString().slice(0, 10) : this.today(),
-          discountType: sale.discountType,
-          discountValue: sale.discountValue,
-          tax: sale.tax,
-          paidAmount: sale.paidAmount,
-          paymentMethodId: sale.paymentMethodId ?? null,
-          remarks: sale.remarks ?? ''
-        });
-        for (const item of sale.items ?? []) {
-          // Look up stock from our dictionary when loading existing sale items
-          const stock = this.productStocks()[item.productId!] ?? 0;
-          this.items.push(this.buildRow(item.productId!, item.productName!, item.quantity!, item.salePrice!, item.discountType!, item.discountValue!, item.tax!, item.total!, stock));
+    this.client.companySettingsGET().subscribe({ next: (c) => this.company = c });
+
+    this.productSearchControl.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(id => { if (id) this.onProductSelected(id); });
+
+    // Single source of truth for all totals + "paid follows grand total" behaviour.
+    this.form.valueChanges
+      .pipe(startWith(null), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.snap.set(this.form.getRawValue());
+        if (!this.isEditMode() && !this.form.get('paidAmount')?.dirty) {
+          this.form.get('paidAmount')?.setValue(this.totals().grandTotal, { emitEvent: false });
+          this.snap.set(this.form.getRawValue());
         }
-        this.form.markAsPristine();
-        this.loading.set(false);
-        this.focusSearch(250);
-      },
-      error: () => {
-        this.errorMessage.set('Could not load this sale.');
-        this.notify.danger('Could not load this sale.');
-        this.loading.set(false);
-      }
-    });
+      });
+
+    const idParam = this.route.snapshot.paramMap.get('id');
+    if (idParam) {
+      this.saleId = Number(idParam);
+      this.isEditMode.set(true);
+      this.loading.set(true);
+
+      this.client.salesGET(this.saleId).subscribe({
+        next: (sale) => {
+          this.existingInvoiceNo.set(sale.invoiceNo ?? null);
+          this.form.patchValue({
+            customerName: sale.customerName ?? '',
+            saleDate: sale.saleDate ? new Date(sale.saleDate).toISOString().slice(0, 10) : this.today(),
+            discountType: sale.discountType,
+            discountValue: sale.discountValue,
+            tax: sale.tax,
+            paidAmount: sale.paidAmount,
+            paymentMethodId: sale.paymentMethodId ?? null,
+            remarks: sale.remarks ?? ''
+          });
+          for (const item of sale.items ?? []) {
+            this.originalQty.set(item.productId!, (this.originalQty.get(item.productId!) ?? 0) + (item.quantity ?? 0));
+            this.items.push(this.buildRow(item.productId!, item.productName!, item.quantity!, item.salePrice!, item.discountType!, item.discountValue!, item.tax!));
+          }
+          this.form.markAsPristine();
+          this.loading.set(false);
+          this.focusSearch(250);
+        },
+        error: () => {
+          this.errorMessage.set('Could not load this sale.');
+          this.notify.danger('Could not load this sale.');
+          this.loading.set(false);
+        }
+      });
+    }
   }
-}
 
   ngAfterViewInit(): void {
     // Cashier can start scanning immediately.
@@ -261,7 +327,7 @@ ngOnInit(): void {
 
   @HostListener('document:keydown', ['$event'])
   onGlobalKey(e: KeyboardEvent): void {
-    if (this.loading()) return;
+    if (this.loading() || this.confirming) return;
     const ctrl = e.ctrlKey || e.metaKey;
 
     // Ctrl+S -> save only (no print). preventDefault stops the browser's "Save page" dialog.
@@ -294,7 +360,7 @@ ngOnInit(): void {
       case 'F2': e.preventDefault(); this.focusSearch(); break;
       case 'F3': e.preventDefault(); this.focusEl(this.customerInput); break;
       case 'F4': e.preventDefault(); this.focusEl(this.discountValueInput); break;
-      case 'F6': e.preventDefault(); this.focusEl(this.paymentSelect); break;
+      case 'F6': e.preventDefault(); this.cyclePayment(); break;
       case 'F7': e.preventDefault(); this.focusEl(this.paidInput); break;
       case 'F8': e.preventDefault(); this.exactAmount(); break;
       case 'F9': e.preventDefault(); this.submit(true); break;
@@ -338,31 +404,54 @@ ngOnInit(): void {
         (host.querySelector('[tabindex], button, .ng-select-container') as HTMLElement | null)?.click();
       }
     };
-    delay ? setTimeout(run, delay) : setTimeout(run, 0);
+    setTimeout(run, delay);
   }
 
   // ---------- Cart actions ----------
 
-onProductSelected(productId: number): void {
-  const existingRowIdx = this.items.controls.findIndex(c => c.get('productId')?.value === productId);
+  onProductSelected(productId: number): void {
+    const existingRowIdx = this.items.controls.findIndex(
+      c => c.get('productId')?.value === productId
+    );
 
-  if (existingRowIdx >= 0) {
-    const row = this.items.at(existingRowIdx);
-    const currentQty = Number(row.get('quantity')?.value) || 0;
-    row.get('quantity')?.setValue(currentQty + 1);
-  } else {
-    const product = this.allProducts().find(p => p.id === productId);
-    if (product) {
-      const stock = this.productStocks()[productId] ?? 0;
-      this.items.push(this.buildRow(product.id!, product.name!, 1, product.salePrice ?? 0, 3, 0, 0, product.salePrice ?? 0, stock));
+    if (existingRowIdx >= 0) {
+      const row = this.items.at(existingRowIdx);
+      const currentQty = Number(row.get('quantity')?.value) || 0;
+      row.get('quantity')?.setValue(currentQty + 1);
+    } else {
+      const product = this.productById().get(productId);
+
+      if (product) {
+        this.items.push(
+          this.buildRow(
+            product.id!,
+            product.name!,
+            1,
+            product.salePrice ?? 0,
+            3,
+            0,
+            0
+          )
+        );
+      }
     }
-  }
 
-  this.form.markAsDirty();
-  this.flashRow(productId);
-  setTimeout(() => this.productSearchControl.setValue(null, { emitEvent: false }), 0);
-  this.focusSearch(30);
-}
+    this.form.markAsDirty();
+    this.flashRow(productId);
+
+    // Clear the selected product without emitting another selection event.
+    this.productSearchControl.setValue(null, { emitEvent: false });
+
+    // Keep focus in the search input without automatically opening the dropdown.
+    setTimeout(() => {
+      const host = this.searchHost?.nativeElement;
+      const input = host?.querySelector('input') as HTMLInputElement | null;
+
+      if (input) {
+        input.focus();
+      }
+    }, 30);
+  }
 
   private flashRow(productId: number): void {
     this.lastAddedId.set(null);
@@ -378,19 +467,17 @@ onProductSelected(productId: number): void {
     this.form.markAsDirty();
   }
 
-  private buildRow(productId: number, productName: string, quantity: number, salePrice: number, discountType: number, discountValue: number, tax: number, total: number, availableStock: number = 0): FormGroup {
-  return this.fb.group({
-    productId: [productId],
-    productName: [{ value: productName, disabled: true }],
-    availableStock: [{ value: availableStock, disabled: true }],
-    quantity: [quantity, [Validators.required, Validators.min(0.001)]],
-    salePrice: [salePrice, [Validators.required, Validators.min(0)]],
-    discountType: [discountType, Validators.required],
-    discountValue: [discountValue, [Validators.min(0)]],
-    tax: [tax, [Validators.min(0)]],
-    total: [{ value: total, disabled: true }]
-  });
-}
+  private buildRow(productId: number, productName: string, quantity: number, salePrice: number, discountType: number, discountValue: number, tax: number): FormGroup {
+    return this.fb.group({
+      productId: [productId],
+      productName: [{ value: productName, disabled: true }],
+      quantity: [quantity, [Validators.required, Validators.min(0.001)]],
+      salePrice: [salePrice, [Validators.required, Validators.min(0)]],
+      discountType: [discountType, Validators.required],
+      discountValue: [discountValue, [Validators.min(0)]],
+      tax: [tax, [Validators.min(0)]]
+    });
+  }
 
   removeRow(index: number): void {
     if (index < 0 || index >= this.items.length) return;
@@ -398,9 +485,33 @@ onProductSelected(productId: number): void {
     this.form.markAsDirty();
   }
 
+  // ---------- Payment ----------
+
+  selectPayment(id: number): void {
+    const ctrl = this.form.get('paymentMethodId');
+    ctrl?.setValue(id);
+    ctrl?.markAsTouched();
+  }
+
+  /** F6: jump to the next payment method. */
+  cyclePayment(): void {
+    const list = this.allPaymentMethods();
+    if (!list.length) return;
+    const cur = this.form.get('paymentMethodId')?.value;
+    const idx = list.findIndex(m => m.id === cur);
+    this.selectPayment(list[(idx + 1) % list.length].id!);
+  }
+
+  /** Quick-cash chips: customer hands over a round amount. */
+  setPaid(amount: number): void {
+    const ctrl = this.form.get('paidAmount');
+    ctrl?.setValue(amount);
+    ctrl?.markAsDirty();
+  }
+
   exactAmount(): void {
     const ctrl = this.form.get('paidAmount');
-    ctrl?.setValue(this.grandTotal);
+    ctrl?.setValue(this.totals().grandTotal);
     ctrl?.markAsPristine(); // keep auto-follow active
   }
 
@@ -408,14 +519,14 @@ onProductSelected(productId: number): void {
     return list.find(m => m.name?.toLowerCase().includes('cash')) || list[0];
   }
 
-  // ---------- Submit / reset ----------
+  // ---------- Submit / print / reset ----------
 
   /**
-   * @param print true  -> save, then print the receipt automatically (F9 / Ctrl+Enter)
+   * @param print true  -> save, then print the receipt automatically (Save & Print / F9 / Ctrl+Enter)
    *              false -> save only (Ctrl+S)
    */
-  submit(print = true): void {
-    if (this.saving()) return;
+  async submit(print = true): Promise<void> {
+    if (this.saving() || this.confirming) return;
 
     if (this.form.invalid || this.items.length === 0) {
       this.form.markAllAsTouched();
@@ -426,6 +537,15 @@ onProductSelected(productId: number): void {
         this.notify.warning('Please complete all required fields.');
       }
       return;
+    }
+
+    // Safety net: an unpaid balance on a walk-in sale is usually a mistake.
+    const t = this.totals();
+    if (t.due > EPS && !this.form.get('customerName')?.value?.trim()) {
+      this.confirming = true;
+      const ok = await this.alert.confirm('Unpaid balance', `Due ${t.due.toFixed(2)} will be left on a sale with no customer name. Save anyway?`);
+      this.confirming = false;
+      if (!ok) { this.focusEl(this.customerInput); return; }
     }
 
     const v = this.form.getRawValue();
@@ -463,12 +583,14 @@ onProductSelected(productId: number): void {
       next: (res) => {
         this.saving.set(false);
 
-        if (print) this.receipt.print(res, this.company);
+        // Print FIRST, before the form is reset / page navigates away.
+        if (print) this.printReceipt(res);
 
         if (this.isEditMode()) {
           this.notify.success('Sale updated successfully.');
           this.router.navigate(['/sales']);
         } else {
+          this.lastSale.set(res);
           this.notify.success(`Sale completed! Invoice: ${res.invoiceNo}`);
           this.resetTill();
         }
@@ -481,6 +603,20 @@ onProductSelected(productId: number): void {
         this.notify.danger(msg);
       }
     });
+  }
+
+  private printReceipt(sale: any): void {
+    try {
+      this.receipt.print(sale, this.company);
+    } catch {
+      this.notify.warning('Sale saved, but the receipt could not be printed. Use Reprint.');
+    }
+  }
+
+  /** Reprint button — runs inside a click, so browsers never block it as a pop-up. */
+  reprint(): void {
+    const sale = this.lastSale();
+    if (sale) this.printReceipt(sale);
   }
 
   private resetTill(): void {
@@ -500,6 +636,12 @@ onProductSelected(productId: number): void {
     }
     this.errorMessage.set(null);
     this.focusSearch(50);
+    this.refreshStock();
+  }
+
+  /** Stock changed after a sale — reload so the badges stay accurate. */
+  private refreshStock(): void {
+    this.client.dictionary().subscribe({ next: (s) => this.productStocks.set(s) });
   }
 
   async cancel(): Promise<void> {
@@ -517,11 +659,5 @@ onProductSelected(productId: number): void {
     } else {
       this.resetTill();
     }
-  }
-  getProductStock(productId: number): number {
-    const product = this.allProducts().find(p => p.id === productId);
-    // Replace 'stockQty' with the exact property name generated in your ProductDto, 
-    // e.g., product?.currentStock, product?.stock, etc.
-    return (product as any)?.stockQty ?? (product as any)?.currentStock ?? 0;
   }
 }

@@ -14,6 +14,8 @@
         <ul class="info-tips">
           <li><i class="bi bi-check-circle-fill tip-icon"></i> A main shop is created automatically.</li>
           <li><i class="bi bi-check-circle-fill tip-icon"></i> The admin login can manage this tenant independently.</li>
+          <li><i class="bi bi-check-circle-fill tip-icon"></i> A free trial lasts {{ trialDays }} days, then login is blocked until the subscription is activated.</li>
+          <li><i class="bi bi-check-circle-fill tip-icon"></i> Users see a reminder at login during the last 5 days.</li>
         </ul>
       </div>
     </div>
@@ -22,7 +24,7 @@
       <div class="form-card">
         <div class="form-header">
           <h5 class="mb-0">New Tenant</h5>
-          <p class="form-subtitle mb-0">Fill in the business and admin login details.</p>
+          <p class="form-subtitle mb-0">Fill in the business, subscription and admin login details.</p>
         </div>
 
         @if (errorMessage()) {
@@ -71,6 +73,26 @@
             <div class="col-md-3">
               <label class="field-label" for="maxUsers">Max Users</label>
               <input id="maxUsers" type="number" class="form-control" formControlName="maxUsers" min="1" />
+            </div>
+          </div>
+
+          <div class="section-label section-label-spaced">Subscription</div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="field-label" for="subscriptionPlanCode">Plan <span class="required-mark">*</span></label>
+              <select id="subscriptionPlanCode" class="form-select" formControlName="subscriptionPlanCode" (change)="onPlanChange()">
+                @for (p of plans; track p.code) { <option [value]="p.code">{{ p.label }}</option> }
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="field-label" for="subscriptionEndDate">Expires On <span class="required-mark">*</span></label>
+              <input
+                id="subscriptionEndDate"
+                type="date"
+                class="form-control"
+                formControlName="subscriptionEndDate"
+                [readOnly]="!isCustomPlan"
+              />
             </div>
           </div>
 
