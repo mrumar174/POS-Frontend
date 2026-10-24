@@ -8,8 +8,7 @@
         <div class="info-icon"><i class="bi bi-building"></i></div>
         <h5 class="info-title">Tenant Details</h5>
         <p class="info-text">
-          Update this business's contact information and account limits.
-          New tenants are created through Signup, not from this screen.
+          Update this business's contact information, account limits and subscription.
         </p>
 
         @if (!loading() && tenant(); as t) {
@@ -39,6 +38,10 @@
           <li>
             <i class="bi bi-check-circle-fill tip-icon"></i>
             These limits are enforced when creating new shops or users.
+          </li>
+          <li>
+            <i class="bi bi-check-circle-fill tip-icon"></i>
+            Suspended, cancelled or expired tenants cannot log in.
           </li>
         </ul>
       </div>
@@ -178,6 +181,56 @@
               </button>
             </div>
           </form>
+
+          <!-- Subscription: saved on its own, through its own endpoint (not part of the form above) -->
+          <div class="subscription-section" [formGroup]="subForm">
+            <div class="section-label">Subscription</div>
+
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="field-label" for="subStatus">Status</label>
+                <select id="subStatus" class="form-select" formControlName="subscriptionStatus">
+                  @for (s of statuses; track s.value) { <option [ngValue]="s.value">{{ s.label }}</option> }
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="field-label" for="subPlan">Plan</label>
+                <select id="subPlan" class="form-select" formControlName="subscriptionPlanCode">
+                  @for (p of plans(); track p.code) { <option [value]="p.code">{{ p.label }}</option> }
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="field-label" for="subEnd">Expires On</label>
+                <input id="subEnd" type="date" class="form-control" formControlName="subscriptionEndDate" />
+                @if (daysLeft !== null) {
+                  <div class="days-badge"
+                       [class.days-ok]="daysLeft > 5"
+                       [class.days-warn]="daysLeft >= 0 && daysLeft <= 5"
+                       [class.days-expired]="daysLeft < 0">
+                    {{ daysLeft < 0 ? 'Expired ' + (-daysLeft) + ' day(s) ago' : daysLeft === 0 ? 'Expires today' : daysLeft + ' day(s) left' }}
+                  </div>
+                } @else {
+                  <div class="field-hint">No end date: this tenant never expires.</div>
+                }
+              </div>
+            </div>
+
+            @if (subscriptionError()) {
+              <div class="alert alert-danger py-2 mt-3">{{ subscriptionError() }}</div>
+            }
+
+            <div class="subscription-actions">
+              <button type="button" class="btn btn-cancel" (click)="renew('MONTHLY')" [disabled]="savingSubscription()">Renew +1 month</button>
+              <button type="button" class="btn btn-cancel" (click)="renew('YEARLY')" [disabled]="savingSubscription()">Renew +1 year</button>
+              <button type="button" class="btn btn-save" (click)="saveSubscription()" [disabled]="savingSubscription()">
+                @if (savingSubscription()) {
+                  <span class="spinner"></span> Saving...
+                } @else {
+                  Update Subscription
+                }
+              </button>
+            </div>
+          </div>
         }
       </div>
     </div>

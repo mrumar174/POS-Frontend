@@ -21,7 +21,7 @@
         <div class="alert alert-danger py-2">{{ errorMessage() }}</div>
       }
 
-      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <form [formGroup]="form" (ngSubmit)="submit()" (keydown.enter)="onEnter($event)" novalidate>
         <div class="section-label">Adjustment Details</div>
         <div class="row g-3">
           <div class="col-md-3">
@@ -39,7 +39,7 @@
         </div>
 
         <div class="section-label section-label-spaced">
-          Items <span class="items-count">{{ items.length }}</span>
+          Items <span class="items-count">{{ filledCount }}</span>
         </div>
 
         <div formArrayName="items" class="items-table-wrapper">
@@ -54,7 +54,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (row of items.controls; track $index) {
+              @for (row of items.controls; track row) {
                 <tr [formGroupName]="$index">
                   <td class="col-product">
                     <app-searchable-select
@@ -71,14 +71,14 @@
                   </td>
                   <td class="col-diff text-end">
                     @let diff = row.get('differenceQuantity')?.value;
-                    <span class="readonly-val fw-bold" 
-                          [class.text-success]="diff > 0" 
+                    <span class="readonly-val fw-bold"
+                          [class.text-success]="diff > 0"
                           [class.text-danger]="diff < 0">
                       {{ diff > 0 ? '+' : '' }}{{ diff | number: '1.0-3' }}
                     </span>
                   </td>
                   <td class="col-remove">
-                    <button type="button" class="remove-row-btn" (click)="removeRow($index)" [disabled]="items.length === 1">
+                    <button type="button" class="remove-row-btn" tabindex="-1" title="Delete row (Alt+D)" (click)="removeRow($index)" [disabled]="isPlaceholderRow($index)">
                       <i class="bi bi-trash3"></i>
                     </button>
                   </td>
@@ -88,13 +88,16 @@
           </table>
         </div>
 
-        <button type="button" class="add-row-btn" (click)="addRow()">
-          <i class="bi bi-plus-lg"></i> Add product
-        </button>
-
         <div class="form-actions">
-          <button type="button" class="btn btn-cancel" (click)="cancel()" [disabled]="saving()">Cancel</button>
-          <button type="submit" class="btn btn-save" [disabled]="saving()">
+          <div class="shortcut-hints d-none d-lg-flex">
+            <span><kbd>Enter</kbd> Next field</span>
+            <span><kbd>Alt</kbd>+<kbd>N</kbd> New row</span>
+            <span><kbd>Alt</kbd>+<kbd>D</kbd> Delete row</span>
+            <span><kbd>Alt</kbd>+<kbd>R</kbd> Reason</span>
+            <span><kbd>Ctrl</kbd>+<kbd>S</kbd> Save</span>
+          </div>
+          <button type="button" class="btn btn-cancel" title="Cancel (Alt+C)" (click)="cancel()" [disabled]="saving()">Cancel</button>
+          <button type="submit" class="btn btn-save" title="Save (Ctrl+S)" [disabled]="saving()">
             @if (saving()) { <span class="spinner"></span> Saving... } @else { {{ isEditMode() ? 'Save Changes' : 'Record Adjustment' }} }
           </button>
         </div>

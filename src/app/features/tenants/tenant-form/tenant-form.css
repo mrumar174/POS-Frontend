@@ -272,3 +272,12 @@
     position: static;
   }
 }
+.form-select { border: 1px solid #e2e0d8; border-radius: 8px; padding: 0.55rem 0.75rem; font-size: 0.92rem; width: 100%; }
+.form-select:focus { border-color: #a5b4fc; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12); }
+.field-hint { font-size: 0.76rem; color: #9a958a; margin-top: 0.3rem; }
+.days-badge { display: inline-block; margin-top: 0.4rem; padding: 0.1rem 0.55rem; border-radius: 999px; font-size: 0.74rem; font-weight: 600; }
+.days-ok { background: #ecfdf5; color: #047857; }
+.days-warn { background: #fffbeb; color: #b45309; }
+.days-expired { background: #fef2f2; color: #b91c1c; }
+.subscription-section { margin-top: 0.5rem; padding-top: 1.25rem; border-top: 1px solid #f0eee7; }
+.subscription-actions { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1.25rem; }

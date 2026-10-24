@@ -9,10 +9,13 @@
 .required-mark { color: #dc3545; }
 .form-control { border: 1px solid #e2e0d8; border-radius: 8px; padding: 0.55rem 0.75rem; font-size: 0.92rem; width: 100%; }
 .form-control:focus { border-color: #a5b4fc; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12); }
+
+/* Items table */
 .items-table-wrapper { border: 1px solid #ece9e1; border-radius: 10px; overflow: visible; background: #fafaf8; }
 .items-table { width: 100%; border-collapse: collapse; }
 .items-table thead th { text-align: left; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: #9a958a; padding: 0.6rem 1rem; border-bottom: 1px solid #ece9e1; }
 .items-table td { padding: 0.6rem 1rem; vertical-align: middle; border-bottom: 1px solid #f0eee7; }
+.items-table tbody tr:last-child td { border-bottom: none; }
 .col-product { min-width: 300px; }
 .col-sys-qty { width: 120px; }
 .col-phys-qty { width: 140px; }
@@ -22,9 +25,28 @@
 .remove-row-btn { width: 28px; height: 28px; border-radius: 7px; border: 1px solid #ece9e1; background: #fff; color: #9a958a; display: flex; align-items: center; justify-content: center; cursor: pointer; float: right; }
 .remove-row-btn:hover:not(:disabled) { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
 .remove-row-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-.add-row-btn { display: inline-flex; align-items: center; gap: 0.4rem; background: #fff; border: 1px dashed #d5d2c8; color: #6b665c; border-radius: 8px; padding: 0.45rem 0.9rem; font-size: 0.82rem; font-weight: 500; cursor: pointer; margin-top: 0.6rem; }
-.add-row-btn:hover { border-color: #a5b4fc; color: #4338ca; background: #f7f8ff; }
-.form-actions { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1.75rem; padding-top: 1.1rem; border-top: 1px solid #f0eee7; }
+
+/* Sticky footer */
+.form-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    margin: 1.75rem -1.75rem -1.75rem; /* cancel the card padding */
+    padding: 0.9rem 1.75rem;
+    background: #fff;
+    border-top: 1px solid #ece9e1;
+    border-radius: 0 0 14px 14px;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.04);
+}
+
+/* Keyboard shortcut hints (left side of the footer) */
+.shortcut-hints { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.9rem; margin-right: auto; font-size: 0.72rem; color: #9a958a; }
+.shortcut-hints kbd { background: #f4f2ec; border: 1px solid #e2e0d8; border-bottom-width: 2px; border-radius: 5px; padding: 0.05rem 0.35rem; font-family: inherit; font-size: 0.68rem; color: #4a453d; }
+
 .btn-cancel { background: #fff; border: 1px solid #e2e0d8; color: #4a453d; border-radius: 8px; padding: 0.5rem 1.1rem; font-weight: 500; }
 .btn-cancel:hover { background: #faf9f6; }
 .btn-save { background: #1c1a17; color: #fff; border: none; border-radius: 8px; padding: 0.5rem 1.3rem; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem; }

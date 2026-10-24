@@ -9022,6 +9022,9 @@ export class AuthResponseDto implements IAuthResponseDto {
     tenantId?: number;
     shopId?: number;
     user?: UserDto;
+    subscriptionEndDate?: Date | undefined;
+    subscriptionDaysRemaining?: number | undefined;
+    isTrial?: boolean;
 
     constructor(data?: IAuthResponseDto) {
         if (data) {
@@ -9039,6 +9042,9 @@ export class AuthResponseDto implements IAuthResponseDto {
             this.tenantId = _data["tenantId"];
             this.shopId = _data["shopId"];
             this.user = _data["user"] ? UserDto.fromJS(_data["user"]) : undefined as any;
+            this.subscriptionEndDate = _data["subscriptionEndDate"] ? new Date(_data["subscriptionEndDate"].toString()) : undefined as any;
+            this.subscriptionDaysRemaining = _data["subscriptionDaysRemaining"];
+            this.isTrial = _data["isTrial"];
         }
     }
 
@@ -9056,6 +9062,9 @@ export class AuthResponseDto implements IAuthResponseDto {
         data["tenantId"] = this.tenantId;
         data["shopId"] = this.shopId;
         data["user"] = this.user ? this.user.toJSON() : undefined as any;
+        data["subscriptionEndDate"] = this.subscriptionEndDate ? this.subscriptionEndDate.toISOString() : undefined as any;
+        data["subscriptionDaysRemaining"] = this.subscriptionDaysRemaining;
+        data["isTrial"] = this.isTrial;
         return data;
     }
 }
@@ -9066,6 +9075,9 @@ export interface IAuthResponseDto {
     tenantId?: number;
     shopId?: number;
     user?: UserDto;
+    subscriptionEndDate?: Date | undefined;
+    subscriptionDaysRemaining?: number | undefined;
+    isTrial?: boolean;
 }
 
 export class BrandDto implements IBrandDto {
@@ -10598,6 +10610,8 @@ export class CreateTenantDto implements ICreateTenantDto {
     adminUserName?: string | undefined;
     adminFullName?: string | undefined;
     adminPassword?: string | undefined;
+    isTrial?: boolean;
+    subscriptionEndDate?: Date | undefined;
 
     constructor(data?: ICreateTenantDto) {
         if (data) {
@@ -10623,6 +10637,8 @@ export class CreateTenantDto implements ICreateTenantDto {
             this.adminUserName = _data["adminUserName"];
             this.adminFullName = _data["adminFullName"];
             this.adminPassword = _data["adminPassword"];
+            this.isTrial = _data["isTrial"];
+            this.subscriptionEndDate = _data["subscriptionEndDate"] ? new Date(_data["subscriptionEndDate"].toString()) : undefined as any;
         }
     }
 
@@ -10648,6 +10664,8 @@ export class CreateTenantDto implements ICreateTenantDto {
         data["adminUserName"] = this.adminUserName;
         data["adminFullName"] = this.adminFullName;
         data["adminPassword"] = this.adminPassword;
+        data["isTrial"] = this.isTrial;
+        data["subscriptionEndDate"] = this.subscriptionEndDate ? this.subscriptionEndDate.toISOString() : undefined as any;
         return data;
     }
 }
@@ -10666,6 +10684,8 @@ export interface ICreateTenantDto {
     adminUserName?: string | undefined;
     adminFullName?: string | undefined;
     adminPassword?: string | undefined;
+    isTrial?: boolean;
+    subscriptionEndDate?: Date | undefined;
 }
 
 export class CreateUnitDto implements ICreateUnitDto {

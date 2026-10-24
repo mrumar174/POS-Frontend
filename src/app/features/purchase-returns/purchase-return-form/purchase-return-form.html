@@ -19,7 +19,7 @@
 
       @if (errorMessage()) { <div class="alert alert-danger py-2">{{ errorMessage() }}</div> }
 
-      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <form [formGroup]="form" (ngSubmit)="submit()" (keydown.enter)="onEnter($event)" novalidate>
         <div class="section-label">Return Details</div>
         <div class="row g-3">
           <div class="col-md-4">
@@ -29,7 +29,7 @@
               @for (s of allSuppliers(); track s.id) { <option [ngValue]="s.id">{{ s.name }}</option> }
             </select>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-4 invoice-field">
             <label class="field-label">
               Original Invoice <span class="optional-tag">optional</span>
             </label>
@@ -57,13 +57,13 @@
           <div class="purchase-items-hint">
             <i class="bi bi-info-circle"></i>
             This return is linked to invoice <strong>{{ purchase.invoiceNo }}</strong>.
-            Select a product below matching one of its original line items — quantities are capped to what was purchased.
+            Only products from this invoice can be selected, and quantities cannot exceed what was purchased.
           </div>
         }
 
         <div class="section-label section-label-spaced">
           Items
-          <span class="items-count">{{ items.length }}</span>
+          <span class="items-count">{{ filledCount }}</span>
         </div>
 
         <div formArrayName="items" class="items-table-wrapper">
@@ -80,23 +80,16 @@
               </tr>
             </thead>
             <tbody>
-              @for (row of items.controls; track $index) {
+              @for (row of items.controls; track row) {
                 <tr [formGroupName]="$index">
                   <td class="col-product">
-                    @if (selectedPurchase()) {
-                      <select class="form-select form-select-sm" formControlName="productId" (change)="fillRowFromPurchaseItem($index, +$any($event.target).value)">
-                        <option [ngValue]="null">Select product</option>
-                        @for (item of selectedPurchase()!.items; track item.productId) {
-                          <option [value]="item.productId">{{ item.productName }}</option>
-                        }
-                      </select>
-                    } @else {
-                      <select class="form-select form-select-sm" formControlName="productId">
-                        <option [ngValue]="null">No invoice selected — pick items manually below</option>
-                      </select>
-                    }
+                    <app-searchable-select
+                      formControlName="productId"
+                      [options]="productOptions()"
+                      placeholder="Select product"
+                    ></app-searchable-select>
                     @if (maxQuantity($index) !== null) {
-                      <div class="max-qty-hint">Max: {{ maxQuantity($index) }}</div>
+                      <div class="max-qty-hint" [class.over-max]="isOverMax($index)">Max: {{ maxQuantity($index) }}</div>
                     }
                   </td>
                   <td class="col-qty">
@@ -115,7 +108,7 @@
                     <span class="row-total">{{ rowTotal($index) | number: '1.2-2' }}</span>
                   </td>
                   <td class="col-remove">
-                    <button type="button" class="remove-row-btn" (click)="removeRow($index)" [disabled]="items.length === 1">
+                    <button type="button" class="remove-row-btn" tabindex="-1" title="Delete row (Alt+D)" (click)="removeRow($index)" [disabled]="isPlaceholderRow($index)">
                       <i class="bi bi-trash3"></i>
                     </button>
                   </td>
@@ -124,10 +117,6 @@
             </tbody>
           </table>
         </div>
-
-        <button type="button" class="add-row-btn" (click)="addRow()">
-          <i class="bi bi-plus-lg"></i> Add item
-        </button>
 
         <div class="totals-panel">
           <div class="row g-3">
@@ -143,6 +132,8 @@
 
           <div class="summary-rows">
             <div class="summary-row"><span>Sub Total</span><span>{{ subTotal | number: '1.2-2' }}</span></div>
+            <div class="summary-row"><span>Total Discount</span><span>−{{ totalDiscountAmount | number: '1.2-2' }}</span></div>
+            <div class="summary-row"><span>Total Tax</span><span>+{{ totalTaxAmount | number: '1.2-2' }}</span></div>
             <div class="summary-row summary-row-total"><span>Grand Total</span><span>{{ grandTotal | number: '1.2-2' }}</span></div>
           </div>
         </div>
@@ -151,8 +142,15 @@
         <textarea class="form-control" formControlName="remarks" rows="2" placeholder="Optional — reason for return"></textarea>
 
         <div class="form-actions">
-          <button type="button" class="btn btn-cancel" (click)="cancel()" [disabled]="saving()">Cancel</button>
-          <button type="submit" class="btn btn-save" [disabled]="saving()">
+          <div class="shortcut-hints d-none d-lg-flex">
+            <span><kbd>Enter</kbd> Next field</span>
+            <span><kbd>Alt</kbd>+<kbd>N</kbd> New row</span>
+            <span><kbd>Alt</kbd>+<kbd>D</kbd> Delete row</span>
+            <span><kbd>Alt</kbd>+<kbd>I</kbd> Invoice</span>
+            <span><kbd>Ctrl</kbd>+<kbd>S</kbd> Save</span>
+          </div>
+          <button type="button" class="btn btn-cancel" title="Cancel (Alt+C)" (click)="cancel()" [disabled]="saving()">Cancel</button>
+          <button type="submit" class="btn btn-save" title="Save (Ctrl+S)" [disabled]="saving()">
             @if (saving()) { <span class="spinner"></span> Saving... } @else { {{ isEditMode() ? 'Save Changes' : 'Record Return' }} }
           </button>
         </div>
